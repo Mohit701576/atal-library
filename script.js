@@ -3,6 +3,8 @@
    Supabase Backend Version
 ===================================================== */
 
+const API_URL = "https://atal-library-backend.onrender.com";
+
 document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================================================
@@ -27,7 +29,6 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
         });
-
     }
 
 
@@ -85,7 +86,6 @@ document.addEventListener("DOMContentLoaded", function () {
             forgotPasswordModal.style.display = "none";
             forgotPasswordModal.classList.remove("show");
         }
-
     }
 
 
@@ -100,7 +100,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (loginModal) {
             loginModal.style.display = "flex";
         }
-
     }
 
 
@@ -115,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (registerModal) {
             registerModal.style.display = "flex";
         }
-
     }
 
 
@@ -131,7 +129,6 @@ document.addEventListener("DOMContentLoaded", function () {
             forgotPasswordModal.style.display = "flex";
             forgotPasswordModal.classList.add("show");
         }
-
     }
 
 
@@ -538,7 +535,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/send-email-otp",
+                        `${API_URL}/send-email-otp`,
                         {
                             method: "POST",
 
@@ -674,7 +671,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/verify-email-otp",
+                        `${API_URL}/verify-email-otp`,
                         {
                             method: "POST",
 
@@ -797,8 +794,6 @@ document.addEventListener("DOMContentLoaded", function () {
             event.preventDefault();
 
 
-            /* DEBUG */
-
             console.log("REGISTER BUTTON CLICKED");
             console.log(
                 "Email Verified:",
@@ -840,10 +835,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     : "";
 
 
-            /* =================================================
-               CHECK ALL FIELDS
-            ================================================= */
-
             if (!name || !email || !phone || !password) {
 
                 alert("Please fill all fields.");
@@ -852,10 +843,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            /* =================================================
-               CHECK EMAIL
-            ================================================= */
-
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 
                 alert("Please enter a valid email address.");
@@ -863,10 +850,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             }
 
-
-            /* =================================================
-               CHECK EMAIL VERIFICATION
-            ================================================= */
 
             if (!emailVerified) {
 
@@ -878,10 +861,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             }
 
-
-            /* =================================================
-               CHECK PHONE
-            ================================================= */
 
             if (!/^\d{10}$/.test(phone)) {
 
@@ -918,7 +897,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/register",
+                        `${API_URL}/register`,
                         {
                             method: "POST",
 
@@ -961,10 +940,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                /* =================================================
-                   SAVE USER LOCALLY
-                ================================================= */
-
                 const user = {
 
                     name: name,
@@ -984,10 +959,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Account created successfully! Please login."
                 );
 
-
-                /* =================================================
-                   RESET FORM
-                ================================================= */
 
                 registerForm.reset();
 
@@ -1107,7 +1078,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/login",
+                        `${API_URL}/login`,
                         {
                             method: "POST",
 
@@ -1139,10 +1110,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 }
 
-
-                /* =================================================
-                   SAVE LOGIN
-                ================================================= */
 
                 localStorage.setItem(
                     "loggedUser",
@@ -1297,7 +1264,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                     const response =
                         await fetch(
-                            "http://localhost:3000/forgot-password",
+                            `${API_URL}/forgot-password`,
                             {
                                 method: "POST",
 
@@ -1524,7 +1491,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const response =
                 await fetch(
-                    "http://localhost:3000/books"
+                    `${API_URL}/books`
                 );
 
 
@@ -1540,20 +1507,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const backendBooks =
                 await response.json();
 
-
-            /*
-               Supabase fields:
-               id
-               name
-               author
-               category
-               year
-               image
-               description
-               rented_by
-
-               Old Excel fields are also supported.
-            */
 
             books =
                 backendBooks.map(function (book) {
@@ -1640,7 +1593,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     ">
 
                         Unable to load books.
-                        Please start the backend server.
+                        Please try again later.
 
                     </p>
 
@@ -2202,7 +2155,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/rent",
+                        `${API_URL}/rent`,
                         {
 
                             method: "POST",
@@ -2373,7 +2326,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/submit",
+                        `${API_URL}/submit`,
                         {
 
                             method: "POST",
