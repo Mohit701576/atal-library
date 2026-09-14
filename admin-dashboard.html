@@ -786,470 +786,78 @@
 
     <script>
 
-        /* =================================================
-           CHECK ADMIN LOGIN
-        ================================================= */
+    /* =================================================
+       API URL
+    ================================================= */
 
-        const adminToken =
-            sessionStorage.getItem("adminToken");
-
-
-        if (!adminToken) {
-
-            window.location.href =
-                "admin-login.html";
-
-        }
+    const API_URL = "https://atal-library-backend.onrender.com";
 
 
-        /* =================================================
-           MESSAGE
-        ================================================= */
+    /* =================================================
+       CHECK ADMIN LOGIN
+    ================================================= */
 
-        function showMessage(text) {
+    const adminToken =
+        sessionStorage.getItem("adminToken");
 
-            const message =
-                document.getElementById("message");
+    if (!adminToken) {
 
-            message.textContent = text;
+        window.location.href =
+            "admin-login.html";
 
-            message.style.display = "block";
-
-        }
-
-
-        /* =================================================
-           VARIABLES
-        ================================================= */
-
-        let allUsers = [];
-
-        let allTransactions = [];
-
-        let allBooks = [];
-
-        let editingBookId = null;
+    }
 
 
-        /* =================================================
-           LOAD USERS
-        ================================================= */
+    /* =================================================
+       MESSAGE
+    ================================================= */
 
-        async function loadUsers() {
+    function showMessage(text) {
 
-            try {
+        const message =
+            document.getElementById("message");
 
-                const response =
-                    await fetch(
-                        "http://localhost:3000/admin/users",
-                        {
-                            headers: {
+        message.textContent = text;
 
-                                "Authorization":
-                                    "Bearer " +
-                                    adminToken
+        message.style.display = "block";
 
-                            }
+    }
+
+
+    /* =================================================
+       VARIABLES
+    ================================================= */
+
+    let allUsers = [];
+
+    let allTransactions = [];
+
+    let allBooks = [];
+
+    let editingBookId = null;
+
+
+    /* =================================================
+       LOAD USERS
+    ================================================= */
+
+    async function loadUsers() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/admin/users`,
+                    {
+                        headers: {
+                            "Authorization":
+                                "Bearer " + adminToken
                         }
-                    );
-
-
-                if (response.status === 401) {
-
-                    sessionStorage.removeItem(
-                        "adminToken"
-                    );
-
-                    window.location.href =
-                        "admin-login.html";
-
-                    return;
-
-                }
-
-
-                const users =
-                    await response.json();
-
-
-                allUsers = users;
-
-
-                document.getElementById(
-                    "totalUsers"
-                ).textContent =
-                    users.length;
-
-
-                displayUsers(users);
-
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Users Error:",
-                    error
-                );
-
-                showMessage(
-                    "Unable to load users. Check backend server."
-                );
-
-            }
-
-        }
-
-
-        /* =================================================
-           DISPLAY USERS
-        ================================================= */
-
-        function displayUsers(users) {
-
-            const table =
-                document.getElementById(
-                    "usersTable"
-                );
-
-
-            table.innerHTML = "";
-
-
-            if (users.length === 0) {
-
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="3">
-                            No users registered.
-                        </td>
-                    </tr>
-                `;
-
-                return;
-
-            }
-
-
-            users.forEach(function(user) {
-
-                const row =
-                    document.createElement("tr");
-
-
-                row.innerHTML = `
-
-                    <td>
-                        ${user.Name || ""}
-                    </td>
-
-                    <td>
-                        ${user.Email || ""}
-                    </td>
-
-                    <td>
-                        ${user.Phone || ""}
-                    </td>
-
-                `;
-
-
-                table.appendChild(row);
-
-            });
-
-        }
-
-
-        /* =================================================
-           USER SEARCH
-        ================================================= */
-
-        document.getElementById(
-            "userSearch"
-        ).addEventListener(
-            "input",
-            function() {
-
-                const search =
-                    this.value
-                    .toLowerCase()
-                    .trim();
-
-
-                const filteredUsers =
-                    allUsers.filter(
-                        function(user) {
-
-                            const name =
-                                (user.Name || "")
-                                .toLowerCase();
-
-
-                            const email =
-                                (user.Email || "")
-                                .toLowerCase();
-
-
-                            const phone =
-                                (user.Phone || "")
-                                .toLowerCase();
-
-
-                            return (
-                                name.includes(search) ||
-                                email.includes(search) ||
-                                phone.includes(search)
-                            );
-
-                        }
-                    );
-
-
-                displayUsers(filteredUsers);
-
-            }
-        );
-
-
-        /* =================================================
-           LOAD TRANSACTIONS
-        ================================================= */
-
-        async function loadTransactions() {
-
-            try {
-
-                const response =
-                    await fetch(
-                        "http://localhost:3000/admin/transactions",
-                        {
-                            headers: {
-
-                                "Authorization":
-                                    "Bearer " +
-                                    adminToken
-
-                            }
-                        }
-                    );
-
-
-                if (response.status === 401) {
-
-                    sessionStorage.removeItem(
-                        "adminToken"
-                    );
-
-                    window.location.href =
-                        "admin-login.html";
-
-                    return;
-
-                }
-
-
-                const transactions =
-                    await response.json();
-
-
-                allTransactions =
-                    transactions;
-
-
-                document.getElementById(
-                    "totalTransactions"
-                ).textContent =
-                    transactions.length;
-
-
-                displayTransactions(
-                    transactions
-                );
-
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Transactions Error:",
-                    error
-                );
-
-                showMessage(
-                    "Unable to load transactions."
-                );
-
-            }
-
-        }
-
-
-        /* =================================================
-           DISPLAY TRANSACTIONS
-        ================================================= */
-
-        function displayTransactions(transactions) {
-
-            const table =
-                document.getElementById(
-                    "transactionsTable"
-                );
-
-
-            table.innerHTML = "";
-
-
-            if (transactions.length === 0) {
-
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="6">
-                            No transactions found.
-                        </td>
-                    </tr>
-                `;
-
-                return;
-
-            }
-
-
-            transactions.forEach(
-                function(transaction) {
-
-                    const row =
-                        document.createElement("tr");
-
-
-                    row.innerHTML = `
-
-                        <td>
-                            ${transaction.Date || ""}
-                        </td>
-
-                        <td>
-                            ${transaction.Action || ""}
-                        </td>
-
-                        <td>
-                            ${transaction.User || ""}
-                        </td>
-
-                        <td>
-                            ${transaction.Email || ""}
-                        </td>
-
-                        <td>
-                            ${transaction.Book || ""}
-                        </td>
-
-                        <td>
-                            ${transaction.Author || ""}
-                        </td>
-
-                    `;
-
-
-                    table.appendChild(row);
-
-                }
-            );
-
-        }
-
-
-        /* =================================================
-           FILTER TRANSACTIONS
-        ================================================= */
-
-        function filterTransactions() {
-
-            const search =
-                document.getElementById(
-                    "transactionSearch"
-                ).value
-                .toLowerCase()
-                .trim();
-
-
-            const filter =
-                document.getElementById(
-                    "transactionFilter"
-                ).value;
-
-
-            const filtered =
-                allTransactions.filter(
-                    function(transaction) {
-
-                        const text = `
-
-                            ${transaction.Date || ""}
-
-                            ${transaction.Action || ""}
-
-                            ${transaction.User || ""}
-
-                            ${transaction.Email || ""}
-
-                            ${transaction.Book || ""}
-
-                            ${transaction.Author || ""}
-
-                        `.toLowerCase();
-
-
-                        const matchesSearch =
-                            text.includes(search);
-
-
-                        const matchesFilter =
-                            filter === "ALL" ||
-                            transaction.Action === filter;
-
-
-                        return (
-                            matchesSearch &&
-                            matchesFilter
-                        );
-
                     }
                 );
 
 
-            displayTransactions(filtered);
-
-        }
-
-
-        document.getElementById(
-            "transactionSearch"
-        ).addEventListener(
-            "input",
-            filterTransactions
-        );
-
-
-        document.getElementById(
-            "transactionFilter"
-        ).addEventListener(
-            "change",
-            filterTransactions
-        );
-
-
-        /* =================================================
-           LOGOUT
-        ================================================= */
-
-        document.getElementById(
-            "logoutBtn"
-        ).addEventListener(
-            "click",
-            function() {
+            if (response.status === 401) {
 
                 sessionStorage.removeItem(
                     "adminToken"
@@ -1258,528 +866,732 @@
                 window.location.href =
                     "admin-login.html";
 
-            }
-        );
-
-
-        /* =================================================
-           LOAD BOOKS
-        ================================================= */
-
-        async function loadBooks() {
-
-            try {
-
-                const response =
-                    await fetch(
-                        "http://localhost:3000/admin/books",
-                        {
-                            headers: {
-
-                                "Authorization":
-                                    "Bearer " +
-                                    adminToken
-
-                            }
-                        }
-                    );
-
-
-                if (response.status === 401) {
-
-                    sessionStorage.removeItem(
-                        "adminToken"
-                    );
-
-                    window.location.href =
-                        "admin-login.html";
-
-                    return;
-
-                }
-
-
-                const books =
-                    await response.json();
-
-
-                allBooks =
-                    books;
-
-
-                updateBookStats();
-
-                displayBooks(books);
-
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "Books Error:",
-                    error
-                );
-
-                showMessage(
-                    "Unable to load books."
-                );
-
-            }
-
-        }
-
-
-        /* =================================================
-           BOOK STATS
-        ================================================= */
-
-        function updateBookStats() {
-
-            const total =
-                allBooks.length;
-
-
-            const issued =
-                allBooks.filter(
-                    function(book) {
-
-                        return book.RentedBy;
-
-                    }
-                ).length;
-
-
-            const available =
-                total - issued;
-
-
-            document.getElementById(
-                "totalBooks"
-            ).textContent =
-                total;
-
-
-            document.getElementById(
-                "availableBooks"
-            ).textContent =
-                available;
-
-
-            document.getElementById(
-                "issuedBooks"
-            ).textContent =
-                issued;
-
-        }
-
-
-        /* =================================================
-           DISPLAY BOOKS
-        ================================================= */
-
-        function displayBooks(books) {
-
-            const table =
-                document.getElementById(
-                    "booksTable"
-                );
-
-
-            table.innerHTML = "";
-
-
-            if (books.length === 0) {
-
-                table.innerHTML = `
-                    <tr>
-                        <td colspan="7">
-                            No books found.
-                        </td>
-                    </tr>
-                `;
-
                 return;
 
             }
 
 
-            books.forEach(
-                function(book) {
-
-                    const row =
-                        document.createElement("tr");
+            const users =
+                await response.json();
 
 
-                    let status =
-                        "Available";
+            allUsers = users;
 
 
-                    if (book.RentedBy) {
-
-                        status =
-                            "Issued";
-
-                    }
+            document.getElementById(
+                "totalUsers"
+            ).textContent =
+                users.length;
 
 
-                    row.innerHTML = `
-
-                        <td>
-                            ${book.ID || ""}
-                        </td>
-
-                        <td>
-                            ${book.Name || ""}
-                        </td>
-
-                        <td>
-                            ${book.Author || ""}
-                        </td>
-
-                        <td>
-                            ${book.Category || ""}
-                        </td>
-
-                        <td>
-                            ${book.Year || ""}
-                        </td>
-
-                        <td>
-                            ${status}
-                        </td>
-
-                        <td class="book-actions">
-
-                            <button
-                                class="edit-btn"
-                                onclick="editBook(${book.ID})">
-
-                                Edit
-
-                            </button>
+            displayUsers(users);
 
 
-                            <button
-                                class="delete-btn"
-                                onclick="deleteBook(${book.ID})">
+        }
+        catch (error) {
 
-                                Delete
+            console.error(
+                "Users Error:",
+                error
+            );
 
-                            </button>
-
-                        </td>
-
-                    `;
-
-
-                    table.appendChild(row);
-
-                }
+            showMessage(
+                "Unable to load users. Check backend server."
             );
 
         }
 
+    }
 
-        /* =================================================
-           ADD / UPDATE BOOK
-        ================================================= */
 
-        document.getElementById(
-            "addBookBtn"
-        ).addEventListener(
-            "click",
-            async function() {
+    /* =================================================
+       DISPLAY USERS
+    ================================================= */
 
-                const name =
-                    document.getElementById(
-                        "bookName"
-                    ).value.trim();
+    function displayUsers(users) {
 
-
-                const author =
-                    document.getElementById(
-                        "bookAuthor"
-                    ).value.trim();
-
-
-                const category =
-                    document.getElementById(
-                        "bookCategory"
-                    ).value.trim();
-
-
-                const year =
-                    document.getElementById(
-                        "bookYear"
-                    ).value.trim();
-
-
-                const image =
-                    document.getElementById(
-                        "bookImage"
-                    ).value.trim();
-
-
-                const description =
-                    document.getElementById(
-                        "bookDescription"
-                    ).value.trim();
-
-
-                if (!name || !author) {
-
-                    alert(
-                        "Book name and author are required."
-                    );
-
-                    return;
-
-                }
-
-
-                const bookData = {
-
-                    name: name,
-
-                    author: author,
-
-                    category: category,
-
-                    year: year,
-
-                    image: image,
-
-                    description: description
-
-                };
-
-
-                try {
-
-                    let url =
-                        "http://localhost:3000/admin/books/add";
-
-
-                    let method =
-                        "POST";
-
-
-                    if (editingBookId !== null) {
-
-                        url =
-                            "http://localhost:3000/admin/books/update/" +
-                            editingBookId;
-
-                        method =
-                            "PUT";
-
-                    }
-
-
-                    const response =
-                        await fetch(
-                            url,
-                            {
-                                method: method,
-
-                                headers: {
-
-                                    "Content-Type":
-                                        "application/json",
-
-                                    "Authorization":
-                                        "Bearer " +
-                                        adminToken
-
-                                },
-
-                                body:
-                                    JSON.stringify(
-                                        bookData
-                                    )
-
-                            }
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (!response.ok) {
-
-                        alert(
-                            result.message ||
-                            "Something went wrong."
-                        );
-
-                        return;
-
-                    }
-
-
-                    alert(
-                        result.message
-                    );
-
-
-                    clearBookForm();
-
-                    loadBooks();
-
-                }
-
-                catch (error) {
-
-                    console.error(
-                        "Book Error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to save book."
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* =================================================
-           EDIT BOOK
-        ================================================= */
-
-        function editBook(id) {
-
-            const book =
-                allBooks.find(
-                    function(book) {
-
-                        return (
-                            Number(book.ID) ===
-                            Number(id)
-                        );
-
-                    }
-                );
-
-
-            if (!book) {
-
-                return;
-
-            }
-
-
-            editingBookId =
-                Number(id);
-
-
+        const table =
             document.getElementById(
-                "bookName"
-            ).value =
-                book.Name || "";
+                "usersTable"
+            );
 
 
-            document.getElementById(
-                "bookAuthor"
-            ).value =
-                book.Author || "";
+        table.innerHTML = "";
 
 
-            document.getElementById(
-                "bookCategory"
-            ).value =
-                book.Category || "";
+        if (users.length === 0) {
 
+            table.innerHTML = `
+                <tr>
+                    <td colspan="3">
+                        No users registered.
+                    </td>
+                </tr>
+            `;
 
-            document.getElementById(
-                "bookYear"
-            ).value =
-                book.Year || "";
-
-
-            document.getElementById(
-                "bookImage"
-            ).value =
-                book.Image || "";
-
-
-            document.getElementById(
-                "bookDescription"
-            ).value =
-                book.Description || "";
-
-
-            document.getElementById(
-                "bookFormTitle"
-            ).textContent =
-                "✏️ Edit Book";
-
-
-            document.getElementById(
-                "addBookBtn"
-            ).textContent =
-                "💾 Update Book";
-
-
-            document.getElementById(
-                "cancelEditBtn"
-            ).style.display =
-                "block";
-
-
-            window.scrollTo({
-
-                top:
-                    document.body.scrollHeight,
-
-                behavior:
-                    "smooth"
-
-            });
+            return;
 
         }
 
 
-        /* =================================================
-           DELETE BOOK
-        ================================================= */
+        users.forEach(function(user) {
 
-        async function deleteBook(id) {
+            const row =
+                document.createElement("tr");
 
-            const confirmDelete =
-                confirm(
-                    "Are you sure you want to delete this book?"
+
+            row.innerHTML = `
+
+                <td>
+                    ${user.Name || ""}
+                </td>
+
+                <td>
+                    ${user.Email || ""}
+                </td>
+
+                <td>
+                    ${user.Phone || ""}
+                </td>
+
+            `;
+
+
+            table.appendChild(row);
+
+        });
+
+    }
+
+
+    /* =================================================
+       USER SEARCH
+    ================================================= */
+
+    document.getElementById(
+        "userSearch"
+    ).addEventListener(
+        "input",
+        function() {
+
+            const search =
+                this.value
+                .toLowerCase()
+                .trim();
+
+
+            const filteredUsers =
+                allUsers.filter(
+                    function(user) {
+
+                        const name =
+                            (user.Name || "")
+                            .toLowerCase();
+
+
+                        const email =
+                            (user.Email || "")
+                            .toLowerCase();
+
+
+                        const phone =
+                            (user.Phone || "")
+                            .toLowerCase();
+
+
+                        return (
+                            name.includes(search) ||
+                            email.includes(search) ||
+                            phone.includes(search)
+                        );
+
+                    }
                 );
 
 
-            if (!confirmDelete) {
+            displayUsers(filteredUsers);
+
+        }
+    );
+
+
+    /* =================================================
+       LOAD TRANSACTIONS
+    ================================================= */
+
+    async function loadTransactions() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/admin/transactions`,
+                    {
+                        headers: {
+                            "Authorization":
+                                "Bearer " + adminToken
+                        }
+                    }
+                );
+
+
+            if (response.status === 401) {
+
+                sessionStorage.removeItem(
+                    "adminToken"
+                );
+
+                window.location.href =
+                    "admin-login.html";
 
                 return;
 
             }
 
 
+            const transactions =
+                await response.json();
+
+
+            allTransactions =
+                transactions;
+
+
+            document.getElementById(
+                "totalTransactions"
+            ).textContent =
+                transactions.length;
+
+
+            displayTransactions(
+                transactions
+            );
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Transactions Error:",
+                error
+            );
+
+            showMessage(
+                "Unable to load transactions."
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       DISPLAY TRANSACTIONS
+    ================================================= */
+
+    function displayTransactions(transactions) {
+
+        const table =
+            document.getElementById(
+                "transactionsTable"
+            );
+
+
+        table.innerHTML = "";
+
+
+        if (transactions.length === 0) {
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        No transactions found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+
+        transactions.forEach(
+            function(transaction) {
+
+                const row =
+                    document.createElement("tr");
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${transaction.Date || ""}
+                    </td>
+
+                    <td>
+                        ${transaction.Action || ""}
+                    </td>
+
+                    <td>
+                        ${transaction.User || ""}
+                    </td>
+
+                    <td>
+                        ${transaction.Email || ""}
+                    </td>
+
+                    <td>
+                        ${transaction.Book || ""}
+                    </td>
+
+                    <td>
+                        ${transaction.Author || ""}
+                    </td>
+
+                `;
+
+
+                table.appendChild(row);
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       FILTER TRANSACTIONS
+    ================================================= */
+
+    function filterTransactions() {
+
+        const search =
+            document.getElementById(
+                "transactionSearch"
+            ).value
+            .toLowerCase()
+            .trim();
+
+
+        const filter =
+            document.getElementById(
+                "transactionFilter"
+            ).value;
+
+
+        const filtered =
+            allTransactions.filter(
+                function(transaction) {
+
+                    const text = `
+
+                        ${transaction.Date || ""}
+
+                        ${transaction.Action || ""}
+
+                        ${transaction.User || ""}
+
+                        ${transaction.Email || ""}
+
+                        ${transaction.Book || ""}
+
+                        ${transaction.Author || ""}
+
+                    `.toLowerCase();
+
+
+                    const matchesSearch =
+                        text.includes(search);
+
+
+                    const matchesFilter =
+                        filter === "ALL" ||
+                        transaction.Action === filter;
+
+
+                    return (
+                        matchesSearch &&
+                        matchesFilter
+                    );
+
+                }
+            );
+
+
+        displayTransactions(filtered);
+
+    }
+
+
+    document.getElementById(
+        "transactionSearch"
+    ).addEventListener(
+        "input",
+        filterTransactions
+    );
+
+
+    document.getElementById(
+        "transactionFilter"
+    ).addEventListener(
+        "change",
+        filterTransactions
+    );
+
+
+    /* =================================================
+       LOGOUT
+    ================================================= */
+
+    document.getElementById(
+        "logoutBtn"
+    ).addEventListener(
+        "click",
+        function() {
+
+            sessionStorage.removeItem(
+                "adminToken"
+            );
+
+            window.location.href =
+                "admin-login.html";
+
+        }
+    );
+
+
+    /* =================================================
+       LOAD BOOKS
+    ================================================= */
+
+    async function loadBooks() {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${API_URL}/admin/books`,
+                    {
+                        headers: {
+                            "Authorization":
+                                "Bearer " + adminToken
+                        }
+                    }
+                );
+
+
+            if (response.status === 401) {
+
+                sessionStorage.removeItem(
+                    "adminToken"
+                );
+
+                window.location.href =
+                    "admin-login.html";
+
+                return;
+
+            }
+
+
+            const books =
+                await response.json();
+
+
+            allBooks =
+                books;
+
+
+            updateBookStats();
+
+            displayBooks(books);
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Books Error:",
+                error
+            );
+
+            showMessage(
+                "Unable to load books."
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       BOOK STATS
+    ================================================= */
+
+    function updateBookStats() {
+
+        const total =
+            allBooks.length;
+
+
+        const issued =
+            allBooks.filter(
+                function(book) {
+
+                    return book.RentedBy;
+
+                }
+            ).length;
+
+
+        const available =
+            total - issued;
+
+
+        document.getElementById(
+            "totalBooks"
+        ).textContent =
+            total;
+
+
+        document.getElementById(
+            "availableBooks"
+        ).textContent =
+            available;
+
+
+        document.getElementById(
+            "issuedBooks"
+        ).textContent =
+            issued;
+
+    }
+
+
+    /* =================================================
+       DISPLAY BOOKS
+    ================================================= */
+
+    function displayBooks(books) {
+
+        const table =
+            document.getElementById(
+                "booksTable"
+            );
+
+
+        table.innerHTML = "";
+
+
+        if (books.length === 0) {
+
+            table.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        No books found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
+
+        books.forEach(
+            function(book) {
+
+                const row =
+                    document.createElement("tr");
+
+
+                let status =
+                    "Available";
+
+
+                if (book.RentedBy) {
+
+                    status =
+                        "Issued";
+
+                }
+
+
+                row.innerHTML = `
+
+                    <td>
+                        ${book.ID || ""}
+                    </td>
+
+                    <td>
+                        ${book.Name || ""}
+                    </td>
+
+                    <td>
+                        ${book.Author || ""}
+                    </td>
+
+                    <td>
+                        ${book.Category || ""}
+                    </td>
+
+                    <td>
+                        ${book.Year || ""}
+                    </td>
+
+                    <td>
+                        ${status}
+                    </td>
+
+                    <td class="book-actions">
+
+                        <button
+                            class="edit-btn"
+                            onclick="editBook(${book.ID})">
+
+                            Edit
+
+                        </button>
+
+
+                        <button
+                            class="delete-btn"
+                            onclick="deleteBook(${book.ID})">
+
+                            Delete
+
+                        </button>
+
+                    </td>
+
+                `;
+
+
+                table.appendChild(row);
+
+            }
+        );
+
+    }
+
+
+    /* =================================================
+       ADD / UPDATE BOOK
+    ================================================= */
+
+    document.getElementById(
+        "addBookBtn"
+    ).addEventListener(
+        "click",
+        async function() {
+
+            const name =
+                document.getElementById(
+                    "bookName"
+                ).value.trim();
+
+
+            const author =
+                document.getElementById(
+                    "bookAuthor"
+                ).value.trim();
+
+
+            const category =
+                document.getElementById(
+                    "bookCategory"
+                ).value.trim();
+
+
+            const year =
+                document.getElementById(
+                    "bookYear"
+                ).value.trim();
+
+
+            const image =
+                document.getElementById(
+                    "bookImage"
+                ).value.trim();
+
+
+            const description =
+                document.getElementById(
+                    "bookDescription"
+                ).value.trim();
+
+
+            if (!name || !author) {
+
+                alert(
+                    "Book name and author are required."
+                );
+
+                return;
+
+            }
+
+
+            const bookData = {
+
+                name: name,
+
+                author: author,
+
+                category: category,
+
+                year: year,
+
+                image: image,
+
+                description: description
+
+            };
+
+
             try {
+
+                let url =
+                    `${API_URL}/admin/books/add`;
+
+
+                let method =
+                    "POST";
+
+
+                if (editingBookId !== null) {
+
+                    url =
+                        `${API_URL}/admin/books/update/${editingBookId}`;
+
+                    method =
+                        "PUT";
+
+                }
+
 
                 const response =
                     await fetch(
-                        "http://localhost:3000/admin/books/delete/" +
-                        id,
+                        url,
                         {
-                            method:
-                                "DELETE",
+                            method: method,
 
                             headers: {
+
+                                "Content-Type":
+                                    "application/json",
 
                                 "Authorization":
                                     "Bearer " +
                                     adminToken
 
-                            }
+                            },
+
+                            body:
+                                JSON.stringify(
+                                    bookData
+                                )
+
                         }
                     );
 
@@ -1792,7 +1604,7 @@
 
                     alert(
                         result.message ||
-                        "Unable to delete book."
+                        "Something went wrong."
                     );
 
                     return;
@@ -1805,183 +1617,362 @@
                 );
 
 
+                clearBookForm();
+
                 loadBooks();
 
-            }
 
+            }
             catch (error) {
 
                 console.error(
-                    "Delete Error:",
+                    "Book Error:",
                     error
                 );
 
                 alert(
-                    "Unable to delete book."
+                    "Unable to save book."
                 );
 
             }
 
         }
+    );
 
 
-        /* =================================================
-           CANCEL EDIT
-        ================================================= */
+    /* =================================================
+       EDIT BOOK
+    ================================================= */
+
+    function editBook(id) {
+
+        const book =
+            allBooks.find(
+                function(book) {
+
+                    return (
+                        Number(book.ID) ===
+                        Number(id)
+                    );
+
+                }
+            );
+
+
+        if (!book) {
+
+            return;
+
+        }
+
+
+        editingBookId =
+            Number(id);
+
+
+        document.getElementById(
+            "bookName"
+        ).value =
+            book.Name || "";
+
+
+        document.getElementById(
+            "bookAuthor"
+        ).value =
+            book.Author || "";
+
+
+        document.getElementById(
+            "bookCategory"
+        ).value =
+            book.Category || "";
+
+
+        document.getElementById(
+            "bookYear"
+        ).value =
+            book.Year || "";
+
+
+        document.getElementById(
+            "bookImage"
+        ).value =
+            book.Image || "";
+
+
+        document.getElementById(
+            "bookDescription"
+        ).value =
+            book.Description || "";
+
+
+        document.getElementById(
+            "bookFormTitle"
+        ).textContent =
+            "✏️ Edit Book";
+
+
+        document.getElementById(
+            "addBookBtn"
+        ).textContent =
+            "💾 Update Book";
+
 
         document.getElementById(
             "cancelEditBtn"
-        ).addEventListener(
-            "click",
-            function() {
-
-                clearBookForm();
-
-            }
-        );
+        ).style.display =
+            "block";
 
 
-        /* =================================================
-           CLEAR BOOK FORM
-        ================================================= */
+        window.scrollTo({
 
-        function clearBookForm() {
+            top:
+                document.body.scrollHeight,
 
-            document.getElementById(
-                "bookName"
-            ).value = "";
+            behavior:
+                "smooth"
 
+        });
 
-            document.getElementById(
-                "bookAuthor"
-            ).value = "";
+    }
 
 
-            document.getElementById(
-                "bookCategory"
-            ).value = "";
+    /* =================================================
+       DELETE BOOK
+    ================================================= */
+
+    async function deleteBook(id) {
+
+        const confirmDelete =
+            confirm(
+                "Are you sure you want to delete this book?"
+            );
 
 
-            document.getElementById(
-                "bookYear"
-            ).value = "";
+        if (!confirmDelete) {
 
-
-            document.getElementById(
-                "bookImage"
-            ).value = "";
-
-
-            document.getElementById(
-                "bookDescription"
-            ).value = "";
-
-
-            editingBookId =
-                null;
-
-
-            document.getElementById(
-                "bookFormTitle"
-            ).textContent =
-                "➕ Add New Book";
-
-
-            document.getElementById(
-                "addBookBtn"
-            ).textContent =
-                "➕ Add Book";
-
-
-            document.getElementById(
-                "cancelEditBtn"
-            ).style.display =
-                "none";
+            return;
 
         }
 
 
-        /* =================================================
-           SEARCH BOOK
-        ================================================= */
+        try {
 
-        document.getElementById(
-            "bookSearch"
-        ).addEventListener(
-            "input",
-            function() {
+            const response =
+                await fetch(
+                    `${API_URL}/admin/books/delete/${id}`,
+                    {
+                        method:
+                            "DELETE",
 
-                const search =
-                    this.value
-                    .toLowerCase()
-                    .trim();
+                        headers: {
 
-
-                const filteredBooks =
-                    allBooks.filter(
-                        function(book) {
-
-                            const text = `
-
-                                ${book.Name || ""}
-
-                                ${book.Author || ""}
-
-                                ${book.Category || ""}
-
-                                ${book.Year || ""}
-
-                            `.toLowerCase();
-
-
-                            return text.includes(
-                                search
-                            );
+                            "Authorization":
+                                "Bearer " +
+                                adminToken
 
                         }
-                    );
-
-
-                displayBooks(
-                    filteredBooks
+                    }
                 );
 
+
+            const result =
+                await response.json();
+
+
+            if (!response.ok) {
+
+                alert(
+                    result.message ||
+                    "Unable to delete book."
+                );
+
+                return;
+
             }
-        );
 
 
-        /* =================================================
-           REFRESH ALL DATA
-        ================================================= */
+            alert(
+                result.message
+            );
+
+
+            loadBooks();
+
+
+        }
+        catch (error) {
+
+            console.error(
+                "Delete Error:",
+                error
+            );
+
+            alert(
+                "Unable to delete book."
+            );
+
+        }
+
+    }
+
+
+    /* =================================================
+       CANCEL EDIT
+    ================================================= */
+
+    document.getElementById(
+        "cancelEditBtn"
+    ).addEventListener(
+        "click",
+        function() {
+
+            clearBookForm();
+
+        }
+    );
+
+
+    /* =================================================
+       CLEAR BOOK FORM
+    ================================================= */
+
+    function clearBookForm() {
 
         document.getElementById(
-            "refreshBtn"
-        ).addEventListener(
-            "click",
-            function() {
-
-                loadUsers();
-
-                loadTransactions();
-
-                loadBooks();
-
-            }
-        );
+            "bookName"
+        ).value = "";
 
 
-        /* =================================================
-           INITIAL LOAD
-        ================================================= */
+        document.getElementById(
+            "bookAuthor"
+        ).value = "";
 
-        loadUsers();
 
-        loadTransactions();
+        document.getElementById(
+            "bookCategory"
+        ).value = "";
 
-        loadBooks();
 
-    </script>
+        document.getElementById(
+            "bookYear"
+        ).value = "";
 
+
+        document.getElementById(
+            "bookImage"
+        ).value = "";
+
+
+        document.getElementById(
+            "bookDescription"
+        ).value = "";
+
+
+        editingBookId =
+            null;
+
+
+        document.getElementById(
+            "bookFormTitle"
+        ).textContent =
+            "➕ Add New Book";
+
+
+        document.getElementById(
+            "addBookBtn"
+        ).textContent =
+            "➕ Add Book";
+
+
+        document.getElementById(
+            "cancelEditBtn"
+        ).style.display =
+            "none";
+
+    }
+
+
+    /* =================================================
+       SEARCH BOOK
+    ================================================= */
+
+    document.getElementById(
+        "bookSearch"
+    ).addEventListener(
+        "input",
+        function() {
+
+            const search =
+                this.value
+                .toLowerCase()
+                .trim();
+
+
+            const filteredBooks =
+                allBooks.filter(
+                    function(book) {
+
+                        const text = `
+
+                            ${book.Name || ""}
+
+                            ${book.Author || ""}
+
+                            ${book.Category || ""}
+
+                            ${book.Year || ""}
+
+                        `.toLowerCase();
+
+
+                        return text.includes(
+                            search
+                        );
+
+                    }
+                );
+
+
+            displayBooks(
+                filteredBooks
+            );
+
+        }
+    );
+
+
+    /* =================================================
+       REFRESH ALL DATA
+    ================================================= */
+
+    document.getElementById(
+        "refreshBtn"
+    ).addEventListener(
+        "click",
+        function() {
+
+            loadUsers();
+
+            loadTransactions();
+
+            loadBooks();
+
+        }
+    );
+
+
+    /* =================================================
+       INITIAL LOAD
+    ================================================= */
+
+    loadUsers();
+
+    loadTransactions();
+
+    loadBooks();
+
+</script>
 
 </body>
 

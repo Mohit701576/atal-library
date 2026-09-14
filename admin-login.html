@@ -186,8 +186,22 @@
 
     <script>
 
+        /* =================================================
+           BACKEND URL
+        ================================================= */
+
+        const API_URL =
+            "https://atal-library-backend.onrender.com";
+
+
+        /* =================================================
+           ADMIN LOGIN
+        ================================================= */
+
         const adminLoginForm =
-            document.getElementById("adminLoginForm");
+            document.getElementById(
+                "adminLoginForm"
+            );
 
 
         adminLoginForm.addEventListener(
@@ -213,7 +227,7 @@
 
                     const response =
                         await fetch(
-                            "http://localhost:3000/admin-login",
+                            `${API_URL}/admin-login`,
                             {
                                 method: "POST",
 
@@ -222,10 +236,14 @@
                                         "application/json"
                                 },
 
-                                body: JSON.stringify({
-                                    username: username,
-                                    password: password
-                                })
+                                body:
+                                    JSON.stringify({
+                                        username:
+                                            username,
+
+                                        password:
+                                            password
+                                    })
                             }
                         );
 
@@ -236,9 +254,13 @@
 
                     if (!response.ok) {
 
-                        alert(data.message);
+                        alert(
+                            data.message ||
+                            "Admin login failed."
+                        );
 
                         return;
+
                     }
 
 
@@ -258,12 +280,17 @@
 
                 }
 
+
                 catch (error) {
 
-                    console.error(error);
+                    console.error(
+                        "Admin Login Error:",
+                        error
+                    );
+
 
                     alert(
-                        "Backend server is not running."
+                        "Unable to connect to backend server."
                     );
 
                 }
