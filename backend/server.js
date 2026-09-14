@@ -5,7 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const crypto = require("crypto");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 // ==================================================
 // SUPABASE
@@ -39,42 +39,12 @@ app.use(
 );
 
 // ==================================================
-// EMAIL TRANSPORTER
+// RESEND EMAIL
 // ==================================================
 
-const emailTransporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-    }
-});
-
-// ==================================================
-// CHECK EMAIL CONFIGURATION
-// ==================================================
-
-emailTransporter.verify(function (error, success) {
-
-    if (error) {
-
-        console.log(
-            "Gmail transporter error:"
-        );
-
-        console.log(
-            error.message
-        );
-
-    } else {
-
-        console.log(
-            "Gmail transporter is ready."
-        );
-
-    }
-
-});
+const resend = new Resend(
+    process.env.RESEND_API_KEY
+);
 
 // ==================================================
 // GENERATE OTP
@@ -254,19 +224,19 @@ app.post(
             );
 
             // ==================================================
-            // CHECK GMAIL CONFIG
+            // CHECK RESEND API KEY
             // ==================================================
 
-            if (
-                !process.env.GMAIL_USER ||
-                !process.env.GMAIL_APP_PASSWORD
-            ) {
+            if (!process.env.RESEND_API_KEY) {
 
                 console.log(
-                    "Gmail environment variables are missing."
+                    "RESEND_API_KEY is missing."
                 );
 
                 return res.status(500).json({
+
+                    success:
+                        false,
 
                     message:
                         "Email service is not configured on server."
@@ -300,6 +270,9 @@ app.post(
 
                 return res.status(500).json({
 
+                    success:
+                        false,
+
                     message:
                         "Unable to check email."
 
@@ -313,6 +286,9 @@ app.post(
             ) {
 
                 return res.status(400).json({
+
+                    success:
+                        false,
 
                     message:
                         "Email already registered. Please login."
@@ -352,16 +328,19 @@ app.post(
             };
 
             // ==================================================
-            // EMAIL MESSAGE
+            // SEND EMAIL USING RESEND
             // ==================================================
 
-            const mailOptions = {
+            const {
+                data,
+                error
+            } = await resend.emails.send({
 
                 from:
-                    `"Atal Library" <${process.env.GMAIL_USER}>`,
+                    "Atal Library <onboarding@resend.dev>",
 
                 to:
-                    cleanEmail,
+                    [cleanEmail],
 
                 subject:
                     "Atal Library - Email Verification OTP",
@@ -373,29 +352,43 @@ This OTP is valid for 5 minutes.
 
 Please do not share this OTP with anyone.`
 
-            };
+            });
 
             // ==================================================
-            // SEND EMAIL
+            // CHECK RESEND ERROR
             // ==================================================
 
-            const mailInfo =
-                await emailTransporter.sendMail(
-                    mailOptions
+            if (error) {
+
+                console.log(
+                    "Resend email error:",
+                    error
                 );
+
+                return res.status(500).json({
+
+                    success:
+                        false,
+
+                    message:
+                        "Unable to send OTP. Please try again."
+
+                });
+
+            }
+
+            // ==================================================
+            // SUCCESS
+            // ==================================================
 
             console.log(
                 "OTP email sent successfully."
             );
 
             console.log(
-                "Message ID:",
-                mailInfo.messageId
+                "Resend Email ID:",
+                data ? data.id : ""
             );
-
-            // ==================================================
-            // RESPONSE
-            // ==================================================
 
             return res.json({
 
@@ -2596,3 +2589,4 @@ app.listen(
 
     }
 );
+
