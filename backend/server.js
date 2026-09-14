@@ -25,16 +25,60 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ==================================================
+// MIDDLEWARE
+// ==================================================
+
+app.use(cors());
+
+app.use(express.json());
+
+app.use(
+    express.static(
+        path.join(__dirname, "..")
+    )
+);
+
+// ==================================================
 // EMAIL TRANSPORTER
 // ==================================================
 
 const emailTransporter = nodemailer.createTransport({
 
-    service: "gmail",
+    host: "smtp.gmail.com",
+
+    port: 465,
+
+    secure: true,
 
     auth: {
         user: process.env.GMAIL_USER,
         pass: process.env.GMAIL_APP_PASSWORD
+    }
+
+});
+
+// ==================================================
+// CHECK EMAIL CONFIGURATION
+// ==================================================
+
+emailTransporter.verify(function (error, success) {
+
+    if (error) {
+
+        console.log(
+            "Gmail transporter error:"
+        );
+
+        console.log(
+            error.message
+        );
+
+    } else {
+
+        console.log(
+            "Gmail transporter is ready."
+        );
+
     }
 
 });
@@ -56,6 +100,7 @@ function generateOTP() {
 // ==================================================
 
 const ADMIN_USERNAME = "admin";
+
 const ADMIN_PASSWORD = "admin123";
 
 let adminToken = null;
@@ -67,20 +112,6 @@ let adminToken = null;
 let emailOtps = {};
 
 // ==================================================
-// MIDDLEWARE
-// ==================================================
-
-app.use(cors());
-
-app.use(express.json());
-
-app.use(
-    express.static(
-        path.join(__dirname, "..")
-    )
-);
-
-// ==================================================
 // ADMIN LOGIN API
 // ==================================================
 
@@ -88,39 +119,63 @@ app.post(
     "/admin-login",
     (req, res) => {
 
-        const {
-            username,
-            password
-        } = req.body;
+        try {
 
-        if (
-            username !== ADMIN_USERNAME ||
-            password !== ADMIN_PASSWORD
-        ) {
+            const {
+                username,
+                password
+            } = req.body;
 
-            return res.status(401).json({
+            console.log(
+                "ADMIN LOGIN API CALLED"
+            );
+
+            if (
+                username !== ADMIN_USERNAME ||
+                password !== ADMIN_PASSWORD
+            ) {
+
+                return res.status(401).json({
+
+                    message:
+                        "Invalid admin username or password."
+
+                });
+
+            }
+
+            adminToken =
+                crypto
+                    .randomBytes(32)
+                    .toString("hex");
+
+            res.json({
 
                 message:
-                    "Invalid admin username or password."
+                    "Admin login successful.",
+
+                token:
+                    adminToken
 
             });
 
         }
 
-        adminToken =
-            crypto
-                .randomBytes(32)
-                .toString("hex");
+        catch (error) {
 
-        res.json({
+            console.log(
+                "Admin login error:",
+                error
+            );
 
-            message:
-                "Admin login successful.",
+            res.status(500).json({
 
-            token:
-                adminToken
+                message:
+                    "Server error."
 
-        });
+            });
+
+        }
 
     }
 );
@@ -162,6 +217,382 @@ function checkAdmin(
 }
 
 // ==================================================
+// SEND EMAIL OTP
+// ==================================================
+
+app.post(
+    "/send-email-otp",
+    async (req, res) => {
+
+        try {
+
+            console.log(
+                "SEND OTP API CALLED"
+            );
+
+            const {
+                email
+            } = req.body;
+
+            // ==================================================
+            // CHECK EMAIL
+            // ==================================================
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Email is required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            console.log(
+                "OTP requested for:",
+                cleanEmail
+            );
+
+            // ==================================================
+            // CHECK GMAIL CONFIG
+            // ==================================================
+
+            if (
+                !process.env.GMAIL_USER ||
+                !process.env.GMAIL_APP_PASSWORD
+            ) {
+
+                console.log(
+                    "Gmail environment variables are missing."
+                );
+
+                return res.status(500).json({
+
+                    message:
+                        "Email service is not configured on server."
+
+                });
+
+            }
+
+            // ==================================================
+            // CHECK EXISTING USER
+            // ==================================================
+
+            const {
+                data: existingUsers,
+                error: userCheckError
+            } = await supabase
+                .from("users")
+                .select("id")
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .limit(1);
+
+            if (userCheckError) {
+
+                console.log(
+                    "Email check error:",
+                    userCheckError
+                );
+
+                return res.status(500).json({
+
+                    message:
+                        "Unable to check email."
+
+                });
+
+            }
+
+            if (
+                existingUsers &&
+                existingUsers.length > 0
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Email already registered. Please login."
+
+                });
+
+            }
+
+            // ==================================================
+            // GENERATE OTP
+            // ==================================================
+
+            const otp =
+                generateOTP();
+
+            console.log(
+                "Generated OTP for:",
+                cleanEmail
+            );
+
+            // ==================================================
+            // SAVE OTP
+            // ==================================================
+
+            emailOtps[cleanEmail] = {
+
+                otp:
+                    otp,
+
+                expiresAt:
+                    Date.now() +
+                    5 * 60 * 1000,
+
+                verified:
+                    false
+
+            };
+
+            // ==================================================
+            // EMAIL MESSAGE
+            // ==================================================
+
+            const mailOptions = {
+
+                from:
+                    `"Atal Library" <${process.env.GMAIL_USER}>`,
+
+                to:
+                    cleanEmail,
+
+                subject:
+                    "Atal Library - Email Verification OTP",
+
+                text:
+                    `Your Atal Library verification OTP is ${otp}.
+
+This OTP is valid for 5 minutes.
+
+Please do not share this OTP with anyone.`
+
+            };
+
+            // ==================================================
+            // SEND EMAIL
+            // ==================================================
+
+            const mailInfo =
+                await emailTransporter.sendMail(
+                    mailOptions
+                );
+
+            console.log(
+                "OTP email sent successfully."
+            );
+
+            console.log(
+                "Message ID:",
+                mailInfo.messageId
+            );
+
+            // ==================================================
+            // RESPONSE
+            // ==================================================
+
+            return res.json({
+
+                success:
+                    true,
+
+                message:
+                    "OTP sent to your email."
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "================================"
+            );
+
+            console.log(
+                "OTP SEND ERROR"
+            );
+
+            console.log(
+                error
+            );
+
+            console.log(
+                "================================"
+            );
+
+            return res.status(500).json({
+
+                success:
+                    false,
+
+                message:
+                    "Unable to send OTP. Please try again."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// VERIFY EMAIL OTP
+// ==================================================
+
+app.post(
+    "/verify-email-otp",
+    (req, res) => {
+
+        try {
+
+            const {
+                email,
+                otp
+            } = req.body;
+
+            // ==================================================
+            // REQUIRED
+            // ==================================================
+
+            if (
+                !email ||
+                !otp
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Email and OTP are required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            const cleanOTP =
+                otp
+                    .toString()
+                    .trim();
+
+            // ==================================================
+            // FIND OTP
+            // ==================================================
+
+            const savedOTP =
+                emailOtps[cleanEmail];
+
+            if (!savedOTP) {
+
+                return res.status(400).json({
+
+                    message:
+                        "OTP not found. Please request a new OTP."
+
+                });
+
+            }
+
+            // ==================================================
+            // CHECK EXPIRY
+            // ==================================================
+
+            if (
+                Date.now() >
+                savedOTP.expiresAt
+            ) {
+
+                delete emailOtps[cleanEmail];
+
+                return res.status(400).json({
+
+                    message:
+                        "OTP expired. Please request a new OTP."
+
+                });
+
+            }
+
+            // ==================================================
+            // CHECK OTP
+            // ==================================================
+
+            if (
+                cleanOTP !==
+                savedOTP.otp
+            ) {
+
+                return res.status(400).json({
+
+                    message:
+                        "Invalid OTP."
+
+                });
+
+            }
+
+            // ==================================================
+            // VERIFIED
+            // ==================================================
+
+            emailOtps[cleanEmail].verified =
+                true;
+
+            console.log(
+                "Email verified:",
+                cleanEmail
+            );
+
+            return res.json({
+
+                success:
+                    true,
+
+                message:
+                    "Email verified successfully."
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "OTP verification error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                message:
+                    "Unable to verify OTP."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
 // USER REGISTER
 // ==================================================
 
@@ -171,8 +602,9 @@ app.post(
 
         try {
 
-            console.log("REGISTER API CALLED");
-            console.log("Register data:", req.body);
+            console.log(
+                "REGISTER API CALLED"
+            );
 
             const {
                 name,
@@ -222,7 +654,7 @@ app.post(
                     .trim();
 
             // ==================================================
-            // CHECK PHONE
+            // PHONE CHECK
             // ==================================================
 
             if (
@@ -241,7 +673,7 @@ app.post(
             }
 
             // ==================================================
-            // CHECK DUPLICATE EMAIL
+            // DUPLICATE EMAIL
             // ==================================================
 
             const {
@@ -287,7 +719,7 @@ app.post(
             }
 
             // ==================================================
-            // CHECK EMAIL OTP
+            // CHECK OTP
             // ==================================================
 
             const verifiedOTP =
@@ -353,7 +785,10 @@ app.post(
 
             delete emailOtps[cleanEmail];
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "User registered successfully."
@@ -369,7 +804,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -377,268 +812,6 @@ app.post(
             });
 
         }
-
-    }
-);
-
-// ==================================================
-// SEND EMAIL OTP
-// ==================================================
-
-app.post(
-    "/send-email-otp",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email
-            } = req.body;
-
-            if (!email) {
-
-                return res.status(400).json({
-
-                    message:
-                        "Email is required."
-
-                });
-
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            // ==================================================
-            // CHECK EMAIL
-            // ==================================================
-
-            const {
-                data: existingUsers,
-                error
-            } = await supabase
-                .from("users")
-                .select("id")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (error) {
-
-                console.log(
-                    "Email check error:",
-                    error
-                );
-
-                return res.status(500).json({
-
-                    message:
-                        "Unable to check email."
-
-                });
-
-            }
-
-            if (
-                existingUsers &&
-                existingUsers.length > 0
-            ) {
-
-                return res.status(400).json({
-
-                    message:
-                        "Email already registered. Please login."
-
-                });
-
-            }
-
-            // ==================================================
-            // GENERATE OTP
-            // ==================================================
-
-            const otp =
-                generateOTP();
-
-            // ==================================================
-            // SAVE OTP
-            // ==================================================
-
-            emailOtps[cleanEmail] = {
-
-                otp:
-                    otp,
-
-                expiresAt:
-                    Date.now() +
-                    5 * 60 * 1000
-
-            };
-
-            // ==================================================
-            // SEND EMAIL
-            // ==================================================
-
-            await emailTransporter.sendMail({
-
-                from:
-                    process.env.GMAIL_USER,
-
-                to:
-                    cleanEmail,
-
-                subject:
-                    "Atal Library - Email Verification OTP",
-
-                text:
-                    "Your Atal Library verification OTP is " +
-                    otp +
-                    ". It is valid for 5 minutes."
-
-            });
-
-            console.log(
-                "Email OTP sent to:",
-                cleanEmail
-            );
-
-            res.json({
-
-                message:
-                    "OTP sent to your email."
-
-            });
-
-        }
-
-        catch (error) {
-
-            console.log(
-                "Email OTP error:",
-                error.message
-            );
-
-            res.status(500).json({
-
-                message:
-                    "Unable to send OTP."
-
-            });
-
-        }
-
-    }
-);
-
-// ==================================================
-// VERIFY EMAIL OTP
-// ==================================================
-
-app.post(
-    "/verify-email-otp",
-    (req, res) => {
-
-        const {
-            email,
-            otp
-        } = req.body;
-
-        if (
-            !email ||
-            !otp
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    "Email and OTP are required."
-
-            });
-
-        }
-
-        const cleanEmail =
-            email
-                .toString()
-                .trim()
-                .toLowerCase();
-
-        const savedOTP =
-            emailOtps[cleanEmail];
-
-        // ==================================================
-        // OTP NOT FOUND
-        // ==================================================
-
-        if (!savedOTP) {
-
-            return res.status(400).json({
-
-                message:
-                    "OTP not found. Please request a new OTP."
-
-            });
-
-        }
-
-        // ==================================================
-        // CHECK EXPIRY
-        // ==================================================
-
-        if (
-            Date.now() >
-            savedOTP.expiresAt
-        ) {
-
-            delete emailOtps[cleanEmail];
-
-            return res.status(400).json({
-
-                message:
-                    "OTP expired. Please request a new OTP."
-
-            });
-
-        }
-
-        // ==================================================
-        // CHECK OTP
-        // ==================================================
-
-        if (
-            otp
-                .toString()
-                .trim() !==
-            savedOTP.otp
-        ) {
-
-            return res.status(400).json({
-
-                message:
-                    "Invalid OTP."
-
-            });
-
-        }
-
-        // ==================================================
-        // VERIFIED
-        // ==================================================
-
-        emailOtps[cleanEmail].verified =
-            true;
-
-        res.json({
-
-            message:
-                "Email verified successfully."
-
-        });
 
     }
 );
@@ -677,10 +850,6 @@ app.post(
                     .toString()
                     .trim()
                     .toLowerCase();
-
-            // ==================================================
-            // FIND USER
-            // ==================================================
 
             const {
                 data: users,
@@ -727,10 +896,6 @@ app.post(
             const user =
                 users[0];
 
-            // ==================================================
-            // CHECK PASSWORD
-            // ==================================================
-
             if (
                 user.password !==
                 password
@@ -745,7 +910,10 @@ app.post(
 
             }
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "Login successful.",
@@ -774,7 +942,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -843,10 +1011,6 @@ app.post(
 
             }
 
-            // ==================================================
-            // FIND USER
-            // ==================================================
-
             const {
                 data: users,
                 error
@@ -893,10 +1057,6 @@ app.post(
 
             }
 
-            // ==================================================
-            // UPDATE PASSWORD
-            // ==================================================
-
             const userId =
                 users[0].id;
 
@@ -931,7 +1091,10 @@ app.post(
 
             }
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "Password changed successfully."
@@ -947,7 +1110,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1018,7 +1181,7 @@ app.get(
                     }
                 );
 
-            res.json(
+            return res.json(
                 safeUsers
             );
 
@@ -1028,7 +1191,7 @@ app.get(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1081,10 +1244,6 @@ app.post(
                     .trim()
                     .toLowerCase();
 
-            // ==================================================
-            // FIND BOOK
-            // ==================================================
-
             const {
                 data: books,
                 error: bookError
@@ -1130,10 +1289,6 @@ app.post(
             const currentBook =
                 books[0];
 
-            // ==================================================
-            // CHECK ALREADY RENTED
-            // ==================================================
-
             if (
                 currentBook.rented_by
             ) {
@@ -1146,10 +1301,6 @@ app.post(
                 });
 
             }
-
-            // ==================================================
-            // UPDATE BOOK
-            // ==================================================
 
             const {
                 error: updateBookError
@@ -1182,10 +1333,6 @@ app.post(
 
             }
 
-            // ==================================================
-            // CREATE NEW TRANSACTION
-            // ==================================================
-
             const rentDate =
                 new Date().toISOString();
 
@@ -1193,18 +1340,30 @@ app.post(
                 error: transactionError
             } = await supabase
                 .from("transactions")
-   .insert({
-    name: name,
-    email: cleanEmail,
-    book_name: book,
-    author: author,
-    rent_date: rentDate,
-    submit_date: null,
-    status: "RENTED"
-});
-            // ==================================================
-            // ROLLBACK BOOK IF TRANSACTION FAILED
-            // ==================================================
+                .insert({
+
+                    name:
+                        name,
+
+                    email:
+                        cleanEmail,
+
+                    book_name:
+                        book,
+
+                    author:
+                        author,
+
+                    rent_date:
+                        rentDate,
+
+                    submit_date:
+                        null,
+
+                    status:
+                        "RENTED"
+
+                });
 
             if (transactionError) {
 
@@ -1235,7 +1394,10 @@ app.post(
 
             }
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "Book rented successfully."
@@ -1251,7 +1413,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1304,10 +1466,6 @@ app.post(
                     .trim()
                     .toLowerCase();
 
-            // ==================================================
-            // FIND BOOK
-            // ==================================================
-
             const {
                 data: books,
                 error: bookError
@@ -1321,11 +1479,6 @@ app.post(
                 .limit(1);
 
             if (bookError) {
-
-                console.log(
-                    "Book search error:",
-                    bookError
-                );
 
                 return res.status(500).json({
 
@@ -1353,10 +1506,6 @@ app.post(
             const currentBook =
                 books[0];
 
-            // ==================================================
-            // CHECK BOOK RENTED
-            // ==================================================
-
             if (
                 !currentBook.rented_by
             ) {
@@ -1369,10 +1518,6 @@ app.post(
                 });
 
             }
-
-            // ==================================================
-            // CHECK PERSON
-            // ==================================================
 
             if (
                 currentBook.rented_by !==
@@ -1387,10 +1532,6 @@ app.post(
                 });
 
             }
-
-            // ==================================================
-            // FIND ACTIVE TRANSACTION
-            // ==================================================
 
             const {
                 data: transactions,
@@ -1424,11 +1565,6 @@ app.post(
 
             if (transactionFindError) {
 
-                console.log(
-                    "Transaction find error:",
-                    transactionFindError
-                );
-
                 return res.status(500).json({
 
                     message:
@@ -1455,10 +1591,6 @@ app.post(
             const currentTransaction =
                 transactions[0];
 
-            // ==================================================
-            // UPDATE TRANSACTION
-            // ==================================================
-
             const submitDate =
                 new Date().toISOString();
 
@@ -1482,11 +1614,6 @@ app.post(
 
             if (transactionUpdateError) {
 
-                console.log(
-                    "Transaction update error:",
-                    transactionUpdateError
-                );
-
                 return res.status(500).json({
 
                     message:
@@ -1495,10 +1622,6 @@ app.post(
                 });
 
             }
-
-            // ==================================================
-            // MAKE BOOK AVAILABLE
-            // ==================================================
 
             const {
                 error: updateBookError
@@ -1515,16 +1638,7 @@ app.post(
                     Number(bookId)
                 );
 
-            // ==================================================
-            // ROLLBACK TRANSACTION IF BOOK UPDATE FAILED
-            // ==================================================
-
             if (updateBookError) {
-
-                console.log(
-                    "Submit book update error:",
-                    updateBookError
-                );
 
                 await supabase
                     .from("transactions")
@@ -1551,7 +1665,10 @@ app.post(
 
             }
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "Book submitted successfully."
@@ -1567,7 +1684,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1653,7 +1770,7 @@ app.get(
                     }
                 );
 
-            res.json(
+            return res.json(
                 formattedBooks
             );
 
@@ -1663,7 +1780,7 @@ app.get(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1700,11 +1817,6 @@ app.get(
                 );
 
             if (error) {
-
-                console.log(
-                    "Admin books error:",
-                    error
-                );
 
                 return res.status(500).json({
 
@@ -1750,7 +1862,7 @@ app.get(
                     }
                 );
 
-            res.json(
+            return res.json(
                 formattedBooks
             );
 
@@ -1760,7 +1872,7 @@ app.get(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1809,7 +1921,7 @@ app.post(
             }
 
             const {
-                data: newBooks,
+                data: newBook,
                 error
             } = await supabase
                 .from("books")
@@ -1856,41 +1968,41 @@ app.post(
 
             }
 
-            const newBook = {
+            return res.json({
 
-                ID:
-                    newBooks.id,
-
-                Name:
-                    newBooks.name,
-
-                Author:
-                    newBooks.author,
-
-                Category:
-                    newBooks.category,
-
-                Year:
-                    newBooks.year,
-
-                Image:
-                    newBooks.image,
-
-                Description:
-                    newBooks.description,
-
-                RentedBy:
-                    newBooks.rented_by || ""
-
-            };
-
-            res.json({
+                success:
+                    true,
 
                 message:
                     "Book added successfully.",
 
-                book:
-                    newBook
+                book: {
+
+                    ID:
+                        newBook.id,
+
+                    Name:
+                        newBook.name,
+
+                    Author:
+                        newBook.author,
+
+                    Category:
+                        newBook.category,
+
+                    Year:
+                        newBook.year,
+
+                    Image:
+                        newBook.image,
+
+                    Description:
+                        newBook.description,
+
+                    RentedBy:
+                        newBook.rented_by || ""
+
+                }
 
             });
 
@@ -1900,7 +2012,7 @@ app.post(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -1986,7 +2098,7 @@ app.put(
             }
 
             const {
-                data: updatedBooks,
+                data: updatedBook,
                 error
             } = await supabase
                 .from("books")
@@ -2014,41 +2126,41 @@ app.put(
 
             }
 
-            const updatedBook = {
+            return res.json({
 
-                ID:
-                    updatedBooks.id,
-
-                Name:
-                    updatedBooks.name,
-
-                Author:
-                    updatedBooks.author,
-
-                Category:
-                    updatedBooks.category,
-
-                Year:
-                    updatedBooks.year,
-
-                Image:
-                    updatedBooks.image,
-
-                Description:
-                    updatedBooks.description,
-
-                RentedBy:
-                    updatedBooks.rented_by || ""
-
-            };
-
-            res.json({
+                success:
+                    true,
 
                 message:
                     "Book updated successfully.",
 
-                book:
-                    updatedBook
+                book: {
+
+                    ID:
+                        updatedBook.id,
+
+                    Name:
+                        updatedBook.name,
+
+                    Author:
+                        updatedBook.author,
+
+                    Category:
+                        updatedBook.category,
+
+                    Year:
+                        updatedBook.year,
+
+                    Image:
+                        updatedBook.image,
+
+                    Description:
+                        updatedBook.description,
+
+                    RentedBy:
+                        updatedBook.rented_by || ""
+
+                }
 
             });
 
@@ -2058,7 +2170,7 @@ app.put(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -2085,10 +2197,6 @@ app.delete(
                 Number(
                     req.params.id
                 );
-
-            // ==================================================
-            // CHECK BOOK
-            // ==================================================
 
             const {
                 data: books,
@@ -2140,10 +2248,6 @@ app.delete(
 
             }
 
-            // ==================================================
-            // DELETE BOOK
-            // ==================================================
-
             const {
                 error: deleteError
             } = await supabase
@@ -2170,7 +2274,10 @@ app.delete(
 
             }
 
-            res.json({
+            return res.json({
+
+                success:
+                    true,
 
                 message:
                     "Book deleted successfully."
@@ -2183,7 +2290,7 @@ app.delete(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -2255,7 +2362,7 @@ app.get(
                     }
                 );
 
-            res.json(
+            return res.json(
                 safeUsers
             );
 
@@ -2265,7 +2372,7 @@ app.get(
 
             console.log(error);
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -2294,15 +2401,15 @@ app.get(
             } = await supabase
                 .from("transactions")
                 .select(`
-    id,
-    name,
-    email,
-    book_name,
-    author,
-    rent_date,
-    submit_date,
-    status
-`)
+                    id,
+                    name,
+                    email,
+                    book_name,
+                    author,
+                    rent_date,
+                    submit_date,
+                    status
+                `)
                 .order(
                     "id",
                     {
@@ -2331,31 +2438,43 @@ app.get(
                     function (transaction) {
 
                         return {
-    ID: transaction.id,
 
-    User: transaction.name || "",
+                            ID:
+                                transaction.id,
 
-    Email: transaction.email || "",
+                            User:
+                                transaction.name || "",
 
-    Book: transaction.book_name || "",
+                            Email:
+                                transaction.email || "",
 
-    Author: transaction.author || "",
+                            Book:
+                                transaction.book_name || "",
 
-    Date: transaction.rent_date || "",
+                            Author:
+                                transaction.author || "",
 
-    RentDate: transaction.rent_date || "",
+                            Date:
+                                transaction.rent_date || "",
 
-    SubmitDate: transaction.submit_date || "",
+                            RentDate:
+                                transaction.rent_date || "",
 
-    Action: transaction.status || "",
+                            SubmitDate:
+                                transaction.submit_date || "",
 
-    Status: transaction.status || ""
-};
+                            Action:
+                                transaction.status || "",
+
+                            Status:
+                                transaction.status || ""
+
+                        };
 
                     }
                 );
 
-            res.json(
+            return res.json(
                 result
             );
 
@@ -2368,7 +2487,7 @@ app.get(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -2417,7 +2536,7 @@ app.get(
 
             }
 
-            res.json({
+            return res.json({
 
                 success:
                     true,
@@ -2439,7 +2558,7 @@ app.get(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 success:
                     false,
@@ -2455,6 +2574,21 @@ app.get(
 );
 
 // ==================================================
+// HEALTH CHECK
+// ==================================================
+
+app.get(
+    "/",
+    (req, res) => {
+
+        res.send(
+            "Atal Library backend is running successfully."
+        );
+
+    }
+);
+
+// ==================================================
 // START SERVER
 // ==================================================
 
@@ -2462,8 +2596,10 @@ app.listen(
     PORT,
     "0.0.0.0",
     () => {
+
         console.log(
             `Atal Library server running on port ${PORT}`
         );
+
     }
 );
