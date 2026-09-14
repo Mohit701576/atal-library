@@ -1165,62 +1165,75 @@
 
     function filterTransactions() {
 
-        const search =
-            document.getElementById(
-                "transactionSearch"
-            ).value
-            .toLowerCase()
-            .trim();
+    const search =
+        document.getElementById(
+            "transactionSearch"
+        ).value
+        .toLowerCase()
+        .trim();
+
+    const filter =
+        document.getElementById(
+            "transactionFilter"
+        ).value
+        .trim()
+        .toUpperCase();
 
 
-        const filter =
-            document.getElementById(
-                "transactionFilter"
-            ).value;
+    const filtered =
+        allTransactions.filter(
+            function(transaction) {
+
+                const action =
+                    (transaction.Action || "")
+                    .trim()
+                    .toUpperCase();
+
+                const text = `
+                    ${transaction.Date || ""}
+                    ${action}
+                    ${transaction.User || ""}
+                    ${transaction.Email || ""}
+                    ${transaction.Book || ""}
+                    ${transaction.Author || ""}
+                `.toLowerCase();
 
 
-        const filtered =
-            allTransactions.filter(
-                function(transaction) {
-
-                    const text = `
-
-                        ${transaction.Date || ""}
-
-                        ${transaction.Action || ""}
-
-                        ${transaction.User || ""}
-
-                        ${transaction.Email || ""}
-
-                        ${transaction.Book || ""}
-
-                        ${transaction.Author || ""}
-
-                    `.toLowerCase();
+                const matchesSearch =
+                    text.includes(search);
 
 
-                    const matchesSearch =
-                        text.includes(search);
+                let matchesFilter = true;
 
 
-                    const matchesFilter =
-                        filter === "ALL" ||
-                        transaction.Action === filter;
+                if (filter === "RENTED") {
 
-
-                    return (
-                        matchesSearch &&
-                        matchesFilter
-                    );
+                    matchesFilter =
+                        action === "RENTED";
 
                 }
-            );
 
 
-        displayTransactions(filtered);
+                if (filter === "SUBMITTED") {
 
-    }
+                    matchesFilter =
+                        action === "SUBMITTED";
+
+                }
+
+
+                return (
+                    matchesSearch &&
+                    matchesFilter
+                );
+
+            }
+        );
+
+
+    displayTransactions(filtered);
+
+}
 
 
     document.getElementById(
