@@ -1,0 +1,1516 @@
+/* =====================================================
+   ATAL LIBRARY - CSS
+===================================================== */
+
+
+/* ================= GLOBAL ================= */
+
+html {
+    scroll-behavior: smooth;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    color: #333;
+    transition: 0.3s;
+}
+
+button,
+input,
+select {
+    font-family: inherit;
+}
+
+
+/* ================= NAVBAR ================= */
+
+nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    min-height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 6%;
+
+    background: #172554;
+    color: white;
+
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Logo */
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+
+/* Menu */
+
+.menu {
+    display: flex;
+    align-items: center;
+
+    margin-left: 60px;
+
+    flex: 1;
+}
+
+.menu-links {
+    display: flex;
+    gap: 30px;
+}
+
+.menu a {
+    color: white;
+    text-decoration: none;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.menu a:hover {
+    color: #60a5fa;
+}
+
+
+/* ================= DESKTOP AUTH ================= */
+
+.auth-buttons {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+.auth-buttons button {
+    border: none;
+
+    padding: 9px 14px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+
+/* Login */
+
+#loginBtn {
+    background: white;
+    color: #172554;
+}
+
+#loginBtn:hover {
+    transform: translateY(-2px);
+}
+
+
+/* Register */
+
+#registerBtn {
+    background: #2563eb;
+    color: white;
+}
+
+#registerBtn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+
+/* Greeting */
+
+#userGreeting {
+    display: none;
+
+    background: #2563eb;
+    color: white;
+
+    padding: 9px 13px;
+
+    border-radius: 7px;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    white-space: nowrap;
+}
+
+
+/* Logout */
+
+#logoutBtn {
+    display: none;
+
+    border: none;
+
+    background: #dc2626;
+    color: white;
+}
+
+#logoutBtn:hover {
+    background: #b91c1c;
+
+    transform: translateY(-2px);
+}
+
+
+/* Theme */
+
+#themeBtn {
+    background: white;
+    color: #172554;
+}
+
+
+/* Hamburger */
+
+.menu-btn {
+    display: none;
+
+    margin-left: auto;
+
+    border: none;
+
+    background: transparent;
+    color: white;
+
+    font-size: 27px;
+
+    cursor: pointer;
+}
+
+
+/* Mobile Auth hidden on desktop */
+
+.mobile-auth {
+    display: none;
+}
+
+
+/* ================= HERO ================= */
+
+.hero {
+    min-height: 500px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 80px 8%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eff6ff,
+            #dbeafe
+        );
+}
+
+.hero-content {
+    max-width: 700px;
+}
+
+.hero-tag {
+    display: inline-block;
+
+    padding: 8px 14px;
+
+    background: white;
+
+    border-radius: 20px;
+
+    color: #2563eb;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    margin-bottom: 20px;
+}
+
+.hero h1 {
+    margin: 0;
+
+    font-size: 55px;
+
+    line-height: 1.1;
+
+    color: #172554;
+}
+
+.hero h1 span {
+    color: #2563eb;
+}
+
+.hero p {
+    max-width: 600px;
+
+    margin: 20px 0;
+
+    font-size: 18px;
+
+    line-height: 1.7;
+
+    color: #475569;
+}
+
+
+/* Hero Buttons */
+
+.hero-buttons {
+    display: flex;
+    gap: 12px;
+
+    margin-top: 30px;
+}
+
+.primary-btn,
+.secondary-btn {
+    padding: 13px 20px;
+
+    border-radius: 8px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    text-decoration: none;
+
+    transition: 0.3s;
+}
+
+.primary-btn {
+    border: none;
+
+    background: #2563eb;
+    color: white;
+}
+
+.primary-btn:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background: white;
+
+    color: #172554;
+
+    border: 2px solid #dbeafe;
+}
+
+.secondary-btn:hover {
+    transform: translateY(-2px);
+}
+
+
+/* ================= STATS ================= */
+
+.stats {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 20px;
+
+    padding: 50px 8%;
+
+    background: white;
+}
+
+.stat-card {
+    text-align: center;
+
+    padding: 25px;
+
+    border-radius: 12px;
+
+    background: #f8fafc;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0, 0, 0, 0.06);
+}
+
+.stat-icon {
+    font-size: 30px;
+}
+
+.stat-card h2 {
+    margin: 10px 0 5px;
+
+    color: #172554;
+}
+
+.stat-card p {
+    margin: 0;
+
+    color: #64748b;
+}
+
+
+/* ================= SECTION HEADING ================= */
+
+.section-heading {
+    text-align: center;
+
+    max-width: 700px;
+
+    margin: auto;
+
+    margin-bottom: 40px;
+}
+
+.section-heading span,
+.section-label {
+    color: #2563eb;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+.section-heading h2 {
+    margin: 10px 0;
+
+    color: #172554;
+
+    font-size: 36px;
+}
+
+.section-heading p {
+    color: #64748b;
+}
+
+
+/* ================= BOOKS ================= */
+
+.books {
+    padding: 80px 8%;
+}
+
+
+/* Search */
+
+.search-area {
+    display: flex;
+
+    gap: 12px;
+
+    margin-bottom: 25px;
+
+    flex-wrap: wrap;
+}
+
+.search-box {
+    flex: 1;
+
+    min-width: 250px;
+
+    display: flex;
+    align-items: center;
+
+    background: white;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 8px;
+
+    padding: 0 12px;
+}
+
+.search-box input {
+    width: 100%;
+
+    border: none;
+
+    outline: none;
+
+    padding: 13px;
+
+    font-size: 15px;
+}
+
+.search-box button {
+    border: none;
+
+    background: transparent;
+
+    cursor: pointer;
+
+    color: #64748b;
+}
+
+.search-area select {
+    padding: 12px;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 8px;
+
+    background: white;
+
+    cursor: pointer;
+
+    outline: none;
+}
+
+
+/* Book Info */
+
+.book-info {
+    display: flex;
+
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+
+/* Book Container */
+
+.book-container {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 25px;
+}
+
+
+/* Book Card */
+
+.book-card {
+    background: white;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0, 0, 0, 0.07);
+
+    transition: 0.3s;
+
+    cursor: pointer;
+
+    min-width: 0;
+}
+
+.book-card:hover {
+    transform: translateY(-6px);
+
+    box-shadow:
+        0 10px 25px
+        rgba(0, 0, 0, 0.12);
+}
+
+.book-card img {
+    width: 100%;
+
+    height: 240px;
+
+    object-fit: contain;
+
+    display: block;
+}
+
+.book-card-content {
+    padding: 18px;
+}
+
+.book-card-content h3 {
+    margin: 0 0 8px;
+
+    color: #172554;
+
+    font-size: 18px;
+}
+
+.book-author {
+    color: #64748b;
+
+    font-size: 14px;
+
+    margin-bottom: 10px;
+}
+
+.category-badge {
+    display: inline-block;
+
+    padding: 5px 9px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    border-radius: 15px;
+
+    font-size: 11px;
+
+    font-weight: bold;
+}
+
+.available {
+    display: inline-block;
+
+    margin-top: 10px;
+
+    color: #16a34a;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+.rented {
+    display: inline-block;
+
+    margin-top: 10px;
+
+    color: #dc2626;
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+
+/* ================= ABOUT ================= */
+
+.about {
+    padding: 80px 8%;
+
+    background: white;
+}
+
+.about-content {
+    display: grid;
+
+    grid-template-columns:
+        1.5fr 1fr;
+
+    gap: 60px;
+
+    align-items: center;
+}
+
+.about-text h2 {
+    font-size: 40px;
+
+    color: #172554;
+}
+
+.about-text h2 span {
+    color: #2563eb;
+}
+
+.about-text p {
+    color: #64748b;
+
+    line-height: 1.7;
+}
+
+.about-points {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 15px;
+
+    margin-top: 25px;
+
+    color: #172554;
+
+    font-weight: bold;
+}
+
+.about-card {
+    text-align: center;
+
+    padding: 50px 30px;
+
+    background: #eff6ff;
+
+    border-radius: 20px;
+}
+
+.about-book-icon {
+    font-size: 70px;
+}
+
+.about-card h3 {
+    color: #172554;
+
+    font-size: 25px;
+}
+
+
+/* ================= CONTACT ================= */
+
+.contact {
+    padding: 80px 8%;
+}
+
+.contact-container {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 25px;
+}
+
+.contact-card {
+    text-align: center;
+
+    background: white;
+
+    padding: 30px;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0, 0, 0, 0.06);
+}
+
+.contact-icon {
+    font-size: 35px;
+}
+
+.contact-card h3 {
+    color: #172554;
+}
+
+.contact-card p {
+    color: #64748b;
+}
+
+
+/* ================= BOOK MODAL ================= */
+
+.modal {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 2000;
+
+    background:
+        rgba(0, 0, 0, 0.65);
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.modal-content {
+    position: relative;
+
+    width: 380px;
+
+    max-width: 100%;
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 20px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+}
+
+.modal-close {
+    position: absolute;
+
+    right: 12px;
+    top: 10px;
+
+    border: none;
+
+    background: white;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    z-index: 5;
+}
+
+#modalImage {
+    width: 140px;
+
+    height: 180px;
+
+    object-fit: cover;
+
+    display: block;
+
+    margin: auto;
+
+    border-radius: 8px;
+}
+
+.modal-details {
+    text-align: center;
+}
+
+.modal-category {
+    display: inline-block;
+
+    margin-top: 15px;
+
+    padding: 5px 10px;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    border-radius: 15px;
+
+    font-size: 12px;
+}
+
+.modal-details h2 {
+    color: #172554;
+}
+
+.modal-details p {
+    color: #64748b;
+
+    line-height: 1.5;
+}
+
+.rent-btn,
+.submit-btn {
+    border: none;
+
+    padding: 11px 16px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    margin: 5px;
+}
+
+.rent-btn {
+    background: #2563eb;
+    color: white;
+}
+
+.submit-btn {
+    background: #16a34a;
+    color: white;
+}
+
+
+/* ================= AUTH MODAL ================= */
+
+.auth-modal {
+    display: none;
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 3000;
+
+    background:
+        rgba(0, 0, 0, 0.65);
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+}
+
+.auth-modal-content {
+    position: relative;
+
+    width: 400px;
+
+    max-width: 100%;
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 30px;
+}
+
+.auth-close {
+    position: absolute;
+
+    right: 12px;
+    top: 10px;
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 28px;
+
+    cursor: pointer;
+}
+
+.auth-icon {
+    text-align: center;
+
+    font-size: 45px;
+}
+
+.auth-modal-content h2 {
+    text-align: center;
+
+    color: #172554;
+}
+
+.auth-modal-content > p {
+    text-align: center;
+
+    color: #64748b;
+}
+
+.auth-modal-content form {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 8px;
+}
+
+.auth-modal-content label {
+    color: #334155;
+
+    font-weight: bold;
+
+    font-size: 14px;
+
+    margin-top: 8px;
+}
+
+.auth-modal-content input {
+    padding: 12px;
+
+    border: 1px solid #cbd5e1;
+
+    border-radius: 7px;
+
+    outline: none;
+}
+
+.auth-modal-content input:focus {
+    border-color: #2563eb;
+}
+
+.auth-submit {
+    margin-top: 15px;
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.auth-switch button {
+    border: none;
+
+    background: transparent;
+
+    color: #2563eb;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+/* ================= FOOTER ================= */
+
+footer {
+    background: #172554;
+
+    color: white;
+
+    padding: 45px 8% 20px;
+}
+
+.footer-content {
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+.footer-content p {
+    color: #cbd5e1;
+}
+
+.footer-links {
+    display: flex;
+
+    gap: 25px;
+
+    align-items: center;
+}
+
+.footer-links a {
+    color: white;
+
+    text-decoration: none;
+}
+
+.footer-bottom {
+    border-top: 1px solid #334155;
+
+    margin-top: 30px;
+
+    padding-top: 20px;
+
+    text-align: center;
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+}
+
+
+/* ================= TOP BUTTON ================= */
+
+#topBtn {
+    position: fixed;
+
+    right: 25px;
+    bottom: 25px;
+
+    width: 45px;
+    height: 45px;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 20px;
+
+    cursor: pointer;
+
+    display: none;
+
+    z-index: 1500;
+}
+
+
+/* ================= DARK MODE ================= */
+
+body.dark {
+    background: #0f172a;
+
+    color: #e2e8f0;
+}
+
+body.dark .hero {
+    background: #1e293b;
+}
+
+body.dark .hero h1,
+body.dark .section-heading h2,
+body.dark .about-text h2,
+body.dark .stat-card h2,
+body.dark .book-card-content h3,
+body.dark .contact-card h3,
+body.dark .about-card h3 {
+    color: white;
+}
+
+body.dark .hero p,
+body.dark .section-heading p,
+body.dark .about-text p,
+body.dark .book-author,
+body.dark .contact-card p {
+    color: #cbd5e1;
+}
+
+body.dark .stats,
+body.dark .about {
+    background: #0f172a;
+}
+
+body.dark .stat-card,
+body.dark .book-card,
+body.dark .contact-card,
+body.dark .about-card {
+    background: #1e293b;
+}
+
+body.dark .search-box,
+body.dark .search-area select {
+    background: #1e293b;
+
+    color: white;
+
+    border-color: #475569;
+}
+
+body.dark .search-box input {
+    background: transparent;
+
+    color: white;
+}
+
+body.dark .modal-content,
+body.dark .auth-modal-content {
+    background: #1e293b;
+}
+
+body.dark .modal-details h2,
+body.dark .auth-modal-content h2 {
+    color: white;
+}
+
+body.dark .modal-details p,
+body.dark .auth-modal-content > p {
+    color: #cbd5e1;
+}
+
+
+/* ================= TABLET ================= */
+
+@media (max-width: 1000px) {
+
+    .menu {
+        margin-left: 30px;
+    }
+
+    .menu-links {
+        gap: 15px;
+    }
+
+    .book-container {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+    .hero h1 {
+        font-size: 45px;
+    }
+
+}
+
+
+/* ================= MOBILE ================= */
+
+@media (max-width: 768px) {
+
+    /* Navbar */
+
+    nav {
+        min-height: 65px;
+
+        padding: 0 20px;
+
+        position: sticky;
+    }
+
+
+    .logo {
+        font-size: 19px;
+    }
+
+
+    /* Hamburger */
+
+    .menu-btn {
+        display: block;
+    }
+
+
+    /* Main Mobile Menu */
+
+    .menu {
+        position: absolute;
+
+        top: 65px;
+        left: 0;
+
+        width: 100%;
+
+        margin: 0;
+
+        display: none;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        background: #172554;
+
+        padding: 10px 20px 20px;
+
+        box-shadow:
+            0 8px 15px
+            rgba(0, 0, 0, 0.2);
+    }
+
+
+    .menu.active {
+        display: flex;
+    }
+
+
+    /* Mobile links */
+
+    .menu-links {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 0;
+    }
+
+
+    .menu-links a {
+        padding: 13px 5px;
+
+        border-bottom:
+            1px solid rgba(255, 255, 255, 0.1);
+    }
+
+
+    /* Hide Desktop Auth */
+
+    .auth-buttons {
+        display: none;
+    }
+
+
+    /* Mobile Auth */
+
+    .mobile-auth {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: flex-start;
+
+        flex-wrap: wrap;
+
+        gap: 8px;
+
+        padding-top: 15px;
+    }
+
+
+    .mobile-auth button {
+        border: none;
+
+        padding: 8px 12px;
+
+        border-radius: 7px;
+
+        cursor: pointer;
+
+        font-weight: bold;
+    }
+
+
+    #mobileLoginBtn,
+    #mobileThemeBtn {
+        background: white;
+
+        color: #172554;
+    }
+
+
+    #mobileRegisterBtn {
+        background: #2563eb;
+
+        color: white;
+    }
+
+
+    #mobileLogoutBtn {
+        display: none;
+
+        background: #dc2626;
+
+        color: white;
+    }
+
+
+    #mobileUserGreeting {
+        display: none;
+
+        background: #2563eb;
+
+        color: white;
+
+        padding: 8px 12px;
+
+        border-radius: 7px;
+
+        font-size: 13px;
+
+        font-weight: bold;
+
+        white-space: nowrap;
+    }
+
+
+    /* Hero */
+
+    .hero {
+        min-height: 480px;
+
+        padding: 60px 20px;
+    }
+
+
+    .hero h1 {
+        font-size: 38px;
+    }
+
+
+    .hero p {
+        font-size: 16px;
+    }
+
+
+    .hero-buttons {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .primary-btn,
+    .secondary-btn {
+        text-align: center;
+    }
+
+
+    /* Stats */
+
+    .stats {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        padding: 35px 20px;
+    }
+
+
+    /* Books */
+
+    .books {
+        padding: 60px 20px;
+    }
+
+
+    .section-heading h2 {
+        font-size: 30px;
+    }
+
+
+    .search-area {
+        flex-direction: column;
+    }
+
+
+    .search-box {
+        min-width: 100%;
+    }
+
+
+    .search-area select {
+        width: 100%;
+    }
+
+
+    .book-container {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        gap: 15px;
+    }
+
+
+    .book-card img {
+        height: 220px;
+    }
+
+
+    /* About */
+
+    .about {
+        padding: 60px 20px;
+    }
+
+
+    .about-content {
+        grid-template-columns: 1fr;
+
+        gap: 30px;
+    }
+
+
+    .about-text h2 {
+        font-size: 32px;
+    }
+
+
+    /* Contact */
+
+    .contact {
+        padding: 60px 20px;
+    }
+
+
+    .contact-container {
+        grid-template-columns: 1fr;
+    }
+
+
+    /* Footer */
+
+    footer {
+        padding:
+            40px 20px 20px;
+    }
+
+
+    .footer-content {
+        flex-direction: column;
+    }
+
+
+    .footer-links {
+        flex-wrap: wrap;
+    }
+
+}
+
+
+/* ================= SMALL MOBILE ================= */
+
+@media (max-width: 480px) {
+
+    .mobile-auth {
+        justify-content: flex-start;
+    }
+
+
+    .mobile-auth button,
+    #mobileUserGreeting {
+        font-size: 12px;
+
+        padding: 8px 9px;
+    }
+
+
+    .hero h1 {
+        font-size: 32px;
+    }
+
+
+    .book-container {
+        grid-template-columns: 1fr;
+    }
+
+
+    .book-card img {
+        height: 260px;
+    }
+
+
+    .stats {
+        gap: 12px;
+    }
+
+
+    .stat-card {
+        padding: 18px 10px;
+    }
+
+}
+
+/* forgot password */
+
+.forgot-password {
+    text-align: right;
+    margin-top: 5px;
+}
+
+.forgot-password a {
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.forgot-password a:hover {
+    text-decoration: underline;
+}
+
+/* ================= FORGOT PASSWORD MODAL FIX ================= */
+
+#forgotPasswordModal {
+    display: none;
+}
+
+#forgotPasswordModal.show {
+    display: flex !important;
+}
+

@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Atal Library</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- ================= NAVBAR ================= -->
+
+    <nav>
+
+        <div class="logo">
+            📚 Atal Library
+        </div>
+
+
+        <!-- Mobile Menu Button -->
+
+        <button
+            id="menuBtn"
+            class="menu-btn"
+        >
+            ☰
+        </button>
+
+
+        <!-- ================= MAIN MENU ================= -->
+
+        <div
+            class="menu"
+            id="mainMenu"
+        >
+
+            <div class="menu-links">
+
+                <a href="#home">
+                    Home
+                </a>
+
+                <a href="#books">
+                    Books
+                </a>
+
+                <a href="#about">
+                    About
+                </a>
+
+                <a href="#contact">
+                    Contact
+                </a>
+
+            </div>
+
+
+            <!-- Desktop Auth -->
+
+            <div class="auth-buttons">
+
+                <span id="userGreeting"></span>
+
+                <button id="loginBtn">
+                    Login
+                </button>
+
+                <button id="registerBtn">
+                    Register
+                </button>
+
+                <button id="adminLoginBtn">
+                    Admin Login
+                </button>
+
+                <button id="logoutBtn">
+                    Logout
+                </button>
+
+                <button id="themeBtn">
+                    🌙
+                </button>
+
+            </div>
+
+
+            <!-- Mobile Auth -->
+
+            <div
+                class="mobile-auth"
+                id="mobileAuth"
+            >
+
+                <span id="mobileUserGreeting"></span>
+
+                <button id="mobileLoginBtn">
+                    Login
+                </button>
+
+                <button id="mobileRegisterBtn">
+                    Register
+                </button>
+
+                <button id="mobileAdminLoginBtn">
+                    Admin Login
+                </button>
+
+                <button id="mobileLogoutBtn">
+                    Logout
+                </button>
+
+                <button id="mobileThemeBtn">
+                    🌙 Dark
+                </button>
+
+            </div>
+
+        </div>
+
+    </nav>
+
+
+
+    <!-- ================= HOME ================= -->
+
+    <section
+        class="hero"
+        id="home"
+    >
+
+        <div class="hero-content">
+
+            <span class="hero-tag">
+                📖 Welcome to Atal Library
+            </span>
+
+
+            <h1>
+
+                Discover Your Next
+
+                <span>
+                    Great Book
+                </span>
+
+            </h1>
+
+
+            <p>
+
+                Explore our collection of programming,
+                computer science and technology books.
+
+            </p>
+
+
+            <div class="hero-buttons">
+
+                <button
+                    id="exploreBtn"
+                    class="primary-btn"
+                >
+                    📚 Explore Books
+                </button>
+
+
+                <a
+                    href="#about"
+                    class="secondary-btn"
+                >
+                    Learn More
+                </a>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= STATS ================= -->
+
+    <section class="stats">
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                📚
+            </div>
+
+            <h2 id="totalBooks">
+                0
+            </h2>
+
+            <p>
+                Total Books
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ✅
+            </div>
+
+            <h2 id="availableBooks">
+                0
+            </h2>
+
+            <p>
+                Available Books
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                👥
+            </div>
+
+            <h2>
+                500+
+            </h2>
+
+            <p>
+                Readers
+            </p>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+                ⭐
+            </div>
+
+            <h2>
+                4.9
+            </h2>
+
+            <p>
+                Rating
+            </p>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= BOOKS ================= -->
+
+    <section
+        class="books"
+        id="books"
+    >
+
+        <div class="section-heading">
+
+            <span>
+                OUR COLLECTION
+            </span>
+
+            <h2>
+                Explore Our Books
+            </h2>
+
+            <p>
+
+                Find books that help you learn,
+                grow and build your future.
+
+            </p>
+
+        </div>
+
+
+        <!-- Search -->
+
+        <div class="search-area">
+
+
+            <div class="search-box">
+
+                <span>
+                    🔍
+                </span>
+
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search books..."
+                >
+
+                <button id="clearBtn">
+                    ✕
+                </button>
+
+            </div>
+
+
+            <select id="categoryFilter">
+
+                <option value="all">
+                    All Categories
+                </option>
+
+                <option value="Programming">
+                    Programming
+                </option>
+
+                <option value="Web Development">
+                    Web Development
+                </option>
+
+                <option value="Computer Science">
+                    Computer Science
+                </option>
+
+                <option value="Database">
+                    Database
+                </option>
+
+            </select>
+
+
+            <select id="sortBooks">
+
+                <option value="default">
+                    Sort Books
+                </option>
+
+                <option value="az">
+                    Name: A-Z
+                </option>
+
+                <option value="za">
+                    Name: Z-A
+                </option>
+
+                <option value="newest">
+                    Newest First
+                </option>
+
+                <option value="oldest">
+                    Oldest First
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="book-info">
+
+            <p id="result"></p>
+
+            <p id="bookCount"></p>
+
+        </div>
+
+
+        <div
+            class="book-container"
+            id="bookContainer"
+        >
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= ABOUT ================= -->
+
+    <section
+        class="about"
+        id="about"
+    >
+
+        <div class="about-content">
+
+
+            <div class="about-text">
+
+                <span class="section-label">
+                    ABOUT US
+                </span>
+
+
+                <h2>
+
+                    A Library Built For
+
+                    <span>
+                        Learners
+                    </span>
+
+                </h2>
+
+
+                <p>
+
+                    Atal Library is a digital library
+                    designed to make learning easier
+                    and more accessible.
+
+                </p>
+
+
+                <p>
+
+                    Students can explore books,
+                    search their favourite topics,
+                    check availability and rent books
+                    from one simple platform.
+
+                </p>
+
+
+                <div class="about-points">
+
+                    <div>
+                        ✓ Easy Book Search
+                    </div>
+
+                    <div>
+                        ✓ Book Availability
+                    </div>
+
+                    <div>
+                        ✓ Simple Rental System
+                    </div>
+
+                    <div>
+                        ✓ Student Friendly
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="about-card">
+
+                <div class="about-book-icon">
+                    📚
+                </div>
+
+                <h3>
+                    Learn. Read. Grow.
+                </h3>
+
+                <p>
+                    Your knowledge journey starts here.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= CONTACT ================= -->
+
+    <section
+        class="contact"
+        id="contact"
+    >
+
+        <div class="section-heading">
+
+            <span>
+                CONTACT US
+            </span>
+
+            <h2>
+                Get In Touch
+            </h2>
+
+            <p>
+
+                Have a question?
+                We would love to hear from you.
+
+            </p>
+
+        </div>
+
+
+        <div class="contact-container">
+
+
+            <div class="contact-card">
+
+                <div class="contact-icon">
+                    📧
+                </div>
+
+                <h3>
+                    Email
+                </h3>
+
+                <p>
+
+                    <a href="mailto:mohityadav7015761526@gmail.com">
+                        mohityadav7015761526@gmail.com
+                    </a>
+
+                </p>
+
+            </div>
+
+
+            <div class="contact-card">
+
+                <div class="contact-icon">
+                    📞
+                </div>
+
+                <h3>
+                    Phone
+                </h3>
+
+                <p>
+
+                    <a href="tel:+919588301389">
+                        +91 9588301389
+                    </a>
+
+                </p>
+
+            </div>
+
+
+            <div class="contact-card">
+
+                <div class="contact-icon">
+                    📍
+                </div>
+
+                <h3>
+                    Location
+                </h3>
+
+                <p>
+
+                    Karawara Manakpur,
+                    Rewari, Haryana, India
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ================= BOOK MODAL ================= -->
+
+    <div
+        id="bookModal"
+        class="modal"
+    >
+
+        <div class="modal-content">
+
+
+            <button
+                id="closeBtn"
+                class="modal-close"
+            >
+                ×
+            </button>
+
+
+            <img
+                id="modalImage"
+                src=""
+                alt="Book"
+            >
+
+
+            <div class="modal-details">
+
+
+                <span
+                    id="modalCategory"
+                    class="modal-category"
+                >
+                </span>
+
+
+                <h2 id="modalTitle">
+                </h2>
+
+
+                <p id="modalAuthor">
+                </p>
+
+
+                <p id="year">
+                </p>
+
+
+                <p id="modalDescription">
+                </p>
+
+
+                <div id="modalStatus">
+                </div>
+
+
+                <button
+                    id="rentModalBtn"
+                    class="rent-btn"
+                >
+                    Rent Book
+                </button>
+
+
+                <button
+                    id="submitModalBtn"
+                    class="submit-btn"
+                >
+                    Submit Book
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= LOGIN MODAL ================= -->
+
+    <div
+        id="loginModal"
+        class="auth-modal"
+    >
+
+        <div class="auth-modal-content">
+
+
+            <button
+                id="loginClose"
+                class="auth-close"
+            >
+                ×
+            </button>
+
+
+            <div class="auth-icon">
+                🔐
+            </div>
+
+
+            <h2>
+                Welcome Back
+            </h2>
+
+
+            <p>
+                Login to your Atal Library account
+            </p>
+
+
+            <form id="loginForm">
+
+
+                <label>
+                    Email
+                </label>
+
+
+                <input
+                    type="email"
+                    id="loginEmail"
+                    placeholder="Enter your email"
+                    required
+                >
+
+
+                <label>
+                    Password
+                </label>
+
+
+                <input
+                    type="password"
+                    id="loginPassword"
+                    placeholder="Enter your password"
+                    required
+                >
+
+
+                <p class="forgot-password">
+
+                    <a
+                        href="#"
+                        id="forgotPasswordBtn"
+                    >
+                        Forgot Password?
+                    </a>
+
+                </p>
+
+
+                <button
+                    type="submit"
+                    class="auth-submit"
+                >
+                    Login
+                </button>
+
+
+            </form>
+
+
+            <p class="auth-switch">
+
+                Don't have an account?
+
+                <button
+                    type="button"
+                    id="openRegister"
+                >
+                    Register
+                </button>
+
+            </p>
+
+
+        </div>
+
+    </div>
+
+<!-- ================= REGISTER MODAL ================= -->
+
+<div
+    id="registerModal"
+    class="auth-modal"
+>
+
+    <div class="auth-modal-content">
+
+        <button
+            id="registerClose"
+            class="auth-close"
+        >
+            ×
+        </button>
+
+
+        <div class="auth-icon">
+            👤
+        </div>
+
+
+        <h2>
+            Create Account
+        </h2>
+
+
+        <p>
+            Join Atal Library today
+        </p>
+
+
+        <form id="registerForm">
+
+
+            <!-- FULL NAME -->
+
+            <label>
+                Full Name
+            </label>
+
+            <input
+                type="text"
+                id="registerName"
+                placeholder="Enter your name"
+                required
+            >
+
+
+            <!-- EMAIL -->
+
+            <label>
+                Email
+            </label>
+
+            <div class="otp-email-row">
+
+                <input
+                    type="email"
+                    id="registerEmail"
+                    placeholder="Enter your email"
+                    required
+                >
+
+                <button
+                    type="button"
+                    id="sendEmailOtp"
+                >
+                    Send OTP
+                </button>
+
+            </div>
+
+
+            <!-- EMAIL OTP -->
+
+            <label>
+                Email OTP
+            </label>
+
+            <div class="otp-email-row">
+
+                <input
+                    type="text"
+                    id="emailOtp"
+                    placeholder="Enter 6-digit OTP"
+                    maxlength="6"
+                    inputmode="numeric"
+                >
+
+                <button
+                    type="button"
+                    id="verifyEmailOtp"
+                >
+                    Verify
+                </button>
+
+            </div>
+
+
+            <!-- OTP STATUS -->
+
+            <p
+                id="emailOtpStatus"
+                style="margin: 5px 0; font-size: 14px;"
+            ></p>
+
+
+            <!-- PHONE -->
+
+            <label>
+                Phone Number
+            </label>
+
+            <input
+                type="tel"
+                id="registerPhone"
+                placeholder="Enter your phone number"
+                maxlength="10"
+                pattern="[0-9]{10}"
+                required
+            >
+
+
+            <!-- PASSWORD -->
+
+            <label>
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="registerPassword"
+                placeholder="Create password"
+                required
+            >
+
+
+            <!-- CREATE ACCOUNT -->
+
+            <button
+                type="submit"
+                class="auth-submit"
+                id="createAccountBtn"
+            >
+                Create Account
+            </button>
+
+
+        </form>
+
+
+        <p class="auth-switch">
+
+            Already have an account?
+
+            <button
+                type="button"
+                id="openLogin"
+            >
+                Login
+            </button>
+
+        </p>
+
+
+    </div>
+
+</div>
+
+
+
+
+    <!-- ================= FORGOT PASSWORD MODAL ================= -->
+
+    <div
+        id="forgotPasswordModal"
+        class="auth-modal"
+    >
+
+        <div class="auth-modal-content">
+
+
+            <button
+                id="forgotPasswordClose"
+                class="auth-close"
+            >
+                ×
+            </button>
+
+
+            <div class="auth-icon">
+                🔑
+            </div>
+
+
+            <h2>
+                Reset Password
+            </h2>
+
+
+            <p>
+                Verify your account to reset password
+            </p>
+
+
+            <form id="forgotPasswordForm">
+
+
+                <!-- Email -->
+
+                <label>
+                    Email
+                </label>
+
+
+                <input
+                    type="email"
+                    id="forgotEmail"
+                    placeholder="Enter your registered email"
+                    required
+                >
+
+
+                <!-- Phone -->
+
+                <label>
+                    Phone Number
+                </label>
+
+
+                <input
+                    type="tel"
+                    id="forgotPhone"
+                    placeholder="Enter your registered phone number"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    required
+                >
+
+
+                <!-- New Password -->
+
+                <label>
+                    New Password
+                </label>
+
+
+                <input
+                    type="password"
+                    id="forgotNewPassword"
+                    placeholder="Enter new password"
+                    required
+                >
+
+
+                <!-- Confirm Password -->
+
+                <label>
+                    Confirm Password
+                </label>
+
+
+                <input
+                    type="password"
+                    id="forgotConfirmPassword"
+                    placeholder="Confirm new password"
+                    required
+                >
+
+
+                <button
+                    type="submit"
+                    class="auth-submit"
+                >
+                    Reset Password
+                </button>
+
+
+            </form>
+
+
+            <p class="auth-switch">
+
+                Remember your password?
+
+                <button
+                    type="button"
+                    id="backToLogin"
+                >
+                    Login
+                </button>
+
+            </p>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer>
+
+
+        <div class="footer-content">
+
+
+            <div>
+
+                <h2>
+                    📚 Atal Library
+                </h2>
+
+                <p>
+                    Read more. Learn more. Become more.
+                </p>
+
+            </div>
+
+
+            <div class="footer-links">
+
+
+                <a href="#home">
+                    Home
+                </a>
+
+
+                <a href="#books">
+                    Books
+                </a>
+
+
+                <a href="#about">
+                    About
+                </a>
+
+
+                <a href="#contact">
+                    Contact
+                </a>
+
+
+            </div>
+
+        </div>
+
+
+        <div class="footer-bottom">
+
+            © 2026 Atal Library.
+            All Rights Reserved.
+
+        </div>
+
+    </footer>
+
+
+
+    <!-- ================= TOP BUTTON ================= -->
+
+    <button id="topBtn">
+        ↑
+    </button>
+
+
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script src="script.js"></script>
+
+
+</body>
+
+</html>

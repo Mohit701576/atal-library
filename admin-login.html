@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Admin Login - Atal Library</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            min-height: 100vh;
+        }
+
+        .admin-login-box {
+            width: 380px;
+            max-width: 90%;
+
+            background: white;
+
+            padding: 35px;
+
+            border-radius: 15px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .admin-login-box h1 {
+            text-align: center;
+
+            color: #172554;
+
+            margin-bottom: 8px;
+        }
+
+        .admin-login-box p {
+            text-align: center;
+
+            color: #666;
+
+            margin-bottom: 25px;
+        }
+
+        .admin-login-box label {
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-weight: bold;
+
+            color: #333;
+        }
+
+        .admin-login-box input {
+            width: 100%;
+
+            padding: 12px;
+
+            margin-bottom: 18px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        .admin-login-box input:focus {
+            outline: none;
+
+            border-color: #2563eb;
+        }
+
+        .admin-login-box button {
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        .admin-login-box button:hover {
+            background: #1d4ed8;
+        }
+
+        .back-btn {
+            display: block;
+
+            text-align: center;
+
+            margin-top: 18px;
+
+            color: #2563eb;
+
+            text-decoration: none;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <div class="admin-login-box">
+
+        <h1>Admin Login</h1>
+
+        <p>Atal Library Administration</p>
+
+
+        <form id="adminLoginForm">
+
+
+            <label for="adminUsername">
+                Username
+            </label>
+
+            <input
+                type="text"
+                id="adminUsername"
+                placeholder="Enter admin username"
+                required
+            >
+
+
+            <label for="adminPassword">
+                Password
+            </label>
+
+            <input
+                type="password"
+                id="adminPassword"
+                placeholder="Enter admin password"
+                required
+            >
+
+
+            <button type="submit">
+                Login as Admin
+            </button>
+
+        </form>
+
+
+        <a href="index.html" class="back-btn">
+            ← Back to Library
+        </a>
+
+    </div>
+
+
+    <script>
+
+        const adminLoginForm =
+            document.getElementById("adminLoginForm");
+
+
+        adminLoginForm.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+
+                const username =
+                    document.getElementById(
+                        "adminUsername"
+                    ).value.trim();
+
+
+                const password =
+                    document.getElementById(
+                        "adminPassword"
+                    ).value;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "http://localhost:3000/admin-login",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    username: username,
+                                    password: password
+                                })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        alert(data.message);
+
+                        return;
+                    }
+
+
+                    alert(
+                        "Admin login successful!"
+                    );
+
+
+                    sessionStorage.setItem(
+                        "adminToken",
+                        data.token
+                    );
+
+
+                    window.location.href =
+                        "admin-dashboard.html";
+
+                }
+
+                catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        "Backend server is not running."
+                    );
+
+                }
+
+            }
+        );
+
+    </script>
+
+
+</body>
+
+</html>
