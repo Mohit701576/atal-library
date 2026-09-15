@@ -58,7 +58,6 @@ function generateOTP() {
 
 }
 
-
 // ==================================================
 // ADMIN LOGIN
 // ==================================================
@@ -1722,6 +1721,18 @@ app.get(
 
             }
 
+            // ==================================================
+            // DEBUG
+            // ==================================================
+
+            console.log(
+                "BOOKS FROM SUPABASE:"
+            );
+
+            console.log(
+                books
+            );
+
             const formattedBooks =
                 (books || []).map(
                     function (book) {
@@ -1749,6 +1760,15 @@ app.get(
                             Description:
                                 book.description || "",
 
+                            // PRICE
+                            Price:
+                                Number(book.price) || 0,
+
+                            // ALSO SEND LOWERCASE PRICE
+                            // This makes frontend debugging easier
+                            price:
+                                Number(book.price) || 0,
+
                             RentedBy:
                                 book.rented_by || ""
 
@@ -1756,6 +1776,14 @@ app.get(
 
                     }
                 );
+
+            console.log(
+                "FORMATTED BOOKS:"
+            );
+
+            console.log(
+                formattedBooks
+            );
 
             return res.json(
                 formattedBooks
@@ -1765,7 +1793,10 @@ app.get(
 
         catch (error) {
 
-            console.log(error);
+            console.log(
+                "Get books server error:",
+                error
+            );
 
             return res.status(500).json({
 
@@ -1805,18 +1836,58 @@ app.get(
 
             if (error) {
 
+                console.log(
+                    "ADMIN GET BOOKS ERROR:",
+                    error
+                );
+
                 return res.status(500).json({
 
                     message:
-                        "Unable to get books."
+                        "Unable to get books.",
+
+                    error:
+                        error.message
 
                 });
 
             }
 
+            // ==================================================
+            // IMPORTANT DEBUG
+            // ==================================================
+
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "ADMIN BOOKS FROM SUPABASE:"
+            );
+
+            console.log(
+                books
+            );
+
+            console.log(
+                "======================================"
+            );
+
             const formattedBooks =
                 (books || []).map(
                     function (book) {
+
+                        const bookPrice =
+                            Number(book.price) || 0;
+
+                        console.log(
+                            "BOOK:",
+                            book.name,
+                            "PRICE FROM SUPABASE:",
+                            book.price,
+                            "FINAL PRICE:",
+                            bookPrice
+                        );
 
                         return {
 
@@ -1841,6 +1912,14 @@ app.get(
                             Description:
                                 book.description || "",
 
+                            // PRICE FOR ADMIN DASHBOARD
+                            Price:
+                                bookPrice,
+
+                            // LOWERCASE PRICE ALSO SENT
+                            price:
+                                bookPrice,
+
                             RentedBy:
                                 book.rented_by || ""
 
@@ -1848,6 +1927,14 @@ app.get(
 
                     }
                 );
+
+            console.log(
+                "ADMIN FORMATTED BOOKS:"
+            );
+
+            console.log(
+                formattedBooks
+            );
 
             return res.json(
                 formattedBooks
@@ -1857,7 +1944,10 @@ app.get(
 
         catch (error) {
 
-            console.log(error);
+            console.log(
+                "Admin get books error:",
+                error
+            );
 
             return res.status(500).json({
 
@@ -1888,8 +1978,26 @@ app.post(
                 category,
                 year,
                 image,
-                description
+                description,
+                price
             } = req.body;
+
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "ADD BOOK API CALLED"
+            );
+
+            console.log(
+                "PRICE RECEIVED FROM ADMIN:",
+                price
+            );
+
+            console.log(
+                "======================================"
+            );
 
             if (
                 !name ||
@@ -1906,6 +2014,14 @@ app.post(
                 });
 
             }
+
+            const finalPrice =
+                Number(price) || 0;
+
+            console.log(
+                "FINAL PRICE TO SAVE:",
+                finalPrice
+            );
 
             const {
                 data: newBook,
@@ -1932,28 +2048,42 @@ app.post(
                     description:
                         description || "",
 
+                    price:
+                        finalPrice,
+
                     rented_by:
                         ""
 
                 })
-                .select()
+                .select("*")
                 .single();
 
             if (error) {
 
                 console.log(
-                    "Add book error:",
+                    "ADD BOOK SUPABASE ERROR:",
                     error
                 );
 
                 return res.status(500).json({
 
                     message:
-                        "Unable to add book."
+                        "Unable to add book.",
+
+                    error:
+                        error.message
 
                 });
 
             }
+
+            console.log(
+                "NEW BOOK SAVED IN SUPABASE:"
+            );
+
+            console.log(
+                newBook
+            );
 
             return res.json({
 
@@ -1986,6 +2116,12 @@ app.post(
                     Description:
                         newBook.description,
 
+                    Price:
+                        Number(newBook.price) || 0,
+
+                    price:
+                        Number(newBook.price) || 0,
+
                     RentedBy:
                         newBook.rented_by || ""
 
@@ -1997,7 +2133,10 @@ app.post(
 
         catch (error) {
 
-            console.log(error);
+            console.log(
+                "Add book server error:",
+                error
+            );
 
             return res.status(500).json({
 
@@ -2033,8 +2172,31 @@ app.put(
                 category,
                 year,
                 image,
-                description
+                description,
+                price
             } = req.body;
+
+            console.log(
+                "======================================"
+            );
+
+            console.log(
+                "UPDATE BOOK API CALLED"
+            );
+
+            console.log(
+                "BOOK ID:",
+                bookId
+            );
+
+            console.log(
+                "PRICE RECEIVED FROM ADMIN:",
+                price
+            );
+
+            console.log(
+                "======================================"
+            );
 
             const updateData = {};
 
@@ -2084,34 +2246,76 @@ app.put(
 
             }
 
+            // ==================================================
+            // IMPORTANT PRICE UPDATE
+            // ==================================================
+
+            if (
+                price !== undefined
+            ) {
+
+                updateData.price =
+                    Number(price) || 0;
+
+            }
+
+            console.log(
+                "UPDATE DATA:"
+            );
+
+            console.log(
+                updateData
+            );
+
             const {
                 data: updatedBook,
                 error
             } = await supabase
                 .from("books")
-                .update(updateData)
+                .update(
+                    updateData
+                )
                 .eq(
                     "id",
                     bookId
                 )
-                .select()
+                .select("*")
                 .single();
 
             if (error) {
 
                 console.log(
-                    "Update book error:",
+                    "UPDATE BOOK SUPABASE ERROR:",
                     error
                 );
 
                 return res.status(500).json({
 
                     message:
-                        "Unable to update book."
+                        "Unable to update book.",
+
+                    error:
+                        error.message
 
                 });
 
             }
+
+            console.log(
+                "UPDATED BOOK FROM SUPABASE:"
+            );
+
+            console.log(
+                updatedBook
+            );
+
+            const finalPrice =
+                Number(updatedBook.price) || 0;
+
+            console.log(
+                "FINAL UPDATED PRICE:",
+                finalPrice
+            );
 
             return res.json({
 
@@ -2144,6 +2348,12 @@ app.put(
                     Description:
                         updatedBook.description,
 
+                    Price:
+                        finalPrice,
+
+                    price:
+                        finalPrice,
+
                     RentedBy:
                         updatedBook.rented_by || ""
 
@@ -2155,7 +2365,10 @@ app.put(
 
         catch (error) {
 
-            console.log(error);
+            console.log(
+                "Update book server error:",
+                error
+            );
 
             return res.status(500).json({
 
@@ -2590,4 +2803,3 @@ app.listen(
 
     }
 );
-

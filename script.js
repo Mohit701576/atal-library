@@ -1540,6 +1540,12 @@ document.addEventListener("DOMContentLoaded", function () {
                                 book.Year
                             ) || "",
 
+                        price:
+                            Number(
+                                book.price ??
+                                book.Price
+                            ) || 0,
+
                         image:
                             book.image ??
                             book.Image ??
@@ -1889,6 +1895,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const modalYear =
         document.getElementById("year");
 
+    const modalPrice =
+        document.getElementById("modalPrice");
+
     const modalStatus =
         document.getElementById("modalStatus");
 
@@ -1945,6 +1954,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (modalYear) {
             modalYear.innerText =
                 "Year: " + book.year;
+        }
+
+        if (modalPrice) {
+            modalPrice.innerText =
+                "Price: ₹" + book.price;
         }
 
 

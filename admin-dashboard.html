@@ -293,13 +293,13 @@
     }
 
 </style>
-```
+
 
 </head>
 
 <body>
 
-```
+
 <!-- ================= NAVBAR ================= -->
 
 <nav class="navbar">
@@ -676,6 +676,13 @@
                 placeholder="Year"
             >
 
+            <input
+                type="number"
+                id="bookPrice"
+                placeholder="Price"
+                min="0"
+            >
+
 
             <input
                 type="text"
@@ -751,6 +758,10 @@
                         </th>
 
                         <th>
+                            Price
+                        </th>
+
+                        <th>
                             Status
                         </th>
 
@@ -767,7 +778,7 @@
 
                     <tr>
 
-                        <td colspan="7">
+                        <td colspan="8">
                             Loading...
                         </td>
 
@@ -1452,7 +1463,7 @@ function displayBooks(books) {
 
         table.innerHTML = `
             <tr>
-                <td colspan="7">
+                <td colspan="8">
                     No books found.
                 </td>
             </tr>
@@ -1502,6 +1513,10 @@ function displayBooks(books) {
 
                 <td>
                     ${book.Year || ""}
+                </td>
+
+                <td>
+                    ₹${book.Price || 0}
                 </td>
 
                 <td>
@@ -1573,6 +1588,11 @@ document.getElementById(
                 "bookYear"
             ).value.trim();
 
+        const price =
+            document.getElementById(
+                "bookPrice"
+            ).value.trim();
+
 
         const image =
             document.getElementById(
@@ -1606,6 +1626,8 @@ document.getElementById(
             category: category,
 
             year: year,
+
+            price: price,
 
             image: image,
 
@@ -1758,6 +1780,10 @@ function editBook(id) {
     ).value =
         book.Year || "";
 
+    document.getElementById(
+        "bookPrice"
+    ).value =
+        book.Price || "";
 
     document.getElementById(
         "bookImage"
@@ -1921,6 +1947,10 @@ function clearBookForm() {
 
     document.getElementById(
         "bookYear"
+    ).value = "";
+
+    document.getElementById(
+        "bookPrice"
     ).value = "";
 
 
