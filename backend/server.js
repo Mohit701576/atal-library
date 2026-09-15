@@ -5,6 +5,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const crypto = require("crypto");
+const multer = require("multer");
 const { Resend } = require("resend");
 
 // ==================================================
@@ -23,6 +24,235 @@ const supabase = createClient(
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+
+// ==================================================
+// PROFILE PHOTO UPLOAD
+// ==================================================
+
+const PROFILE_PHOTOS_BUCKET = "profile-photos";
+
+const upload = multer({
+
+    storage: multer.memoryStorage(),
+
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    },
+
+    fileFilter: (req, file, cb) => {
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif"
+        ];
+
+        if (allowedTypes.includes(file.mimetype)) {
+
+            cb(null, true);
+
+        } else {
+
+            cb(
+                new Error(
+                    "Only JPG, PNG, WEBP and GIF images are allowed."
+                )
+            );
+
+        }
+
+    }
+
+});
+
+// ==================================================
+// PROFILE PHOTO MIDDLEWARE
+// ==================================================
+
+function uploadProfilePhoto(req, res, next) {
+
+    upload.single("profile_photo")(
+        req,
+        res,
+        function (err) {
+
+            if (err instanceof multer.MulterError) {
+
+                if (err.code === "LIMIT_FILE_SIZE") {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        message:
+                            "Profile photo must be 5 MB or smaller."
+
+                    });
+
+                }
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message: err.message
+
+                });
+
+            }
+
+            if (err) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message: err.message
+
+                });
+
+            }
+
+            next();
+
+        }
+    );
+
+}
+
+// ==================================================
+// GET PHOTO EXTENSION
+// ==================================================
+
+function getPhotoExtension(mimetype) {
+
+    if (mimetype === "image/png") {
+        return "png";
+    }
+
+    if (mimetype === "image/webp") {
+        return "webp";
+    }
+
+    if (mimetype === "image/gif") {
+        return "gif";
+    }
+
+    return "jpg";
+
+}
+
+// ==================================================
+// UPLOAD PHOTO TO SUPABASE
+// ==================================================
+
+async function saveProfilePhoto(
+    userId,
+    file
+) {
+
+    const extension =
+        getPhotoExtension(file.mimetype);
+
+    const filePath =
+        `users/${userId}/profile.${extension}`;
+
+    const {
+        error: uploadError
+    } = await supabase
+        .storage
+        .from(PROFILE_PHOTOS_BUCKET)
+        .upload(
+            filePath,
+            file.buffer,
+            {
+                contentType: file.mimetype,
+                upsert: true
+            }
+        );
+
+    if (uploadError) {
+
+        throw uploadError;
+
+    }
+
+    const {
+        data: publicUrlData
+    } = supabase
+        .storage
+        .from(PROFILE_PHOTOS_BUCKET)
+        .getPublicUrl(filePath);
+
+    if (
+        !publicUrlData ||
+        !publicUrlData.publicUrl
+    ) {
+
+        throw new Error(
+            "Unable to create profile photo URL."
+        );
+
+    }
+
+    return (
+        publicUrlData.publicUrl +
+        "?v=" +
+        Date.now()
+    );
+
+}
+
+// ==================================================
+// DELETE OLD PROFILE PHOTOS
+// ==================================================
+
+async function deleteOldProfilePhotos(
+    userId,
+    currentFilePath
+) {
+
+    const possibleFiles = [
+
+        `users/${userId}/profile.jpg`,
+
+        `users/${userId}/profile.png`,
+
+        `users/${userId}/profile.webp`,
+
+        `users/${userId}/profile.gif`
+
+    ];
+
+    const filesToDelete =
+        possibleFiles.filter(
+            function (filePath) {
+
+                return filePath !== currentFilePath;
+
+            }
+        );
+
+    try {
+
+        await supabase
+            .storage
+            .from(PROFILE_PHOTOS_BUCKET)
+            .remove(filesToDelete);
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Old profile photo delete warning:",
+            error
+        );
+
+    }
+
+}
 
 // ==================================================
 // MIDDLEWARE
@@ -53,7 +283,8 @@ const resend = new Resend(
 function generateOTP() {
 
     return Math.floor(
-        100000 + Math.random() * 900000
+        100000 +
+        Math.random() * 900000
     ).toString();
 
 }
@@ -112,7 +343,9 @@ app.post(
                     .randomBytes(32)
                     .toString("hex");
 
-            res.json({
+            return res.json({
+
+                success: true,
 
                 message:
                     "Admin login successful.",
@@ -131,7 +364,7 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            return res.status(500).json({
 
                 message:
                     "Server error."
@@ -197,13 +430,11 @@ app.post(
                 email
             } = req.body;
 
-            // ==================================================
-            // CHECK EMAIL
-            // ==================================================
-
             if (!email) {
 
                 return res.status(400).json({
+
+                    success: false,
 
                     message:
                         "Email is required."
@@ -223,10 +454,6 @@ app.post(
                 cleanEmail
             );
 
-            // ==================================================
-            // CHECK RESEND API KEY
-            // ==================================================
-
             if (!process.env.RESEND_API_KEY) {
 
                 console.log(
@@ -235,8 +462,7 @@ app.post(
 
                 return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     message:
                         "Email service is not configured on server."
@@ -244,10 +470,6 @@ app.post(
                 });
 
             }
-
-            // ==================================================
-            // CHECK EXISTING USER
-            // ==================================================
 
             const {
                 data: existingUsers,
@@ -270,8 +492,7 @@ app.post(
 
                 return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     message:
                         "Unable to check email."
@@ -287,8 +508,7 @@ app.post(
 
                 return res.status(400).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     message:
                         "Email already registered. Please login."
@@ -297,39 +517,20 @@ app.post(
 
             }
 
-            // ==================================================
-            // GENERATE OTP
-            // ==================================================
-
             const otp =
                 generateOTP();
 
-            console.log(
-                "Generated OTP for:",
-                cleanEmail
-            );
-
-            // ==================================================
-            // SAVE OTP
-            // ==================================================
-
             emailOtps[cleanEmail] = {
 
-                otp:
-                    otp,
+                otp: otp,
 
                 expiresAt:
                     Date.now() +
                     5 * 60 * 1000,
 
-                verified:
-                    false
+                verified: false
 
             };
-
-            // ==================================================
-            // SEND EMAIL USING RESEND
-            // ==================================================
 
             const {
                 data,
@@ -354,10 +555,6 @@ Please do not share this OTP with anyone.`
 
             });
 
-            // ==================================================
-            // CHECK RESEND ERROR
-            // ==================================================
-
             if (error) {
 
                 console.log(
@@ -367,8 +564,7 @@ Please do not share this OTP with anyone.`
 
                 return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     message:
                         "Unable to send OTP. Please try again."
@@ -376,10 +572,6 @@ Please do not share this OTP with anyone.`
                 });
 
             }
-
-            // ==================================================
-            // SUCCESS
-            // ==================================================
 
             console.log(
                 "OTP email sent successfully."
@@ -392,8 +584,7 @@ Please do not share this OTP with anyone.`
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "OTP sent to your email."
@@ -405,25 +596,13 @@ Please do not share this OTP with anyone.`
         catch (error) {
 
             console.log(
-                "================================"
-            );
-
-            console.log(
-                "OTP SEND ERROR"
-            );
-
-            console.log(
+                "OTP SEND ERROR:",
                 error
-            );
-
-            console.log(
-                "================================"
             );
 
             return res.status(500).json({
 
-                success:
-                    false,
+                success: false,
 
                 message:
                     "Unable to send OTP. Please try again."
@@ -450,16 +629,14 @@ app.post(
                 otp
             } = req.body;
 
-            // ==================================================
-            // REQUIRED
-            // ==================================================
-
             if (
                 !email ||
                 !otp
             ) {
 
                 return res.status(400).json({
+
+                    success: false,
 
                     message:
                         "Email and OTP are required."
@@ -479,10 +656,6 @@ app.post(
                     .toString()
                     .trim();
 
-            // ==================================================
-            // FIND OTP
-            // ==================================================
-
             const savedOTP =
                 emailOtps[cleanEmail];
 
@@ -490,16 +663,14 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "OTP not found. Please request a new OTP."
 
                 });
 
             }
-
-            // ==================================================
-            // CHECK EXPIRY
-            // ==================================================
 
             if (
                 Date.now() >
@@ -510,16 +681,14 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "OTP expired. Please request a new OTP."
 
                 });
 
             }
-
-            // ==================================================
-            // CHECK OTP
-            // ==================================================
 
             if (
                 cleanOTP !==
@@ -528,16 +697,14 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Invalid OTP."
 
                 });
 
             }
-
-            // ==================================================
-            // VERIFIED
-            // ==================================================
 
             emailOtps[cleanEmail].verified =
                 true;
@@ -549,8 +716,7 @@ app.post(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Email verified successfully."
@@ -568,6 +734,8 @@ app.post(
 
             return res.status(500).json({
 
+                success: false,
+
                 message:
                     "Unable to verify OTP."
 
@@ -584,6 +752,7 @@ app.post(
 
 app.post(
     "/register",
+    uploadProfilePhoto,
     async (req, res) => {
 
         try {
@@ -599,9 +768,9 @@ app.post(
                 password
             } = req.body;
 
-            // ==================================================
+            // ------------------------------------------
             // REQUIRED FIELDS
-            // ==================================================
+            // ------------------------------------------
 
             if (
                 !name ||
@@ -612,6 +781,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Name, email, phone and password are required."
 
@@ -619,9 +790,26 @@ app.post(
 
             }
 
-            // ==================================================
+            // ------------------------------------------
+            // PHOTO REQUIRED
+            // ------------------------------------------
+
+            if (!req.file) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Please upload a profile photo."
+
+                });
+
+            }
+
+            // ------------------------------------------
             // CLEAN DATA
-            // ==================================================
+            // ------------------------------------------
 
             const cleanName =
                 name
@@ -639,9 +827,9 @@ app.post(
                     .toString()
                     .trim();
 
-            // ==================================================
+            // ------------------------------------------
             // PHONE CHECK
-            // ==================================================
+            // ------------------------------------------
 
             if (
                 !/^\d{10}$/.test(
@@ -651,6 +839,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Please enter a valid 10-digit phone number."
 
@@ -658,9 +848,9 @@ app.post(
 
             }
 
-            // ==================================================
+            // ------------------------------------------
             // DUPLICATE EMAIL
-            // ==================================================
+            // ------------------------------------------
 
             const {
                 data: existingUsers,
@@ -683,6 +873,8 @@ app.post(
 
                 return res.status(500).json({
 
+                    success: false,
+
                     message:
                         "Unable to check user."
 
@@ -697,6 +889,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "You have already registered. Please login."
 
@@ -704,9 +898,9 @@ app.post(
 
             }
 
-            // ==================================================
+            // ------------------------------------------
             // CHECK OTP
-            // ==================================================
+            // ------------------------------------------
 
             const verifiedOTP =
                 emailOtps[cleanEmail];
@@ -718,6 +912,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Please verify your email before registering."
 
@@ -725,11 +921,12 @@ app.post(
 
             }
 
-            // ==================================================
+            // ------------------------------------------
             // INSERT USER
-            // ==================================================
+            // ------------------------------------------
 
             const {
+                data: newUser,
                 error: insertError
             } = await supabase
                 .from("users")
@@ -745,18 +942,27 @@ app.post(
                         cleanPhone,
 
                     password:
-                        password
+                        password,
 
-                });
+                    profile_photo:
+                        null
+
+                })
+                .select(
+                    "id,name,email,phone,profile_photo"
+                )
+                .single();
 
             if (insertError) {
 
                 console.log(
-                    "Register error:",
+                    "Register insert error:",
                     insertError
                 );
 
                 return res.status(500).json({
+
+                    success: false,
 
                     message:
                         "Unable to register user."
@@ -765,19 +971,121 @@ app.post(
 
             }
 
-            // ==================================================
+            // ------------------------------------------
+            // SAVE PHOTO
+            // ------------------------------------------
+
+            let profilePhotoUrl;
+
+            try {
+
+                profilePhotoUrl =
+                    await saveProfilePhoto(
+                        newUser.id,
+                        req.file
+                    );
+
+            }
+
+            catch (photoError) {
+
+                console.log(
+                    "Profile photo upload error:",
+                    photoError
+                );
+
+                // Delete user if photo upload fails
+                await supabase
+                    .from("users")
+                    .delete()
+                    .eq(
+                        "id",
+                        newUser.id
+                    );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Profile photo upload failed."
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // SAVE PHOTO URL
+            // ------------------------------------------
+
+            const {
+                error: photoUpdateError
+            } = await supabase
+                .from("users")
+                .update({
+
+                    profile_photo:
+                        profilePhotoUrl
+
+                })
+                .eq(
+                    "id",
+                    newUser.id
+                );
+
+            if (photoUpdateError) {
+
+                console.log(
+                    "Profile photo URL update error:",
+                    photoUpdateError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Photo uploaded but could not be saved."
+
+                });
+
+            }
+
+            // ------------------------------------------
             // DELETE OTP
-            // ==================================================
+            // ------------------------------------------
 
             delete emailOtps[cleanEmail];
 
-            return res.json({
+            // ------------------------------------------
+            // SUCCESS
+            // ------------------------------------------
 
-                success:
-                    true,
+            return res.status(201).json({
+
+                success: true,
 
                 message:
-                    "User registered successfully."
+                    "User registered successfully.",
+
+                user: {
+
+                    id:
+                        newUser.id,
+
+                    name:
+                        cleanName,
+
+                    email:
+                        cleanEmail,
+
+                    phone:
+                        cleanPhone,
+
+                    profile_photo:
+                        profilePhotoUrl
+
+                }
 
             });
 
@@ -791,6 +1099,8 @@ app.post(
             );
 
             return res.status(500).json({
+
+                success: false,
 
                 message:
                     "Server error."
@@ -823,6 +1133,8 @@ app.post(
             ) {
 
                 return res.status(400).json({
+
+                    success: false,
 
                     message:
                         "Email and password are required."
@@ -858,6 +1170,8 @@ app.post(
 
                 return res.status(500).json({
 
+                    success: false,
+
                     message:
                         "Unable to login."
 
@@ -871,6 +1185,8 @@ app.post(
             ) {
 
                 return res.status(404).json({
+
+                    success: false,
 
                     message:
                         "User not found. Please register."
@@ -889,6 +1205,8 @@ app.post(
 
                 return res.status(401).json({
 
+                    success: false,
+
                     message:
                         "Incorrect email or password."
 
@@ -898,13 +1216,15 @@ app.post(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Login successful.",
 
                 user: {
+
+                    id:
+                        user.id || "",
 
                     name:
                         user.name || "",
@@ -913,7 +1233,10 @@ app.post(
                         user.email || "",
 
                     phone:
-                        user.phone || ""
+                        user.phone || "",
+
+                    profile_photo:
+                        user.profile_photo || ""
 
                 }
 
@@ -929,6 +1252,408 @@ app.post(
             );
 
             return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// CHANGE / UPLOAD PROFILE PHOTO
+// ==================================================
+
+app.post(
+    "/profile-photo",
+    uploadProfilePhoto,
+    async (req, res) => {
+
+        try {
+
+            const {
+                email
+            } = req.body;
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Email is required."
+
+                });
+
+            }
+
+            if (!req.file) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Please select a profile photo."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            // ------------------------------------------
+            // FIND USER
+            // ------------------------------------------
+
+            const {
+                data: users,
+                error: userError
+            } = await supabase
+                .from("users")
+                .select(
+                    "id,name,email,phone,profile_photo"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .limit(1);
+
+            if (userError) {
+
+                console.log(
+                    "Profile user search error:",
+                    userError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to find user."
+
+                });
+
+            }
+
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found."
+
+                });
+
+            }
+
+            const user =
+                users[0];
+
+            // ------------------------------------------
+            // UPLOAD NEW PHOTO
+            // ------------------------------------------
+
+            const extension =
+                getPhotoExtension(
+                    req.file.mimetype
+                );
+
+            const filePath =
+                `users/${user.id}/profile.${extension}`;
+
+            const {
+                error: uploadError
+            } = await supabase
+                .storage
+                .from(PROFILE_PHOTOS_BUCKET)
+                .upload(
+                    filePath,
+                    req.file.buffer,
+                    {
+                        contentType:
+                            req.file.mimetype,
+
+                        upsert:
+                            true
+                    }
+                );
+
+            if (uploadError) {
+
+                console.log(
+                    "Change photo upload error:",
+                    uploadError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to upload new profile photo."
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // GET NEW PHOTO URL
+            // ------------------------------------------
+
+            const {
+                data: publicUrlData
+            } = supabase
+                .storage
+                .from(PROFILE_PHOTOS_BUCKET)
+                .getPublicUrl(filePath);
+
+            const profilePhotoUrl =
+                publicUrlData.publicUrl +
+                "?v=" +
+                Date.now();
+
+            // ------------------------------------------
+            // UPDATE USER
+            // ------------------------------------------
+
+            const {
+                error: updateError
+            } = await supabase
+                .from("users")
+                .update({
+
+                    profile_photo:
+                        profilePhotoUrl
+
+                })
+                .eq(
+                    "id",
+                    user.id
+                );
+
+            if (updateError) {
+
+                console.log(
+                    "Change photo database error:",
+                    updateError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Photo uploaded but database update failed."
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // DELETE OLD FORMAT FILES
+            // ------------------------------------------
+
+            await deleteOldProfilePhotos(
+                user.id,
+                filePath
+            );
+
+            // ------------------------------------------
+            // SUCCESS
+            // ------------------------------------------
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Profile photo updated successfully.",
+
+                profile_photo:
+                    profilePhotoUrl,
+
+                user: {
+
+                    id:
+                        user.id,
+
+                    name:
+                        user.name || "",
+
+                    email:
+                        user.email || "",
+
+                    phone:
+                        user.phone || "",
+
+                    profile_photo:
+                        profilePhotoUrl
+
+                }
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Profile photo server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// GET CURRENT USER PROFILE
+// ==================================================
+
+app.get(
+    "/profile",
+    async (req, res) => {
+
+        try {
+
+            const email =
+                req.query.email;
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Email is required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            const {
+                data: users,
+                error
+            } = await supabase
+                .from("users")
+                .select(
+                    "id,name,email,phone,profile_photo"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .limit(1);
+
+            if (error) {
+
+                console.log(
+                    "Profile error:",
+                    error
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to get profile."
+
+                });
+
+            }
+
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found."
+
+                });
+
+            }
+
+            const user =
+                users[0];
+
+            return res.json({
+
+                success: true,
+
+                user: {
+
+                    id:
+                        user.id || "",
+
+                    name:
+                        user.name || "",
+
+                    email:
+                        user.email || "",
+
+                    phone:
+                        user.phone || "",
+
+                    profile_photo:
+                        user.profile_photo || ""
+
+                }
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Profile server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
 
                 message:
                     "Server error."
@@ -964,6 +1689,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Email, phone number and new password are required."
 
@@ -990,6 +1717,8 @@ app.post(
 
                 return res.status(400).json({
 
+                    success: false,
+
                     message:
                         "Please enter a valid 10-digit phone number."
 
@@ -1002,7 +1731,9 @@ app.post(
                 error
             } = await supabase
                 .from("users")
-                .select("id,email,phone")
+                .select(
+                    "id,email,phone"
+                )
                 .eq(
                     "email",
                     cleanEmail
@@ -1022,6 +1753,8 @@ app.post(
 
                 return res.status(500).json({
 
+                    success: false,
+
                     message:
                         "Unable to change password."
 
@@ -1035,6 +1768,8 @@ app.post(
             ) {
 
                 return res.status(404).json({
+
+                    success: false,
 
                     message:
                         "Email and phone number do not match."
@@ -1070,6 +1805,8 @@ app.post(
 
                 return res.status(500).json({
 
+                    success: false,
+
                     message:
                         "Unable to change password."
 
@@ -1079,8 +1816,7 @@ app.post(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Password changed successfully."
@@ -1097,6 +1833,8 @@ app.post(
             );
 
             return res.status(500).json({
+
+                success: false,
 
                 message:
                     "Server error."
@@ -1123,7 +1861,9 @@ app.get(
                 error
             } = await supabase
                 .from("users")
-                .select("name,email,phone")
+                .select(
+                    "name,email,phone,profile_photo"
+                )
                 .order(
                     "created_at",
                     {
@@ -1160,7 +1900,10 @@ app.get(
                                 user.email || "",
 
                             Phone:
-                                user.phone || ""
+                                user.phone || "",
+
+                            ProfilePhoto:
+                                user.profile_photo || ""
 
                         };
 
@@ -1382,8 +2125,7 @@ app.post(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Book rented successfully."
@@ -1653,8 +2395,7 @@ app.post(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Book submitted successfully."
@@ -1721,18 +2462,6 @@ app.get(
 
             }
 
-            // ==================================================
-            // DEBUG
-            // ==================================================
-
-            console.log(
-                "BOOKS FROM SUPABASE:"
-            );
-
-            console.log(
-                books
-            );
-
             const formattedBooks =
                 (books || []).map(
                     function (book) {
@@ -1760,12 +2489,9 @@ app.get(
                             Description:
                                 book.description || "",
 
-                            // PRICE
                             Price:
                                 Number(book.price) || 0,
 
-                            // ALSO SEND LOWERCASE PRICE
-                            // This makes frontend debugging easier
                             price:
                                 Number(book.price) || 0,
 
@@ -1776,14 +2502,6 @@ app.get(
 
                     }
                 );
-
-            console.log(
-                "FORMATTED BOOKS:"
-            );
-
-            console.log(
-                formattedBooks
-            );
 
             return res.json(
                 formattedBooks
@@ -1853,41 +2571,12 @@ app.get(
 
             }
 
-            // ==================================================
-            // IMPORTANT DEBUG
-            // ==================================================
-
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "ADMIN BOOKS FROM SUPABASE:"
-            );
-
-            console.log(
-                books
-            );
-
-            console.log(
-                "======================================"
-            );
-
             const formattedBooks =
                 (books || []).map(
                     function (book) {
 
                         const bookPrice =
                             Number(book.price) || 0;
-
-                        console.log(
-                            "BOOK:",
-                            book.name,
-                            "PRICE FROM SUPABASE:",
-                            book.price,
-                            "FINAL PRICE:",
-                            bookPrice
-                        );
 
                         return {
 
@@ -1912,11 +2601,9 @@ app.get(
                             Description:
                                 book.description || "",
 
-                            // PRICE FOR ADMIN DASHBOARD
                             Price:
                                 bookPrice,
 
-                            // LOWERCASE PRICE ALSO SENT
                             price:
                                 bookPrice,
 
@@ -1927,14 +2614,6 @@ app.get(
 
                     }
                 );
-
-            console.log(
-                "ADMIN FORMATTED BOOKS:"
-            );
-
-            console.log(
-                formattedBooks
-            );
 
             return res.json(
                 formattedBooks
@@ -1982,23 +2661,6 @@ app.post(
                 price
             } = req.body;
 
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "ADD BOOK API CALLED"
-            );
-
-            console.log(
-                "PRICE RECEIVED FROM ADMIN:",
-                price
-            );
-
-            console.log(
-                "======================================"
-            );
-
             if (
                 !name ||
                 !author ||
@@ -2017,11 +2679,6 @@ app.post(
 
             const finalPrice =
                 Number(price) || 0;
-
-            console.log(
-                "FINAL PRICE TO SAVE:",
-                finalPrice
-            );
 
             const {
                 data: newBook,
@@ -2077,18 +2734,9 @@ app.post(
 
             }
 
-            console.log(
-                "NEW BOOK SAVED IN SUPABASE:"
-            );
-
-            console.log(
-                newBook
-            );
-
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Book added successfully.",
@@ -2176,105 +2824,50 @@ app.put(
                 price
             } = req.body;
 
-            console.log(
-                "======================================"
-            );
-
-            console.log(
-                "UPDATE BOOK API CALLED"
-            );
-
-            console.log(
-                "BOOK ID:",
-                bookId
-            );
-
-            console.log(
-                "PRICE RECEIVED FROM ADMIN:",
-                price
-            );
-
-            console.log(
-                "======================================"
-            );
-
             const updateData = {};
 
             if (name) {
-
-                updateData.name =
-                    name;
-
+                updateData.name = name;
             }
 
             if (author) {
-
-                updateData.author =
-                    author;
-
+                updateData.author = author;
             }
 
             if (category) {
-
-                updateData.category =
-                    category;
-
+                updateData.category = category;
             }
 
             if (year) {
-
-                updateData.year =
-                    Number(year);
-
+                updateData.year = Number(year);
             }
 
             if (
                 image !== undefined
             ) {
-
-                updateData.image =
-                    image;
-
+                updateData.image = image;
             }
 
             if (
                 description !== undefined
             ) {
-
                 updateData.description =
                     description;
-
             }
-
-            // ==================================================
-            // IMPORTANT PRICE UPDATE
-            // ==================================================
 
             if (
                 price !== undefined
             ) {
-
                 updateData.price =
                     Number(price) || 0;
-
             }
-
-            console.log(
-                "UPDATE DATA:"
-            );
-
-            console.log(
-                updateData
-            );
 
             const {
                 data: updatedBook,
                 error
             } = await supabase
                 .from("books")
-                .update(
-                    updateData
-                )
+                .update(updateData)
                 .eq(
                     "id",
                     bookId
@@ -2301,26 +2894,12 @@ app.put(
 
             }
 
-            console.log(
-                "UPDATED BOOK FROM SUPABASE:"
-            );
-
-            console.log(
-                updatedBook
-            );
-
             const finalPrice =
                 Number(updatedBook.price) || 0;
 
-            console.log(
-                "FINAL UPDATED PRICE:",
-                finalPrice
-            );
-
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Book updated successfully.",
@@ -2403,7 +2982,9 @@ app.delete(
                 error: findError
             } = await supabase
                 .from("books")
-                .select("id,rented_by")
+                .select(
+                    "id,rented_by"
+                )
                 .eq(
                     "id",
                     bookId
@@ -2476,8 +3057,7 @@ app.delete(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Book deleted successfully."
@@ -2518,7 +3098,9 @@ app.get(
                 error
             } = await supabase
                 .from("users")
-                .select("name,email,phone")
+                .select(
+                    "name,email,phone,profile_photo"
+                )
                 .order(
                     "created_at",
                     {
@@ -2555,7 +3137,10 @@ app.get(
                                 user.email || "",
 
                             Phone:
-                                user.phone || ""
+                                user.phone || "",
+
+                            ProfilePhoto:
+                                user.profile_photo || ""
 
                         };
 
@@ -2726,8 +3311,7 @@ app.get(
 
                 return res.status(500).json({
 
-                    success:
-                        false,
+                    success: false,
 
                     error:
                         error.message
@@ -2738,8 +3322,7 @@ app.get(
 
             return res.json({
 
-                success:
-                    true,
+                success: true,
 
                 message:
                     "Supabase connected successfully!",
@@ -2760,8 +3343,7 @@ app.get(
 
             return res.status(500).json({
 
-                success:
-                    false,
+                success: false,
 
                 error:
                     error.message
