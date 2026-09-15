@@ -58,6 +58,18 @@ function generateOTP() {
 
 }
 
+function getIndiaTime() {
+
+    return new Date().toLocaleString(
+        "en-IN",
+        {
+            timeZone: "Asia/Kolkata"
+        }
+    );
+
+}
+
+
 // ==================================================
 // ADMIN LOGIN
 // ==================================================
@@ -1320,7 +1332,7 @@ app.post(
             }
 
             const rentDate =
-                new Date().toISOString();
+                getIndiaTime();
 
             const {
                 error: transactionError
@@ -1578,7 +1590,7 @@ app.post(
                 transactions[0];
 
             const submitDate =
-                new Date().toISOString();
+                getIndiaTime();
 
             const {
                 error: transactionUpdateError
