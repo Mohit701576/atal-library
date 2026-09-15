@@ -627,6 +627,7 @@
                 <p id="year">
                 </p>
 
+
                 <p id="modalPrice">
                 </p>
 
@@ -653,6 +654,7 @@
                 >
                     Submit Book
                 </button>
+
 
             </div>
 
@@ -765,176 +767,195 @@
 
     </div>
 
-<!-- ================= REGISTER MODAL ================= -->
-
-<div
-    id="registerModal"
-    class="auth-modal"
->
-
-    <div class="auth-modal-content">
-
-        <button
-            id="registerClose"
-            class="auth-close"
-        >
-            ×
-        </button>
 
 
-        <div class="auth-icon">
-            👤
-        </div>
+    <!-- ================= REGISTER MODAL ================= -->
 
+    <div
+        id="registerModal"
+        class="auth-modal"
+    >
 
-        <h2>
-            Create Account
-        </h2>
+        <div class="auth-modal-content">
 
-
-        <p>
-            Join Atal Library today
-        </p>
-
-
-        <form id="registerForm">
-
-
-            <!-- FULL NAME -->
-
-            <label>
-                Full Name
-            </label>
-
-            <input
-                type="text"
-                id="registerName"
-                placeholder="Enter your name"
-                required
+            <button
+                id="registerClose"
+                class="auth-close"
             >
+                ×
+            </button>
 
 
-            <!-- EMAIL -->
-
-            <label>
-                Email
-            </label>
-
-            <div class="otp-email-row">
-
-                <input
-                    type="email"
-                    id="registerEmail"
-                    placeholder="Enter your email"
-                    required
-                >
-
-                <button
-                    type="button"
-                    id="sendEmailOtp"
-                >
-                    Send OTP
-                </button>
-
+            <div class="auth-icon">
+                👤
             </div>
 
 
-            <!-- EMAIL OTP -->
+            <h2>
+                Create Account
+            </h2>
 
-            <label>
-                Email OTP
-            </label>
 
-            <div class="otp-email-row">
+            <p>
+                Join Atal Library today
+            </p>
+
+
+            <form id="registerForm">
+
+
+                <!-- FULL NAME -->
+
+                <label>
+                    Full Name
+                </label>
 
                 <input
                     type="text"
-                    id="emailOtp"
-                    placeholder="Enter 6-digit OTP"
-                    maxlength="6"
-                    inputmode="numeric"
+                    id="registerName"
+                    placeholder="Enter your name"
+                    required
                 >
+
+
+                <!-- EMAIL -->
+
+                <label>
+                    Email
+                </label>
+
+                <div class="otp-email-row">
+
+                    <input
+                        type="email"
+                        id="registerEmail"
+                        placeholder="Enter your email"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        id="sendEmailOtp"
+                    >
+                        Send OTP
+                    </button>
+
+                </div>
+
+
+                <!-- EMAIL OTP -->
+
+                <label>
+                    Email OTP
+                </label>
+
+                <div class="otp-email-row">
+
+                    <input
+                        type="text"
+                        id="emailOtp"
+                        placeholder="Enter 6-digit OTP"
+                        maxlength="6"
+                        inputmode="numeric"
+                    >
+
+                    <button
+                        type="button"
+                        id="verifyEmailOtp"
+                    >
+                        Verify
+                    </button>
+
+                </div>
+
+
+                <!-- OTP STATUS -->
+
+                <p
+                    id="emailOtpStatus"
+                    style="margin: 5px 0; font-size: 14px;"
+                ></p>
+
+
+                <!-- PHONE -->
+
+                <label>
+                    Phone Number
+                </label>
+
+                <input
+                    type="tel"
+                    id="registerPhone"
+                    placeholder="Enter your phone number"
+                    maxlength="10"
+                    pattern="[0-9]{10}"
+                    required
+                >
+
+
+                <!-- PASSWORD -->
+
+                <label>
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="registerPassword"
+                    placeholder="Create password"
+                    required
+                >
+
+
+                <!-- ================= PROFILE PHOTO ================= -->
+
+                <label for="registerPhoto">
+                    Profile Photo
+                </label>
+
+                <input
+                    type="file"
+                    id="registerPhoto"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    required
+                >
+
+                <small style="display:block; margin-top:5px;">
+                    JPG, PNG, WEBP or GIF — Maximum 5 MB
+                </small>
+
+
+                <!-- CREATE ACCOUNT -->
+
+                <button
+                    type="submit"
+                    class="auth-submit"
+                    id="createAccountBtn"
+                >
+                    Create Account
+                </button>
+
+
+            </form>
+
+
+            <p class="auth-switch">
+
+                Already have an account?
 
                 <button
                     type="button"
-                    id="verifyEmailOtp"
+                    id="openLogin"
                 >
-                    Verify
+                    Login
                 </button>
 
-            </div>
+            </p>
 
 
-            <!-- OTP STATUS -->
-
-            <p
-                id="emailOtpStatus"
-                style="margin: 5px 0; font-size: 14px;"
-            ></p>
-
-
-            <!-- PHONE -->
-
-            <label>
-                Phone Number
-            </label>
-
-            <input
-                type="tel"
-                id="registerPhone"
-                placeholder="Enter your phone number"
-                maxlength="10"
-                pattern="[0-9]{10}"
-                required
-            >
-
-
-            <!-- PASSWORD -->
-
-            <label>
-                Password
-            </label>
-
-            <input
-                type="password"
-                id="registerPassword"
-                placeholder="Create password"
-                required
-            >
-
-
-            <!-- CREATE ACCOUNT -->
-
-            <button
-                type="submit"
-                class="auth-submit"
-                id="createAccountBtn"
-            >
-                Create Account
-            </button>
-
-
-        </form>
-
-
-        <p class="auth-switch">
-
-            Already have an account?
-
-            <button
-                type="button"
-                id="openLogin"
-            >
-                Login
-            </button>
-
-        </p>
-
+        </div>
 
     </div>
-
-</div>
-
 
 
 

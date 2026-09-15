@@ -83,8 +83,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (forgotPasswordModal) {
+
             forgotPasswordModal.style.display = "none";
-            forgotPasswordModal.classList.remove("show");
+
+            forgotPasswordModal.classList.remove(
+                "show"
+            );
         }
     }
 
@@ -126,8 +130,12 @@ document.addEventListener("DOMContentLoaded", function () {
         closeAllAuthModals();
 
         if (forgotPasswordModal) {
+
             forgotPasswordModal.style.display = "flex";
-            forgotPasswordModal.classList.add("show");
+
+            forgotPasswordModal.classList.add(
+                "show"
+            );
         }
     }
 
@@ -242,7 +250,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (forgotPasswordModal) {
 
-                forgotPasswordModal.style.display = "none";
+                forgotPasswordModal.style.display =
+                    "none";
 
                 forgotPasswordModal.classList.remove(
                     "show"
@@ -320,7 +329,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (forgotPasswordModal) {
 
-                forgotPasswordModal.style.display = "none";
+                forgotPasswordModal.style.display =
+                    "none";
 
                 forgotPasswordModal.classList.remove(
                     "show"
@@ -344,20 +354,96 @@ document.addEventListener("DOMContentLoaded", function () {
         const loggedUser =
             localStorage.getItem("loggedUser");
 
+        const savedUser =
+            localStorage.getItem("libraryUser");
+
+        let user = null;
+
+        if (savedUser) {
+
+            try {
+
+                user = JSON.parse(savedUser);
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "User data error:",
+                    error
+                );
+
+            }
+
+        }
+
 
         if (loggedUser) {
 
-            /* Desktop */
+            /* =============================================
+               PROFILE PHOTO
+            ============================================= */
+
+            const profilePhoto =
+                user && user.profile_photo
+                    ? user.profile_photo
+                    : "";
+
+
+            /* =============================================
+               DESKTOP
+            ============================================= */
 
             if (userGreeting) {
 
-                userGreeting.innerText =
-                    "Hello, " + loggedUser + " 👋";
+                if (profilePhoto) {
+
+                    userGreeting.innerHTML = `
+
+                        <span style="
+                            display:inline-flex;
+                            align-items:center;
+                            gap:8px;
+                        ">
+
+                            <img
+                                src="${profilePhoto}"
+                                alt="Profile"
+                                style="
+                                    width:35px;
+                                    height:35px;
+                                    border-radius:50%;
+                                    object-fit:cover;
+                                    border:2px solid #ffffff;
+                                "
+                            >
+
+                            <span>
+                                Hello, ${loggedUser} 👋
+                            </span>
+
+                        </span>
+
+                    `;
+
+                }
+
+                else {
+
+                    userGreeting.innerText =
+                        "Hello, " +
+                        loggedUser +
+                        " 👋";
+
+                }
+
 
                 userGreeting.style.display =
                     "inline-block";
 
             }
+
 
             if (loginBtn) {
                 loginBtn.style.display = "none";
@@ -372,17 +458,59 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            /* Mobile */
+            /* =============================================
+               MOBILE
+            ============================================= */
 
             if (mobileUserGreeting) {
 
-                mobileUserGreeting.innerText =
-                    "Hello, " + loggedUser + " 👋";
+                if (profilePhoto) {
+
+                    mobileUserGreeting.innerHTML = `
+
+                        <span style="
+                            display:inline-flex;
+                            align-items:center;
+                            gap:8px;
+                        ">
+
+                            <img
+                                src="${profilePhoto}"
+                                alt="Profile"
+                                style="
+                                    width:35px;
+                                    height:35px;
+                                    border-radius:50%;
+                                    object-fit:cover;
+                                    border:2px solid #ffffff;
+                                "
+                            >
+
+                            <span>
+                                Hello, ${loggedUser} 👋
+                            </span>
+
+                        </span>
+
+                    `;
+
+                }
+
+                else {
+
+                    mobileUserGreeting.innerText =
+                        "Hello, " +
+                        loggedUser +
+                        " 👋";
+
+                }
+
 
                 mobileUserGreeting.style.display =
                     "inline-block";
 
             }
+
 
             if (mobileLoginBtn) {
                 mobileLoginBtn.style.display = "none";
@@ -393,14 +521,17 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             if (mobileLogoutBtn) {
-                mobileLogoutBtn.style.display = "inline-block";
+                mobileLogoutBtn.style.display =
+                    "inline-block";
             }
 
         }
 
         else {
 
-            /* Desktop */
+            /* =============================================
+               DESKTOP LOGGED OUT
+            ============================================= */
 
             if (userGreeting) {
                 userGreeting.style.display = "none";
@@ -419,18 +550,22 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            /* Mobile */
+            /* =============================================
+               MOBILE LOGGED OUT
+            ============================================= */
 
             if (mobileUserGreeting) {
                 mobileUserGreeting.style.display = "none";
             }
 
             if (mobileLoginBtn) {
-                mobileLoginBtn.style.display = "inline-block";
+                mobileLoginBtn.style.display =
+                    "inline-block";
             }
 
             if (mobileRegisterBtn) {
-                mobileRegisterBtn.style.display = "inline-block";
+                mobileRegisterBtn.style.display =
+                    "inline-block";
             }
 
             if (mobileLogoutBtn) {
@@ -449,6 +584,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function logoutUser() {
 
         localStorage.removeItem("loggedUser");
+
         localStorage.removeItem("libraryUser");
 
         updateUserUI();
@@ -513,7 +649,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!email) {
 
-                alert("Please enter your email first.");
+                alert(
+                    "Please enter your email first."
+                );
+
                 return;
 
             }
@@ -521,7 +660,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 
-                alert("Please enter a valid email address.");
+                alert(
+                    "Please enter a valid email address."
+                );
+
                 return;
 
             }
@@ -530,6 +672,7 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
 
                 sendEmailOtp.disabled = true;
+
                 sendEmailOtp.innerText = "Sending...";
 
 
@@ -537,6 +680,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     await fetch(
                         `${API_URL}/send-email-otp`,
                         {
+
                             method: "POST",
 
                             headers: {
@@ -547,6 +691,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             body: JSON.stringify({
                                 email: email
                             })
+
                         }
                     );
 
@@ -605,7 +750,9 @@ document.addEventListener("DOMContentLoaded", function () {
             finally {
 
                 sendEmailOtp.disabled = false;
-                sendEmailOtp.innerText = "Send OTP";
+
+                sendEmailOtp.innerText =
+                    "Send OTP";
 
             }
 
@@ -639,6 +786,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!email) {
 
                 alert("Please enter your email.");
+
                 return;
 
             }
@@ -647,6 +795,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!otp) {
 
                 alert("Please enter the OTP.");
+
                 return;
 
             }
@@ -666,13 +815,16 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
 
                 verifyEmailOtp.disabled = true;
-                verifyEmailOtp.innerText = "Verifying...";
+
+                verifyEmailOtp.innerText =
+                    "Verifying...";
 
 
                 const response =
                     await fetch(
                         `${API_URL}/verify-email-otp`,
                         {
+
                             method: "POST",
 
                             headers: {
@@ -681,9 +833,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             },
 
                             body: JSON.stringify({
+
                                 email: email,
                                 otp: otp
+
                             })
+
                         }
                     );
 
@@ -695,6 +850,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!response.ok) {
 
                     emailVerified = false;
+
 
                     if (emailOtpStatus) {
 
@@ -732,7 +888,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 const emailInputElement =
-                    document.getElementById("registerEmail");
+                    document.getElementById(
+                        "registerEmail"
+                    );
 
 
                 if (emailInputElement) {
@@ -746,7 +904,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 verifyEmailOtp.disabled = true;
-                verifyEmailOtp.innerText = "Verified ✓";
+
+                verifyEmailOtp.innerText =
+                    "Verified ✓";
 
             }
 
@@ -772,7 +932,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (!emailVerified) {
 
                     verifyEmailOtp.disabled = false;
-                    verifyEmailOtp.innerText = "Verify";
+
+                    verifyEmailOtp.innerText =
+                        "Verify";
 
                 }
 
@@ -785,6 +947,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /* =====================================================
        REGISTER ACCOUNT
+       WITH PROFILE PHOTO
     ===================================================== */
 
     if (registerForm) {
@@ -794,7 +957,10 @@ document.addEventListener("DOMContentLoaded", function () {
             event.preventDefault();
 
 
-            console.log("REGISTER BUTTON CLICKED");
+            console.log(
+                "REGISTER BUTTON CLICKED"
+            );
+
             console.log(
                 "Email Verified:",
                 emailVerified
@@ -812,6 +978,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const passwordInput =
                 document.getElementById("registerPassword");
+
+            const photoInput =
+                document.getElementById("registerPhoto");
 
 
             const name =
@@ -835,9 +1004,75 @@ document.addEventListener("DOMContentLoaded", function () {
                     : "";
 
 
+            /* =================================================
+               PHOTO CHECK
+            ================================================= */
+
+            if (
+                !photoInput ||
+                !photoInput.files ||
+                photoInput.files.length === 0
+            ) {
+
+                alert(
+                    "Please select your profile photo."
+                );
+
+                return;
+
+            }
+
+
+            const photo =
+                photoInput.files[0];
+
+
+            /* Maximum 5 MB */
+
+            if (photo.size > 5 * 1024 * 1024) {
+
+                alert(
+                    "Profile photo must be 5 MB or smaller."
+                );
+
+                return;
+
+            }
+
+
+            /* Allowed image types */
+
+            const allowedTypes = [
+
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/gif"
+
+            ];
+
+
+            if (!allowedTypes.includes(photo.type)) {
+
+                alert(
+                    "Please select JPG, PNG, WEBP or GIF image."
+                );
+
+                return;
+
+            }
+
+
+            /* =================================================
+               BASIC VALIDATION
+            ================================================= */
+
             if (!name || !email || !phone || !password) {
 
-                alert("Please fill all fields.");
+                alert(
+                    "Please fill all fields."
+                );
+
                 return;
 
             }
@@ -845,7 +1080,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 
-                alert("Please enter a valid email address.");
+                alert(
+                    "Please enter a valid email address."
+                );
+
                 return;
 
             }
@@ -876,12 +1114,18 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
 
                 const createAccountBtn =
-                    document.getElementById("createAccountBtn");
+                    document.getElementById(
+                        "createAccountBtn"
+                    );
 
 
                 if (createAccountBtn) {
+
                     createAccountBtn.disabled = true;
-                    createAccountBtn.innerText = "Creating...";
+
+                    createAccountBtn.innerText =
+                        "Creating...";
+
                 }
 
 
@@ -890,30 +1134,59 @@ document.addEventListener("DOMContentLoaded", function () {
                     {
                         name: name,
                         email: email,
-                        phone: phone
+                        phone: phone,
+                        photo: photo.name
                     }
                 );
 
+
+                /* =================================================
+                   FORM DATA
+                ================================================= */
+
+                const formData =
+                    new FormData();
+
+
+                formData.append(
+                    "name",
+                    name
+                );
+
+                formData.append(
+                    "email",
+                    email
+                );
+
+                formData.append(
+                    "phone",
+                    phone
+                );
+
+                formData.append(
+                    "password",
+                    password
+                );
+
+                formData.append(
+                    "profile_photo",
+                    photo
+                );
+
+
+                /* =================================================
+                   REGISTER API
+                ================================================= */
 
                 const response =
                     await fetch(
                         `${API_URL}/register`,
                         {
+
                             method: "POST",
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
+                            body: formData
 
-                            body: JSON.stringify({
-
-                                name: name,
-                                email: email,
-                                phone: phone,
-                                password: password
-
-                            })
                         }
                     );
 
@@ -940,11 +1213,31 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
+                /* =================================================
+                   SAVE USER DATA
+                ================================================= */
+
                 const user = {
 
-                    name: name,
-                    email: email,
-                    phone: phone
+                    name:
+                        data.user
+                            ? data.user.name
+                            : name,
+
+                    email:
+                        data.user
+                            ? data.user.email
+                            : email,
+
+                    phone:
+                        data.user
+                            ? data.user.phone
+                            : phone,
+
+                    profile_photo:
+                        data.user
+                            ? data.user.profile_photo
+                            : ""
 
                 };
 
@@ -983,7 +1276,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (verifyEmailOtp) {
 
                     verifyEmailOtp.disabled = false;
-                    verifyEmailOtp.innerText = "Verify";
+
+                    verifyEmailOtp.innerText =
+                        "Verify";
 
                 }
 
@@ -1015,12 +1310,15 @@ document.addEventListener("DOMContentLoaded", function () {
             finally {
 
                 const createAccountBtn =
-                    document.getElementById("createAccountBtn");
+                    document.getElementById(
+                        "createAccountBtn"
+                    );
 
 
                 if (createAccountBtn) {
 
                     createAccountBtn.disabled = false;
+
                     createAccountBtn.innerText =
                         "Create Account";
 
@@ -1068,7 +1366,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!email || !password) {
 
-                alert("Please fill all fields.");
+                alert(
+                    "Please fill all fields."
+                );
+
                 return;
 
             }
@@ -1080,6 +1381,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     await fetch(
                         `${API_URL}/login`,
                         {
+
                             method: "POST",
 
                             headers: {
@@ -1088,9 +1390,12 @@ document.addEventListener("DOMContentLoaded", function () {
                             },
 
                             body: JSON.stringify({
+
                                 email: email,
                                 password: password
+
                             })
+
                         }
                     );
 
@@ -1111,6 +1416,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
+                /* =================================================
+                   SAVE LOGGED USER
+                ================================================= */
+
                 localStorage.setItem(
                     "loggedUser",
                     data.user.name
@@ -1121,6 +1430,9 @@ document.addEventListener("DOMContentLoaded", function () {
                     "libraryUser",
                     JSON.stringify({
 
+                        id:
+                            data.user.id || "",
+
                         name:
                             data.user.name,
 
@@ -1128,7 +1440,13 @@ document.addEventListener("DOMContentLoaded", function () {
                             data.user.email,
 
                         phone:
-                            data.user.phone || ""
+                            data.user.phone || "",
+
+                        profile_photo:
+                            data.user.profile_photo ||
+                            data.user.ProfilePhoto ||
+                            data.user.profilePhoto ||
+                            ""
 
                     })
                 );
@@ -1176,7 +1494,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const forgotPasswordForm =
-        document.getElementById("forgotPasswordForm");
+        document.getElementById(
+            "forgotPasswordForm"
+        );
 
 
     if (forgotPasswordForm) {
@@ -1188,10 +1508,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 const emailInput =
-                    document.getElementById("forgotEmail");
+                    document.getElementById(
+                        "forgotEmail"
+                    );
 
                 const phoneInput =
-                    document.getElementById("forgotPhone");
+                    document.getElementById(
+                        "forgotPhone"
+                    );
 
                 const newPasswordInput =
                     document.getElementById(
@@ -1206,7 +1530,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const email =
                     emailInput
-                        ? emailInput.value.trim().toLowerCase()
+                        ? emailInput.value
+                            .trim()
+                            .toLowerCase()
                         : "";
 
                 const phone =
@@ -1232,7 +1558,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     !confirmPassword
                 ) {
 
-                    alert("Please fill all fields.");
+                    alert(
+                        "Please fill all fields."
+                    );
+
                     return;
 
                 }
@@ -1249,7 +1578,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                if (newPassword !== confirmPassword) {
+                if (
+                    newPassword !==
+                    confirmPassword
+                ) {
 
                     alert(
                         "New password and confirm password do not match."
@@ -1266,6 +1598,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         await fetch(
                             `${API_URL}/forgot-password`,
                             {
+
                                 method: "POST",
 
                                 headers: {
@@ -1281,6 +1614,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                         newPassword
 
                                 })
+
                             }
                         );
 
@@ -1349,6 +1683,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     let books = [];
+
     let selectedBookId = null;
 
 
@@ -1357,7 +1692,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const bookContainer =
-        document.getElementById("bookContainer");
+        document.getElementById(
+            "bookContainer"
+        );
 
 
     /* =====================================================
@@ -1380,7 +1717,10 @@ document.addEventListener("DOMContentLoaded", function () {
         bookContainer.innerHTML = "";
 
 
-        if (!bookList || bookList.length === 0) {
+        if (
+            !bookList ||
+            bookList.length === 0
+        ) {
 
             bookContainer.innerHTML = `
 
@@ -1436,7 +1776,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.createElement("div");
 
 
-            card.className = "book-card";
+            card.className =
+                "book-card";
 
 
             card.innerHTML = `
@@ -1509,62 +1850,64 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             books =
-                backendBooks.map(function (book) {
+                backendBooks.map(
+                    function (book) {
 
-                    return {
+                        return {
 
-                        id:
-                            Number(
-                                book.id ??
-                                book.ID
-                            ),
+                            id:
+                                Number(
+                                    book.id ??
+                                    book.ID
+                                ),
 
-                        name:
-                            book.name ??
-                            book.Name ??
-                            "",
+                            name:
+                                book.name ??
+                                book.Name ??
+                                "",
 
-                        author:
-                            book.author ??
-                            book.Author ??
-                            "",
+                            author:
+                                book.author ??
+                                book.Author ??
+                                "",
 
-                        category:
-                            book.category ??
-                            book.Category ??
-                            "",
+                            category:
+                                book.category ??
+                                book.Category ??
+                                "",
 
-                        year:
-                            Number(
-                                book.year ??
-                                book.Year
-                            ) || "",
+                            year:
+                                Number(
+                                    book.year ??
+                                    book.Year
+                                ) || "",
 
-                        price:
-                            Number(
-                                book.price ??
-                                book.Price
-                            ) || 0,
+                            price:
+                                Number(
+                                    book.price ??
+                                    book.Price
+                                ) || 0,
 
-                        image:
-                            book.image ??
-                            book.Image ??
-                            "",
+                            image:
+                                book.image ??
+                                book.Image ??
+                                "",
 
-                        description:
-                            book.description ??
-                            book.Description ??
-                            "",
+                            description:
+                                book.description ??
+                                book.Description ??
+                                "",
 
-                        rentedBy:
-                            book.rented_by ??
-                            book.rentedBy ??
-                            book.RentedBy ??
-                            ""
+                            rentedBy:
+                                book.rented_by ??
+                                book.rentedBy ??
+                                book.RentedBy ??
+                                ""
 
-                    };
+                        };
 
-                });
+                    }
+                );
 
 
             console.log(
@@ -1574,6 +1917,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             filterBooks();
+
             updateBookStats();
 
         }
@@ -1617,35 +1961,50 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const searchInput =
-        document.getElementById("searchInput");
+        document.getElementById(
+            "searchInput"
+        );
 
     const categoryFilter =
-        document.getElementById("categoryFilter");
+        document.getElementById(
+            "categoryFilter"
+        );
 
     const sortBooks =
-        document.getElementById("sortBooks");
+        document.getElementById(
+            "sortBooks"
+        );
 
     const result =
-        document.getElementById("result");
+        document.getElementById(
+            "result"
+        );
 
     const bookCount =
-        document.getElementById("bookCount");
+        document.getElementById(
+            "bookCount"
+        );
 
 
     function filterBooks() {
 
-        if (!books || books.length === 0) {
+        if (
+            !books ||
+            books.length === 0
+        ) {
 
             displayBooks([]);
 
 
             if (result) {
-                result.innerText = "0 books found";
+                result.innerText =
+                    "0 books found";
             }
 
 
             if (bookCount) {
-                bookCount.innerText = "Total: 0";
+                bookCount.innerText =
+                    "Total: 0";
             }
 
 
@@ -1656,7 +2015,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const searchText =
             searchInput
-                ? searchInput.value.toLowerCase().trim()
+                ? searchInput.value
+                    .toLowerCase()
+                    .trim()
                 : "";
 
 
@@ -1667,42 +2028,48 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         let filteredBooks =
-            books.filter(function (book) {
+            books.filter(
+                function (book) {
 
-                const bookName =
-                    String(
-                        book.name || ""
-                    ).toLowerCase();
-
-
-                const bookAuthor =
-                    String(
-                        book.author || ""
-                    ).toLowerCase();
+                    const bookName =
+                        String(
+                            book.name || ""
+                        ).toLowerCase();
 
 
-                const bookCategory =
-                    String(
-                        book.category || ""
+                    const bookAuthor =
+                        String(
+                            book.author || ""
+                        ).toLowerCase();
+
+
+                    const bookCategory =
+                        String(
+                            book.category || ""
+                        );
+
+
+                    const matchesSearch =
+                        bookName.includes(
+                            searchText
+                        ) ||
+                        bookAuthor.includes(
+                            searchText
+                        );
+
+
+                    const matchesCategory =
+                        category === "all" ||
+                        bookCategory === category;
+
+
+                    return (
+                        matchesSearch &&
+                        matchesCategory
                     );
 
-
-                const matchesSearch =
-                    bookName.includes(searchText) ||
-                    bookAuthor.includes(searchText);
-
-
-                const matchesCategory =
-                    category === "all" ||
-                    bookCategory === category;
-
-
-                return (
-                    matchesSearch &&
-                    matchesCategory
-                );
-
-            });
+                }
+            );
 
 
         /* =================================================
@@ -1711,56 +2078,76 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (sortBooks) {
 
-            if (sortBooks.value === "az") {
+            if (
+                sortBooks.value === "az"
+            ) {
 
-                filteredBooks.sort(function (a, b) {
+                filteredBooks.sort(
+                    function (a, b) {
 
-                    return String(a.name).localeCompare(
-                        String(b.name)
-                    );
+                        return String(
+                            a.name
+                        ).localeCompare(
+                            String(b.name)
+                        );
 
-                });
-
-            }
-
-
-            if (sortBooks.value === "za") {
-
-                filteredBooks.sort(function (a, b) {
-
-                    return String(b.name).localeCompare(
-                        String(a.name)
-                    );
-
-                });
+                    }
+                );
 
             }
 
 
-            if (sortBooks.value === "newest") {
+            if (
+                sortBooks.value === "za"
+            ) {
 
-                filteredBooks.sort(function (a, b) {
+                filteredBooks.sort(
+                    function (a, b) {
 
-                    return (
-                        Number(b.year) -
-                        Number(a.year)
-                    );
+                        return String(
+                            b.name
+                        ).localeCompare(
+                            String(a.name)
+                        );
 
-                });
+                    }
+                );
 
             }
 
 
-            if (sortBooks.value === "oldest") {
+            if (
+                sortBooks.value === "newest"
+            ) {
 
-                filteredBooks.sort(function (a, b) {
+                filteredBooks.sort(
+                    function (a, b) {
 
-                    return (
-                        Number(a.year) -
-                        Number(b.year)
-                    );
+                        return (
+                            Number(b.year) -
+                            Number(a.year)
+                        );
 
-                });
+                    }
+                );
+
+            }
+
+
+            if (
+                sortBooks.value === "oldest"
+            ) {
+
+                filteredBooks.sort(
+                    function (a, b) {
+
+                        return (
+                            Number(a.year) -
+                            Number(b.year)
+                        );
+
+                    }
+                );
 
             }
 
@@ -1791,17 +2178,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     if (searchInput) {
-        searchInput.oninput = filterBooks;
+        searchInput.oninput =
+            filterBooks;
     }
 
 
     if (categoryFilter) {
-        categoryFilter.onchange = filterBooks;
+        categoryFilter.onchange =
+            filterBooks;
     }
 
 
     if (sortBooks) {
-        sortBooks.onchange = filterBooks;
+        sortBooks.onchange =
+            filterBooks;
     }
 
 
@@ -1810,28 +2200,33 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const clearBtn =
-        document.getElementById("clearBtn");
+        document.getElementById(
+            "clearBtn"
+        );
 
 
     if (clearBtn) {
 
-        clearBtn.onclick = function () {
+        clearBtn.onclick =
+            function () {
 
-            if (searchInput) {
-                searchInput.value = "";
-            }
+                if (searchInput) {
+                    searchInput.value = "";
+                }
 
-            if (categoryFilter) {
-                categoryFilter.value = "all";
-            }
+                if (categoryFilter) {
+                    categoryFilter.value =
+                        "all";
+                }
 
-            if (sortBooks) {
-                sortBooks.value = "default";
-            }
+                if (sortBooks) {
+                    sortBooks.value =
+                        "default";
+                }
 
-            filterBooks();
+                filterBooks();
 
-        };
+            };
 
     }
 
@@ -1843,28 +2238,39 @@ document.addEventListener("DOMContentLoaded", function () {
     function updateBookStats() {
 
         const totalBooks =
-            document.getElementById("totalBooks");
+            document.getElementById(
+                "totalBooks"
+            );
 
         const availableBooks =
-            document.getElementById("availableBooks");
+            document.getElementById(
+                "availableBooks"
+            );
 
 
         if (totalBooks) {
-            totalBooks.innerText = books.length;
+
+            totalBooks.innerText =
+                books.length;
+
         }
 
 
         const available =
-            books.filter(function (book) {
+            books.filter(
+                function (book) {
 
-                return !book.rentedBy;
+                    return !book.rentedBy;
 
-            });
+                }
+            );
 
 
         if (availableBooks) {
+
             availableBooks.innerText =
                 available.length;
+
         }
 
     }
@@ -1875,53 +2281,78 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const bookModal =
-        document.getElementById("bookModal");
+        document.getElementById(
+            "bookModal"
+        );
 
     const modalImage =
-        document.getElementById("modalImage");
+        document.getElementById(
+            "modalImage"
+        );
 
     const modalTitle =
-        document.getElementById("modalTitle");
+        document.getElementById(
+            "modalTitle"
+        );
 
     const modalAuthor =
-        document.getElementById("modalAuthor");
+        document.getElementById(
+            "modalAuthor"
+        );
 
     const modalCategory =
-        document.getElementById("modalCategory");
+        document.getElementById(
+            "modalCategory"
+        );
 
     const modalDescription =
-        document.getElementById("modalDescription");
+        document.getElementById(
+            "modalDescription"
+        );
 
     const modalYear =
-        document.getElementById("year");
+        document.getElementById(
+            "year"
+        );
 
     const modalPrice =
-        document.getElementById("modalPrice");
+        document.getElementById(
+            "modalPrice"
+        );
 
     const modalStatus =
-        document.getElementById("modalStatus");
+        document.getElementById(
+            "modalStatus"
+        );
 
     const rentModalBtn =
-        document.getElementById("rentModalBtn");
+        document.getElementById(
+            "rentModalBtn"
+        );
 
     const submitModalBtn =
-        document.getElementById("submitModalBtn");
+        document.getElementById(
+            "submitModalBtn"
+        );
 
 
     function openBookModal(bookId) {
 
-        selectedBookId = Number(bookId);
+        selectedBookId =
+            Number(bookId);
 
 
         const book =
-            books.find(function (item) {
+            books.find(
+                function (item) {
 
-                return (
-                    Number(item.id) ===
-                    Number(bookId)
-                );
+                    return (
+                        Number(item.id) ===
+                        Number(bookId)
+                    );
 
-            });
+                }
+            );
 
 
         if (!book) {
@@ -1930,41 +2361,57 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         if (modalImage) {
-            modalImage.src = book.image;
+            modalImage.src =
+                book.image;
         }
 
 
         if (modalTitle) {
-            modalTitle.innerText = book.name;
+            modalTitle.innerText =
+                book.name;
         }
 
 
         if (modalAuthor) {
+
             modalAuthor.innerText =
-                "Author: " + book.author;
+                "Author: " +
+                book.author;
+
         }
 
 
         if (modalCategory) {
+
             modalCategory.innerText =
                 book.category;
+
         }
 
 
         if (modalYear) {
+
             modalYear.innerText =
-                "Year: " + book.year;
+                "Year: " +
+                book.year;
+
         }
 
+
         if (modalPrice) {
+
             modalPrice.innerText =
-                "Price: ₹" + book.price;
+                "Price: ₹" +
+                book.price;
+
         }
 
 
         if (modalDescription) {
+
             modalDescription.innerText =
                 book.description;
+
         }
 
 
@@ -1994,12 +2441,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             if (rentModalBtn) {
-                rentModalBtn.style.display = "none";
+                rentModalBtn.style.display =
+                    "none";
             }
 
 
             if (submitModalBtn) {
-                submitModalBtn.style.display = "inline-block";
+                submitModalBtn.style.display =
+                    "inline-block";
             }
 
         }
@@ -2030,19 +2479,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             if (rentModalBtn) {
-                rentModalBtn.style.display = "inline-block";
+                rentModalBtn.style.display =
+                    "inline-block";
             }
 
 
             if (submitModalBtn) {
-                submitModalBtn.style.display = "none";
+                submitModalBtn.style.display =
+                    "none";
             }
 
         }
 
 
         if (bookModal) {
-            bookModal.style.display = "flex";
+            bookModal.style.display =
+                "flex";
         }
 
     }
@@ -2053,18 +2505,22 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const closeBtn =
-        document.getElementById("closeBtn");
+        document.getElementById(
+            "closeBtn"
+        );
 
 
     if (closeBtn) {
 
-        closeBtn.onclick = function () {
+        closeBtn.onclick =
+            function () {
 
-            if (bookModal) {
-                bookModal.style.display = "none";
-            }
+                if (bookModal) {
+                    bookModal.style.display =
+                        "none";
+                }
 
-        };
+            };
 
     }
 
@@ -2075,142 +2531,52 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (rentModalBtn) {
 
-        rentModalBtn.onclick = async function () {
+        rentModalBtn.onclick =
+            async function () {
 
-            const loggedUser =
-                localStorage.getItem("loggedUser");
-
-
-            if (!loggedUser) {
-
-                alert(
-                    "Please login first to rent a book."
-                );
+                const loggedUser =
+                    localStorage.getItem(
+                        "loggedUser"
+                    );
 
 
-                if (bookModal) {
-                    bookModal.style.display = "none";
+                if (!loggedUser) {
+
+                    alert(
+                        "Please login first to rent a book."
+                    );
+
+
+                    if (bookModal) {
+                        bookModal.style.display =
+                            "none";
+                    }
+
+
+                    openLogin();
+
+                    return;
+
                 }
 
 
-                openLogin();
+                const book =
+                    books.find(
+                        function (item) {
 
-                return;
-
-            }
-
-
-            const book =
-                books.find(function (item) {
-
-                    return (
-                        Number(item.id) ===
-                        Number(selectedBookId)
-                    );
-
-                });
-
-
-            if (!book) {
-
-                alert("Book not found.");
-                return;
-
-            }
-
-
-            if (book.rentedBy) {
-
-                alert(
-                    "This book is already rented."
-                );
-
-                return;
-
-            }
-
-
-            const savedUser =
-                localStorage.getItem("libraryUser");
-
-
-            if (!savedUser) {
-
-                alert("User data not found.");
-                return;
-
-            }
-
-
-            let user;
-
-
-            try {
-
-                user =
-                    JSON.parse(savedUser);
-
-            }
-
-            catch (error) {
-
-                console.error(error);
-
-                alert(
-                    "User data is corrupted."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        `${API_URL}/rent`,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                name:
-                                    user.name,
-
-                                email:
-                                    user.email,
-
-                                book:
-                                    book.name,
-
-                                author:
-                                    book.author,
-
-                                bookId:
-                                    book.id
-
-                            })
+                            return (
+                                Number(item.id) ===
+                                Number(selectedBookId)
+                            );
 
                         }
                     );
 
 
-                const data =
-                    await response.json();
-
-
-                if (!response.ok) {
+                if (!book) {
 
                     alert(
-                        data.message ||
-                        "Rent failed."
+                        "Book not found."
                     );
 
                     return;
@@ -2218,35 +2584,145 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                alert(
-                    "Book rented successfully!"
-                );
+                if (book.rentedBy) {
 
+                    alert(
+                        "This book is already rented."
+                    );
 
-                if (bookModal) {
-                    bookModal.style.display = "none";
+                    return;
+
                 }
 
 
-                await loadBooksFromBackend();
+                const savedUser =
+                    localStorage.getItem(
+                        "libraryUser"
+                    );
 
-            }
+
+                if (!savedUser) {
+
+                    alert(
+                        "User data not found."
+                    );
+
+                    return;
+
+                }
 
 
-            catch (error) {
+                let user;
 
-                console.error(
-                    "Rent Error:",
-                    error
-                );
 
-                alert(
-                    "Unable to connect to backend server."
-                );
+                try {
 
-            }
+                    user =
+                        JSON.parse(
+                            savedUser
+                        );
 
-        };
+                }
+
+
+                catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        "User data is corrupted."
+                    );
+
+                    return;
+
+                }
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_URL}/rent`,
+                            {
+
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+
+                                    name:
+                                        user.name,
+
+                                    email:
+                                        user.email,
+
+                                    book:
+                                        book.name,
+
+                                    author:
+                                        book.author,
+
+                                    bookId:
+                                        book.id
+
+                                })
+
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        alert(
+                            data.message ||
+                            "Rent failed."
+                        );
+
+                        return;
+
+                    }
+
+
+                    alert(
+                        "Book rented successfully!"
+                    );
+
+
+                    if (bookModal) {
+
+                        bookModal.style.display =
+                            "none";
+
+                    }
+
+
+                    await loadBooksFromBackend();
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Rent Error:",
+                        error
+                    );
+
+                    alert(
+                        "Unable to connect to backend server."
+                    );
+
+                }
+
+            };
 
     }
 
@@ -2257,131 +2733,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (submitModalBtn) {
 
-        submitModalBtn.onclick = async function () {
+        submitModalBtn.onclick =
+            async function () {
 
-            const book =
-                books.find(function (item) {
+                const book =
+                    books.find(
+                        function (item) {
 
-                    return (
-                        Number(item.id) ===
-                        Number(selectedBookId)
-                    );
-
-                });
-
-
-            if (!book) {
-
-                alert("Book not found.");
-                return;
-
-            }
-
-
-            const loggedUser =
-                localStorage.getItem("loggedUser");
-
-
-            if (!loggedUser) {
-
-                alert("Please login first.");
-                return;
-
-            }
-
-
-            if (book.rentedBy !== loggedUser) {
-
-                alert(
-                    "Only the person who rented this book can submit it."
-                );
-
-                return;
-
-            }
-
-
-            const savedUser =
-                localStorage.getItem("libraryUser");
-
-
-            if (!savedUser) {
-
-                alert("User data not found.");
-                return;
-
-            }
-
-
-            let user;
-
-
-            try {
-
-                user =
-                    JSON.parse(savedUser);
-
-            }
-
-            catch (error) {
-
-                console.error(error);
-
-                alert(
-                    "User data is corrupted."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        `${API_URL}/submit`,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                name:
-                                    user.name,
-
-                                email:
-                                    user.email,
-
-                                book:
-                                    book.name,
-
-                                author:
-                                    book.author,
-
-                                bookId:
-                                    book.id
-
-                            })
+                            return (
+                                Number(item.id) ===
+                                Number(selectedBookId)
+                            );
 
                         }
                     );
 
 
-                const data =
-                    await response.json();
-
-
-                if (!response.ok) {
+                if (!book) {
 
                     alert(
-                        data.message ||
-                        "Submit failed."
+                        "Book not found."
                     );
 
                     return;
@@ -2389,35 +2760,165 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                alert(
-                    "Book submitted successfully! 📚"
-                );
+                const loggedUser =
+                    localStorage.getItem(
+                        "loggedUser"
+                    );
 
 
-                if (bookModal) {
-                    bookModal.style.display = "none";
+                if (!loggedUser) {
+
+                    alert(
+                        "Please login first."
+                    );
+
+                    return;
+
                 }
 
 
-                await loadBooksFromBackend();
+                if (
+                    book.rentedBy !==
+                    loggedUser
+                ) {
 
-            }
+                    alert(
+                        "Only the person who rented this book can submit it."
+                    );
+
+                    return;
+
+                }
 
 
-            catch (error) {
+                const savedUser =
+                    localStorage.getItem(
+                        "libraryUser"
+                    );
 
-                console.error(
-                    "Submit Error:",
-                    error
-                );
 
-                alert(
-                    "Unable to connect to backend server."
-                );
+                if (!savedUser) {
 
-            }
+                    alert(
+                        "User data not found."
+                    );
 
-        };
+                    return;
+
+                }
+
+
+                let user;
+
+
+                try {
+
+                    user =
+                        JSON.parse(
+                            savedUser
+                        );
+
+                }
+
+
+                catch (error) {
+
+                    console.error(error);
+
+                    alert(
+                        "User data is corrupted."
+                    );
+
+                    return;
+
+                }
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_URL}/submit`,
+                            {
+
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+
+                                    name:
+                                        user.name,
+
+                                    email:
+                                        user.email,
+
+                                    book:
+                                        book.name,
+
+                                    author:
+                                        book.author,
+
+                                    bookId:
+                                        book.id
+
+                                })
+
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        alert(
+                            data.message ||
+                            "Submit failed."
+                        );
+
+                        return;
+
+                    }
+
+
+                    alert(
+                        "Book submitted successfully! 📚"
+                    );
+
+
+                    if (bookModal) {
+
+                        bookModal.style.display =
+                            "none";
+
+                    }
+
+
+                    await loadBooksFromBackend();
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "Submit Error:",
+                        error
+                    );
+
+                    alert(
+                        "Unable to connect to backend server."
+                    );
+
+                }
+
+            };
 
     }
 
@@ -2427,26 +2928,31 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const exploreBtn =
-        document.getElementById("exploreBtn");
+        document.getElementById(
+            "exploreBtn"
+        );
 
 
     if (exploreBtn) {
 
-        exploreBtn.onclick = function () {
+        exploreBtn.onclick =
+            function () {
 
-            const booksSection =
-                document.getElementById("books");
+                const booksSection =
+                    document.getElementById(
+                        "books"
+                    );
 
 
-            if (booksSection) {
+                if (booksSection) {
 
-                booksSection.scrollIntoView({
-                    behavior: "smooth"
-                });
+                    booksSection.scrollIntoView({
+                        behavior: "smooth"
+                    });
 
-            }
+                }
 
-        };
+            };
 
     }
 
@@ -2456,22 +2962,30 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const themeBtn =
-        document.getElementById("themeBtn");
+        document.getElementById(
+            "themeBtn"
+        );
 
     const mobileThemeBtn =
-        document.getElementById("mobileThemeBtn");
+        document.getElementById(
+            "mobileThemeBtn"
+        );
 
 
     function updateThemeButton() {
 
         const isDark =
-            document.body.classList.contains("dark");
+            document.body.classList.contains(
+                "dark"
+            );
 
 
         if (themeBtn) {
 
             themeBtn.innerText =
-                isDark ? "☀️" : "🌙";
+                isDark
+                    ? "☀️"
+                    : "🌙";
 
         }
 
@@ -2490,11 +3004,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function toggleTheme() {
 
-        document.body.classList.toggle("dark");
+        document.body.classList.toggle(
+            "dark"
+        );
 
 
         const isDark =
-            document.body.classList.contains("dark");
+            document.body.classList.contains(
+                "dark"
+            );
 
 
         localStorage.setItem(
@@ -2509,21 +3027,25 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     if (themeBtn) {
-        themeBtn.onclick = toggleTheme;
+        themeBtn.onclick =
+            toggleTheme;
     }
 
 
     if (mobileThemeBtn) {
 
-        mobileThemeBtn.onclick = function () {
+        mobileThemeBtn.onclick =
+            function () {
 
-            toggleTheme();
+                toggleTheme();
 
-            if (mainMenu) {
-                mainMenu.classList.remove("active");
-            }
+                if (mainMenu) {
+                    mainMenu.classList.remove(
+                        "active"
+                    );
+                }
 
-        };
+            };
 
     }
 
@@ -2533,10 +3055,14 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     if (
-        localStorage.getItem("darkMode") === "true"
+        localStorage.getItem(
+            "darkMode"
+        ) === "true"
     ) {
 
-        document.body.classList.add("dark");
+        document.body.classList.add(
+            "dark"
+        );
 
     }
 
@@ -2549,7 +3075,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     const topBtn =
-        document.getElementById("topBtn");
+        document.getElementById(
+            "topBtn"
+        );
 
 
     window.addEventListener(
@@ -2563,13 +3091,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (window.scrollY > 400) {
 
-                topBtn.style.display = "block";
+                topBtn.style.display =
+                    "block";
 
             }
 
             else {
 
-                topBtn.style.display = "none";
+                topBtn.style.display =
+                    "none";
 
             }
 
@@ -2579,16 +3109,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (topBtn) {
 
-        topBtn.onclick = function () {
+        topBtn.onclick =
+            function () {
 
-            window.scrollTo({
+                window.scrollTo({
 
-                top: 0,
-                behavior: "smooth"
+                    top: 0,
 
-            });
+                    behavior: "smooth"
 
-        };
+                });
+
+            };
 
     }
 
@@ -2606,7 +3138,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.target === bookModal
             ) {
 
-                bookModal.style.display = "none";
+                bookModal.style.display =
+                    "none";
 
             }
 
@@ -2616,7 +3149,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.target === loginModal
             ) {
 
-                loginModal.style.display = "none";
+                loginModal.style.display =
+                    "none";
 
             }
 
@@ -2626,14 +3160,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 event.target === registerModal
             ) {
 
-                registerModal.style.display = "none";
+                registerModal.style.display =
+                    "none";
 
             }
 
 
             if (
                 forgotPasswordModal &&
-                event.target === forgotPasswordModal
+                event.target ===
+                    forgotPasswordModal
             ) {
 
                 forgotPasswordModal.style.display =
@@ -2654,6 +3190,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ===================================================== */
 
     loadBooksFromBackend();
+
     updateUserUI();
 
 
@@ -2669,7 +3206,9 @@ document.addEventListener("DOMContentLoaded", function () {
 ===================================================== */
 
 const adminLoginBtn =
-    document.getElementById("adminLoginBtn");
+    document.getElementById(
+        "adminLoginBtn"
+    );
 
 
 if (adminLoginBtn) {

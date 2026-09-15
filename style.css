@@ -836,11 +836,13 @@ nav {
 
 .rent-btn {
     background: #2563eb;
+
     color: white;
 }
 
 .submit-btn {
     background: #16a34a;
+
     color: white;
 }
 
@@ -1166,7 +1168,6 @@ body.dark .auth-modal-content > p {
         position: sticky;
     }
 
-
     .logo {
         font-size: 19px;
     }
@@ -1206,7 +1207,6 @@ body.dark .auth-modal-content > p {
             rgba(0, 0, 0, 0.2);
     }
 
-
     .menu.active {
         display: flex;
     }
@@ -1221,7 +1221,6 @@ body.dark .auth-modal-content > p {
 
         gap: 0;
     }
-
 
     .menu-links a {
         padding: 13px 5px;
@@ -1254,7 +1253,6 @@ body.dark .auth-modal-content > p {
         padding-top: 15px;
     }
 
-
     .mobile-auth button {
         border: none;
 
@@ -1267,7 +1265,6 @@ body.dark .auth-modal-content > p {
         font-weight: bold;
     }
 
-
     #mobileLoginBtn,
     #mobileThemeBtn {
         background: white;
@@ -1275,13 +1272,11 @@ body.dark .auth-modal-content > p {
         color: #172554;
     }
 
-
     #mobileRegisterBtn {
         background: #2563eb;
 
         color: white;
     }
-
 
     #mobileLogoutBtn {
         display: none;
@@ -1290,7 +1285,6 @@ body.dark .auth-modal-content > p {
 
         color: white;
     }
-
 
     #mobileUserGreeting {
         display: none;
@@ -1319,23 +1313,19 @@ body.dark .auth-modal-content > p {
         padding: 60px 20px;
     }
 
-
     .hero h1 {
         font-size: 38px;
     }
 
-
     .hero p {
         font-size: 16px;
     }
-
 
     .hero-buttons {
         flex-direction: column;
 
         align-items: stretch;
     }
-
 
     .primary-btn,
     .secondary-btn {
@@ -1359,26 +1349,21 @@ body.dark .auth-modal-content > p {
         padding: 60px 20px;
     }
 
-
     .section-heading h2 {
         font-size: 30px;
     }
-
 
     .search-area {
         flex-direction: column;
     }
 
-
     .search-box {
         min-width: 100%;
     }
 
-
     .search-area select {
         width: 100%;
     }
-
 
     .book-container {
         grid-template-columns:
@@ -1386,7 +1371,6 @@ body.dark .auth-modal-content > p {
 
         gap: 15px;
     }
-
 
     .book-card img {
         height: 220px;
@@ -1399,13 +1383,11 @@ body.dark .auth-modal-content > p {
         padding: 60px 20px;
     }
 
-
     .about-content {
         grid-template-columns: 1fr;
 
         gap: 30px;
     }
-
 
     .about-text h2 {
         font-size: 32px;
@@ -1417,7 +1399,6 @@ body.dark .auth-modal-content > p {
     .contact {
         padding: 60px 20px;
     }
-
 
     .contact-container {
         grid-template-columns: 1fr;
@@ -1431,11 +1412,9 @@ body.dark .auth-modal-content > p {
             40px 20px 20px;
     }
 
-
     .footer-content {
         flex-direction: column;
     }
-
 
     .footer-links {
         flex-wrap: wrap;
@@ -1452,7 +1431,6 @@ body.dark .auth-modal-content > p {
         justify-content: flex-start;
     }
 
-
     .mobile-auth button,
     #mobileUserGreeting {
         font-size: 12px;
@@ -1460,26 +1438,21 @@ body.dark .auth-modal-content > p {
         padding: 8px 9px;
     }
 
-
     .hero h1 {
         font-size: 32px;
     }
-
 
     .book-container {
         grid-template-columns: 1fr;
     }
 
-
     .book-card img {
         height: 260px;
     }
 
-
     .stats {
         gap: 12px;
     }
-
 
     .stat-card {
         padding: 18px 10px;
@@ -1487,22 +1460,27 @@ body.dark .auth-modal-content > p {
 
 }
 
-/* forgot password */
+
+/* ================= FORGOT PASSWORD ================= */
 
 .forgot-password {
     text-align: right;
+
     margin-top: 5px;
 }
 
 .forgot-password a {
     color: #2563eb;
+
     text-decoration: none;
+
     font-size: 14px;
 }
 
 .forgot-password a:hover {
     text-decoration: underline;
 }
+
 
 /* ================= FORGOT PASSWORD MODAL FIX ================= */
 
@@ -1514,3 +1492,349 @@ body.dark .auth-modal-content > p {
     display: flex !important;
 }
 
+
+/* =====================================================
+   REGISTER FORM - COMPACT
+===================================================== */
+
+/*
+   IMPORTANT:
+   Register modal ko compact rakha gaya hai.
+   Login modal par iska koi effect nahi hoga.
+*/
+
+#registerModal .auth-modal-content {
+    width: 400px;
+
+    max-width: 95%;
+
+    padding: 20px 25px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+}
+
+
+/* Register close button */
+
+#registerModal .auth-close {
+    right: 10px;
+
+    top: 7px;
+
+    font-size: 25px;
+}
+
+
+/* Register icon */
+
+#registerModal .auth-icon {
+    font-size: 35px;
+
+    margin: 0;
+}
+
+
+/* Register heading */
+
+#registerModal .auth-modal-content h2 {
+    margin: 3px 0 7px;
+
+    font-size: 24px;
+}
+
+
+/* Register description */
+
+#registerModal .auth-modal-content > p {
+    margin: 4px 0 10px;
+
+    font-size: 13px;
+
+    line-height: 1.3;
+}
+
+
+/* Register form */
+
+#registerModal .auth-modal-content form {
+    gap: 4px;
+}
+
+
+/* Register labels */
+
+#registerModal .auth-modal-content label {
+    margin-top: 4px;
+
+    margin-bottom: 1px;
+
+    font-size: 13px;
+}
+
+
+/* Register input */
+
+#registerModal .auth-modal-content input {
+    width: 100%;
+
+    height: 37px;
+
+    padding: 7px 10px;
+
+    font-size: 13px;
+}
+
+
+/* Profile photo input */
+
+#registerModal .auth-modal-content input[type="file"] {
+    height: auto;
+
+    min-height: 37px;
+
+    padding: 6px;
+
+    font-size: 12px;
+}
+
+
+/* Profile photo information */
+
+#registerModal .auth-modal-content small {
+    display: block;
+
+    margin-top: 1px !important;
+
+    font-size: 10px !important;
+
+    line-height: 1.15;
+}
+
+
+/* Register button */
+
+#registerModal .auth-submit {
+    width: 100%;
+
+    margin-top: 9px;
+
+    padding: 9px;
+
+    font-size: 13px;
+}
+
+
+/* Already have account */
+
+#registerModal .auth-switch {
+    margin-top: 7px;
+
+    margin-bottom: 0;
+
+    font-size: 12px;
+}
+
+
+/* =====================================================
+   REGISTER FORM - TABLET
+===================================================== */
+
+@media (max-width: 1000px) {
+
+    #registerModal .auth-modal-content {
+        width: 380px;
+
+        padding: 18px 22px;
+    }
+
+}
+
+
+/* =====================================================
+   REGISTER FORM - MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+    #registerModal {
+        padding: 10px;
+    }
+
+    #registerModal .auth-modal-content {
+        width: 92%;
+
+        max-width: 400px;
+
+        max-height: 88vh;
+
+        padding: 16px 18px;
+
+        border-radius: 12px;
+    }
+
+    #registerModal .auth-close {
+        right: 8px;
+
+        top: 6px;
+
+        font-size: 23px;
+    }
+
+    #registerModal .auth-icon {
+        font-size: 30px;
+    }
+
+    #registerModal .auth-modal-content h2 {
+        font-size: 20px;
+
+        margin: 2px 0 5px;
+    }
+
+    #registerModal .auth-modal-content > p {
+        font-size: 11px;
+
+        margin: 2px 0 7px;
+    }
+
+    #registerModal .auth-modal-content form {
+        gap: 3px;
+    }
+
+    #registerModal .auth-modal-content label {
+        font-size: 12px;
+
+        margin-top: 3px;
+
+        margin-bottom: 1px;
+    }
+
+    #registerModal .auth-modal-content input {
+        height: 35px;
+
+        padding: 6px 9px;
+
+        font-size: 12px;
+    }
+
+    #registerModal .auth-modal-content input[type="file"] {
+        height: auto;
+
+        min-height: 34px;
+
+        padding: 5px;
+
+        font-size: 11px;
+    }
+
+    #registerModal .auth-modal-content small {
+        font-size: 9px !important;
+
+        line-height: 1.1;
+    }
+
+    #registerModal .auth-submit {
+        margin-top: 7px;
+
+        padding: 8px;
+
+        font-size: 12px;
+    }
+
+    #registerModal .auth-switch {
+        margin-top: 5px;
+
+        font-size: 11px;
+    }
+
+}
+
+
+/* =====================================================
+   REGISTER FORM - VERY SMALL MOBILE
+===================================================== */
+
+@media (max-width: 480px) {
+
+    #registerModal {
+        padding: 5px;
+    }
+
+    #registerModal .auth-modal-content {
+        width: 94%;
+
+        max-width: 380px;
+
+        max-height: 92vh;
+
+        padding: 12px 14px;
+
+        border-radius: 10px;
+    }
+
+    #registerModal .auth-close {
+        right: 7px;
+
+        top: 4px;
+
+        font-size: 21px;
+    }
+
+    #registerModal .auth-icon {
+        font-size: 26px;
+    }
+
+    #registerModal .auth-modal-content h2 {
+        font-size: 18px;
+
+        margin: 1px 0 4px;
+    }
+
+    #registerModal .auth-modal-content > p {
+        font-size: 10px;
+
+        margin: 1px 0 5px;
+    }
+
+    #registerModal .auth-modal-content label {
+        font-size: 11px;
+
+        margin-top: 2px;
+    }
+
+    #registerModal .auth-modal-content input {
+        height: 33px;
+
+        padding: 5px 8px;
+
+        font-size: 11px;
+    }
+
+    #registerModal .auth-modal-content input[type="file"] {
+        min-height: 32px;
+
+        padding: 4px;
+
+        font-size: 10px;
+    }
+
+    #registerModal .auth-modal-content small {
+        font-size: 8px !important;
+    }
+
+    #registerModal .auth-submit {
+        margin-top: 6px;
+
+        padding: 7px;
+
+        font-size: 11px;
+    }
+
+    #registerModal .auth-switch {
+        margin-top: 4px;
+
+        font-size: 10px;
+    }
+
+}
