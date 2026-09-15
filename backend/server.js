@@ -533,45 +533,52 @@ app.post(
             };
 
             const {
-                data,
-                error
-            } = await resend.emails.send({
+    data,
+    error
+} = await resend.emails.send({
 
-                from:
-                    "Atal Library <onboarding@resend.dev>",
+    from:
+        "Atal Library <onboarding@resend.dev>",
 
-                to:
-                    [cleanEmail],
+    to:
+        [cleanEmail],
 
-                subject:
-                    "Atal Library - Email Verification OTP",
+    subject:
+        "Atal Library - Email Verification OTP",
 
-                text:
-                    `Your Atal Library verification OTP is ${otp}.
+    text:
+        `Your Atal Library verification OTP is ${otp}.
 
 This OTP is valid for 5 minutes.
 
 Please do not share this OTP with anyone.`
 
-            });
+});
 
-            if (error) {
+if (error) {
 
-                console.log(
-                    "Resend email error:",
-                    error
-                );
+    console.log(
+        "================ RESEND ERROR ================"
+    );
 
-                return res.status(500).json({
+    console.log(
+        JSON.stringify(error, null, 2)
+    );
 
-                    success: false,
+    console.log(
+        "================================================"
+    );
 
-                    message:
-                        "Unable to send OTP. Please try again."
+    return res.status(500).json({
 
-                });
+        success: false,
 
-            }
+        message:
+            "Unable to send OTP. Please try again."
+
+    });
+
+}
 
             console.log(
                 "OTP email sent successfully."
