@@ -1900,6 +1900,9 @@ app.get(
 
                         return {
 
+                            ID:
+                                user.id || "",
+
                             Name:
                                 user.name || "",
 
@@ -3106,7 +3109,7 @@ app.get(
             } = await supabase
                 .from("users")
                 .select(
-                    "name,email,phone,profile_photo"
+                    "id,name,email,phone,profile_photo"
                 )
                 .order(
                     "created_at",
@@ -3136,6 +3139,9 @@ app.get(
                     function (user) {
 
                         return {
+
+                            ID:
+                                user.id || "",
 
                             Name:
                                 user.name || "",
@@ -3288,6 +3294,508 @@ app.get(
 
         }
 
+    }
+);
+
+
+// ==================================================
+// USER - ATTENDANCE ENTER
+// ==================================================
+
+app.post(
+    "/attendance/enter",
+    async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email is required."
+                });
+            }
+
+            const cleanEmail = email.toString().trim().toLowerCase();
+
+            const { data: users, error: userError } = await supabase
+                .from("users")
+                .select("id,name,email")
+                .eq("email", cleanEmail)
+                .limit(1);
+
+            if (userError) {
+                console.log("Attendance user error:", userError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to verify user."
+                });
+            }
+
+            if (!users || users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "User not found. Please login again."
+                });
+            }
+
+            const user = users[0];
+
+            const { data: activeAttendance, error: activeError } = await supabase
+                .from("attendance")
+                .select("id,entry_time,exit_time,status")
+                .eq("email", cleanEmail)
+                .eq("status", "INSIDE")
+                .is("exit_time", null)
+                .order("entry_time", { ascending: false })
+                .limit(1);
+
+            if (activeError) {
+                console.log("Attendance active check error:", activeError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to check attendance."
+                });
+            }
+
+            if (activeAttendance && activeAttendance.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "You are already inside the library.",
+                    attendance: activeAttendance[0]
+                });
+            }
+
+            const entryTime = new Date().toISOString();
+
+            const { data: attendance, error: insertError } = await supabase
+                .from("attendance")
+                .insert({
+                    user_id: String(user.id),
+                    name: user.name || "",
+                    email: cleanEmail,
+                    entry_time: entryTime,
+                    exit_time: null,
+                    status: "INSIDE"
+                })
+                .select("*")
+                .single();
+
+            if (insertError) {
+                console.log("Attendance insert error:", insertError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to record library entry."
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Entry recorded successfully.",
+                attendance: attendance
+            });
+        }
+        catch (error) {
+            console.log("Attendance enter server error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Server error."
+            });
+        }
+    }
+);
+
+// ==================================================
+// USER - ATTENDANCE EXIT
+// ==================================================
+
+app.post(
+    "/attendance/exit",
+    async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email is required."
+                });
+            }
+
+            const cleanEmail = email.toString().trim().toLowerCase();
+
+            const { data: activeAttendance, error: findError } = await supabase
+                .from("attendance")
+                .select("*")
+                .eq("email", cleanEmail)
+                .eq("status", "INSIDE")
+                .is("exit_time", null)
+                .order("entry_time", { ascending: false })
+                .limit(1);
+
+            if (findError) {
+                console.log("Attendance exit find error:", findError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to find active attendance."
+                });
+            }
+
+            if (!activeAttendance || activeAttendance.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "No active library entry found."
+                });
+            }
+
+            const record = activeAttendance[0];
+            const exitTime = new Date().toISOString();
+
+            const { data: updatedAttendance, error: updateError } = await supabase
+                .from("attendance")
+                .update({
+                    exit_time: exitTime,
+                    status: "OUTSIDE"
+                })
+                .eq("id", record.id)
+                .select("*")
+                .single();
+
+            if (updateError) {
+                console.log("Attendance exit update error:", updateError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to record library exit."
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "Exit recorded successfully.",
+                attendance: updatedAttendance
+            });
+        }
+        catch (error) {
+            console.log("Attendance exit server error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Server error."
+            });
+        }
+    }
+);
+
+// ==================================================
+// USER - CURRENT ATTENDANCE STATUS
+// ==================================================
+
+app.get(
+    "/attendance/status",
+    async (req, res) => {
+        try {
+            const email = req.query.email;
+
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email is required."
+                });
+            }
+
+            const cleanEmail = email.toString().trim().toLowerCase();
+
+            const { data: activeAttendance, error } = await supabase
+                .from("attendance")
+                .select("id,name,email,entry_time,exit_time,status")
+                .eq("email", cleanEmail)
+                .eq("status", "INSIDE")
+                .is("exit_time", null)
+                .order("entry_time", { ascending: false })
+                .limit(1);
+
+            if (error) {
+                console.log("Attendance status error:", error);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to get attendance status."
+                });
+            }
+
+            return res.json({
+                success: true,
+                inside: !!(activeAttendance && activeAttendance.length > 0),
+                attendance: activeAttendance && activeAttendance.length > 0
+                    ? activeAttendance[0]
+                    : null
+            });
+        }
+        catch (error) {
+            console.log("Attendance status server error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Server error."
+            });
+        }
+    }
+);
+
+// ==================================================
+// ADMIN - GET ATTENDANCE
+// ==================================================
+
+app.get(
+    "/admin/attendance",
+    checkAdmin,
+    async (req, res) => {
+        try {
+            const { data: attendance, error } = await supabase
+                .from("attendance")
+                .select("id,user_id,name,email,entry_time,exit_time,status")
+                .order("entry_time", { ascending: false });
+
+            if (error) {
+                console.log("Admin attendance error:", error);
+                return res.status(500).json({
+                    message: "Unable to get attendance."
+                });
+            }
+
+            const result = (attendance || []).map(function (record) {
+                return {
+                    ID: record.id,
+                    UserID: record.user_id || "",
+                    Name: record.name || "",
+                    Email: record.email || "",
+                    EntryTime: record.entry_time || "",
+                    ExitTime: record.exit_time || "",
+                    Status: record.status || ""
+                };
+            });
+
+            return res.json(result);
+        }
+        catch (error) {
+            console.log("Admin attendance server error:", error);
+            return res.status(500).json({
+                message: "Server error."
+            });
+        }
+    }
+);
+
+// ==================================================
+// DELETE USER ACCOUNT
+// ==================================================
+
+app.delete(
+    "/account",
+    async (req, res) => {
+        try {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email and password are required."
+                });
+            }
+
+            const cleanEmail = email.toString().trim().toLowerCase();
+
+            const { data: users, error: findError } = await supabase
+                .from("users")
+                .select("id,email,password")
+                .eq("email", cleanEmail)
+                .limit(1);
+
+            if (findError) {
+                console.log("Delete account find error:", findError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to find account."
+                });
+            }
+
+            if (!users || users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Account not found."
+                });
+            }
+
+            const userId = users[0].id;
+
+            if (users[0].password !== password) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Incorrect password. Account was not deleted."
+                });
+            }
+
+            const { data: activeRentals, error: rentalError } = await supabase
+                .from("transactions")
+                .select("id,book_name")
+                .eq("email", cleanEmail)
+                .eq("status", "RENTED")
+                .is("submit_date", null);
+
+            if (rentalError) {
+                console.log("Delete account rental check error:", rentalError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to check active book rentals."
+                });
+            }
+
+            if (activeRentals && activeRentals.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please submit all rented books before deleting your account."
+                });
+            }
+
+            await supabase.from("attendance").delete().eq("email", cleanEmail);
+            await supabase.from("transactions").delete().eq("email", cleanEmail);
+
+            const { error: deleteError } = await supabase
+                .from("users")
+                .delete()
+                .eq("id", userId);
+
+            if (deleteError) {
+                console.log("Delete account error:", deleteError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to delete account."
+                });
+            }
+
+            const possibleFiles = [
+                `users/${userId}/profile.jpg`,
+                `users/${userId}/profile.png`,
+                `users/${userId}/profile.webp`,
+                `users/${userId}/profile.gif`
+            ];
+
+            try {
+                await supabase.storage.from(PROFILE_PHOTOS_BUCKET).remove(possibleFiles);
+            }
+            catch (photoError) {
+                console.log("Account photo delete warning:", photoError);
+            }
+
+            return res.json({
+                success: true,
+                message: "Account deleted successfully."
+            });
+        }
+        catch (error) {
+            console.log("Delete account server error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Server error."
+            });
+        }
+    }
+);
+
+// ==================================================
+// ADMIN - DELETE USER ACCOUNT
+// ==================================================
+
+app.delete(
+    "/admin/users/:email",
+    checkAdmin,
+    async (req, res) => {
+        try {
+            const cleanEmail = decodeURIComponent(req.params.email)
+                .toString()
+                .trim()
+                .toLowerCase();
+
+            const { data: users, error: findError } = await supabase
+                .from("users")
+                .select("id,email")
+                .eq("email", cleanEmail)
+                .limit(1);
+
+            if (findError) {
+                console.log("Admin delete user find error:", findError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to find user."
+                });
+            }
+
+            if (!users || users.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: "User not found."
+                });
+            }
+
+            const userId = users[0].id;
+
+            const { data: activeRentals, error: rentalError } = await supabase
+                .from("transactions")
+                .select("id")
+                .eq("email", cleanEmail)
+                .eq("status", "RENTED")
+                .is("submit_date", null);
+
+            if (rentalError) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to check active rentals."
+                });
+            }
+
+            if (activeRentals && activeRentals.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "User has active rented books. Submit them before deleting the account."
+                });
+            }
+
+            await supabase.from("attendance").delete().eq("email", cleanEmail);
+            await supabase.from("transactions").delete().eq("email", cleanEmail);
+
+            const { error: deleteError } = await supabase
+                .from("users")
+                .delete()
+                .eq("id", userId);
+
+            if (deleteError) {
+                console.log("Admin delete user error:", deleteError);
+                return res.status(500).json({
+                    success: false,
+                    message: "Unable to delete user."
+                });
+            }
+
+            try {
+                await supabase.storage.from(PROFILE_PHOTOS_BUCKET).remove([
+                    `users/${userId}/profile.jpg`,
+                    `users/${userId}/profile.png`,
+                    `users/${userId}/profile.webp`,
+                    `users/${userId}/profile.gif`
+                ]);
+            }
+            catch (photoError) {
+                console.log("Admin user photo delete warning:", photoError);
+            }
+
+            return res.json({
+                success: true,
+                message: "User account deleted successfully."
+            });
+        }
+        catch (error) {
+            console.log("Admin delete user server error:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Server error."
+            });
+        }
     }
 );
 

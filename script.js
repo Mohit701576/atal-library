@@ -5,253 +5,360 @@
 
 const API_URL = "https://atal-library-backend.onrender.com";
 
-document.addEventListener("DOMContentLoaded", function () {
 
-    /* =====================================================
-       NAVBAR
-    ===================================================== */
+/* =====================================================
+   USER FUNCTIONS
+===================================================== */
 
-    const menuBtn = document.getElementById("menuBtn");
-    const mainMenu = document.getElementById("mainMenu");
+function getSavedUser() {
 
-    if (menuBtn && mainMenu) {
+    const savedUser = localStorage.getItem("libraryUser");
 
-        menuBtn.onclick = function () {
-            mainMenu.classList.toggle("active");
-        };
+    if (!savedUser) {
+        return null;
+    }
 
-        const menuLinks = document.querySelectorAll(".menu a");
+    try {
+        return JSON.parse(savedUser);
+    }
 
-        menuLinks.forEach(function (link) {
+    catch (error) {
+        console.error("User data error:", error);
+        return null;
+    }
+}
 
-            link.onclick = function () {
-                mainMenu.classList.remove("active");
-            };
 
-        });
+function saveUser(user) {
+
+    if (user) {
+        localStorage.setItem(
+            "libraryUser",
+            JSON.stringify(user)
+        );
+    }
+}
+
+
+function getAttendanceUser() {
+
+    const user = getSavedUser();
+
+    if (user && user.email) {
+        return user;
+    }
+
+    return null;
+}
+
+
+/* =====================================================
+   ATTENDANCE VISIBILITY
+===================================================== */
+
+function updateAttendanceVisibility() {
+
+    const user = getAttendanceUser();
+
+    const attendanceSection =
+        document.getElementById("attendance");
+
+    const attendanceNavLink =
+        document.getElementById("attendanceNavLink");
+
+
+    const isLoggedIn =
+        !!(user && user.email);
+
+
+    if (attendanceSection) {
+
+        attendanceSection.style.display =
+            isLoggedIn ? "block" : "none";
+
     }
 
 
-    /* =====================================================
-       AUTH ELEMENTS
-    ===================================================== */
+    if (attendanceNavLink) {
 
-    const loginBtn = document.getElementById("loginBtn");
-    const registerBtn = document.getElementById("registerBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userGreeting = document.getElementById("userGreeting");
+        attendanceNavLink.style.display =
+            isLoggedIn ? "inline-block" : "none";
 
-    const mobileLoginBtn =
-        document.getElementById("mobileLoginBtn");
+    }
 
-    const mobileRegisterBtn =
-        document.getElementById("mobileRegisterBtn");
-
-    const mobileLogoutBtn =
-        document.getElementById("mobileLogoutBtn");
-
-    const mobileUserGreeting =
-        document.getElementById("mobileUserGreeting");
+}
 
 
-    /* =====================================================
-       AUTH MODALS
-    ===================================================== */
+/* =====================================================
+   PROFILE PHOTO
+===================================================== */
 
-    const loginModal =
-        document.getElementById("loginModal");
+function getProfilePhoto(user) {
 
-    const registerModal =
-        document.getElementById("registerModal");
+    return (
+        user?.profile_photo ||
+        user?.ProfilePhoto ||
+        user?.profilePhoto ||
+        ""
+    );
 
-    const forgotPasswordModal =
-        document.getElementById("forgotPasswordModal");
+}
 
 
-    /* =====================================================
-       CLOSE ALL AUTH MODALS
-    ===================================================== */
+function renderUserGreeting(element, name, photoUrl) {
 
-    function closeAllAuthModals() {
+    if (!element) {
+        return;
+    }
 
-        if (loginModal) {
-            loginModal.style.display = "none";
-        }
 
-        if (registerModal) {
-            registerModal.style.display = "none";
-        }
+    element.innerHTML = "";
 
-        if (forgotPasswordModal) {
 
-            forgotPasswordModal.style.display = "none";
+    const wrapper =
+        document.createElement("span");
 
-            forgotPasswordModal.classList.remove(
-                "show"
+
+    wrapper.style.display =
+        "inline-flex";
+
+    wrapper.style.alignItems =
+        "center";
+
+    wrapper.style.gap =
+        "8px";
+
+
+    if (photoUrl) {
+
+        const img =
+            document.createElement("img");
+
+
+        img.src = photoUrl;
+
+        img.alt = "Profile Photo";
+
+
+        img.width = 35;
+        img.height = 35;
+
+
+        img.style.width =
+            "35px";
+
+        img.style.height =
+            "35px";
+
+        img.style.borderRadius =
+            "50%";
+
+        img.style.objectFit =
+            "cover";
+
+        img.style.border =
+            "2px solid #ffffff";
+
+        img.style.display =
+            "block";
+
+        img.style.cursor =
+            "pointer";
+
+
+        img.title =
+            "Click to change profile photo";
+
+
+        img.onerror = function () {
+
+            console.error(
+                "Profile photo could not be loaded:",
+                photoUrl
             );
-        }
+
+            img.style.display = "none";
+
+        };
+
+
+        wrapper.appendChild(img);
+
     }
 
 
-    /* =====================================================
-       OPEN LOGIN
-    ===================================================== */
-
-    function openLogin() {
-
-        closeAllAuthModals();
-
-        if (loginModal) {
-            loginModal.style.display = "flex";
-        }
-    }
+    const text =
+        document.createElement("span");
 
 
-    /* =====================================================
-       OPEN REGISTER
-    ===================================================== */
-
-    function openRegister() {
-
-        closeAllAuthModals();
-
-        if (registerModal) {
-            registerModal.style.display = "flex";
-        }
-    }
+    text.textContent =
+        "Hello, " +
+        name +
+        " 👋";
 
 
-    /* =====================================================
-       OPEN FORGOT PASSWORD
-    ===================================================== */
+    wrapper.appendChild(text);
 
-    function openForgotPassword() {
 
-        closeAllAuthModals();
+    element.appendChild(wrapper);
 
-        if (forgotPasswordModal) {
 
-            forgotPasswordModal.style.display = "flex";
+    element.style.display =
+        "inline-block";
 
-            forgotPasswordModal.classList.add(
-                "show"
+}
+
+
+/* =====================================================
+   DOM LOADED
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+
+        /* =================================================
+           NAVBAR
+        ================================================= */
+
+        const menuBtn =
+            document.getElementById("menuBtn");
+
+
+        const mainMenu =
+            document.getElementById("mainMenu");
+
+
+        if (menuBtn && mainMenu) {
+
+            menuBtn.onclick =
+                function () {
+
+                    mainMenu.classList.toggle(
+                        "active"
+                    );
+
+                };
+
+
+            const menuLinks =
+                document.querySelectorAll(
+                    ".menu a"
+                );
+
+
+            menuLinks.forEach(
+                function (link) {
+
+                    link.onclick =
+                        function () {
+
+                            mainMenu.classList.remove(
+                                "active"
+                            );
+
+                        };
+
+                }
             );
+
         }
-    }
 
 
-    /* =====================================================
-       DESKTOP LOGIN
-    ===================================================== */
+        /* =================================================
+           AUTH ELEMENTS
+        ================================================= */
 
-    if (loginBtn) {
-
-        loginBtn.onclick = function () {
-            openLogin();
-        };
-
-    }
+        const loginBtn =
+            document.getElementById("loginBtn");
 
 
-    /* =====================================================
-       DESKTOP REGISTER
-    ===================================================== */
-
-    if (registerBtn) {
-
-        registerBtn.onclick = function () {
-            openRegister();
-        };
-
-    }
+        const registerBtn =
+            document.getElementById("registerBtn");
 
 
-    /* =====================================================
-       MOBILE LOGIN
-    ===================================================== */
-
-    if (mobileLoginBtn) {
-
-        mobileLoginBtn.onclick = function () {
-
-            openLogin();
-
-            if (mainMenu) {
-                mainMenu.classList.remove("active");
-            }
-
-        };
-
-    }
+        const logoutBtn =
+            document.getElementById("logoutBtn");
 
 
-    /* =====================================================
-       MOBILE REGISTER
-    ===================================================== */
-
-    if (mobileRegisterBtn) {
-
-        mobileRegisterBtn.onclick = function () {
-
-            openRegister();
-
-            if (mainMenu) {
-                mainMenu.classList.remove("active");
-            }
-
-        };
-
-    }
+        const userGreeting =
+            document.getElementById("userGreeting");
 
 
-    /* =====================================================
-       CLOSE BUTTONS
-    ===================================================== */
-
-    const loginClose =
-        document.getElementById("loginClose");
-
-    const registerClose =
-        document.getElementById("registerClose");
-
-    const forgotPasswordClose =
-        document.getElementById("forgotPasswordClose");
+        const mobileLoginBtn =
+            document.getElementById(
+                "mobileLoginBtn"
+            );
 
 
-    if (loginClose) {
+        const mobileRegisterBtn =
+            document.getElementById(
+                "mobileRegisterBtn"
+            );
 
-        loginClose.onclick = function () {
+
+        const mobileLogoutBtn =
+            document.getElementById(
+                "mobileLogoutBtn"
+            );
+
+
+        const mobileUserGreeting =
+            document.getElementById(
+                "mobileUserGreeting"
+            );
+
+
+        /* =================================================
+           AUTH MODALS
+        ================================================= */
+
+        const loginModal =
+            document.getElementById(
+                "loginModal"
+            );
+
+
+        const registerModal =
+            document.getElementById(
+                "registerModal"
+            );
+
+
+        const forgotPasswordModal =
+            document.getElementById(
+                "forgotPasswordModal"
+            );
+
+
+        /* =================================================
+           CLOSE ALL AUTH MODALS
+        ================================================= */
+
+        function closeAllAuthModals() {
 
             if (loginModal) {
-                loginModal.style.display = "none";
+
+                loginModal.style.display =
+                    "none";
+
             }
 
-        };
-
-    }
-
-
-    if (registerClose) {
-
-        registerClose.onclick = function () {
 
             if (registerModal) {
-                registerModal.style.display = "none";
+
+                registerModal.style.display =
+                    "none";
+
             }
 
-        };
-
-    }
-
-
-    if (forgotPasswordClose) {
-
-        forgotPasswordClose.onclick = function () {
 
             if (forgotPasswordModal) {
 
                 forgotPasswordModal.style.display =
                     "none";
+
 
                 forgotPasswordModal.classList.remove(
                     "show"
@@ -259,763 +366,583 @@ document.addEventListener("DOMContentLoaded", function () {
 
             }
 
-        };
-
-    }
+        }
 
 
-    /* =====================================================
-       SWITCH LOGIN / REGISTER
-    ===================================================== */
+        /* =================================================
+           OPEN LOGIN
+        ================================================= */
 
-    const openRegisterBtn =
-        document.getElementById("openRegister");
+        function openLogin() {
 
-    const openLoginBtn =
-        document.getElementById("openLogin");
+            closeAllAuthModals();
 
 
-    if (openRegisterBtn) {
+            if (loginModal) {
 
-        openRegisterBtn.onclick = function () {
-            openRegister();
-        };
+                loginModal.style.display =
+                    "flex";
 
-    }
+            }
 
-
-    if (openLoginBtn) {
-
-        openLoginBtn.onclick = function () {
-            openLogin();
-        };
-
-    }
+        }
 
 
-    /* =====================================================
-       FORGOT PASSWORD BUTTON
-    ===================================================== */
+        /* =================================================
+           OPEN REGISTER
+        ================================================= */
 
-    const forgotPasswordBtn =
-        document.getElementById("forgotPasswordBtn");
+        function openRegister() {
 
-
-    if (forgotPasswordBtn) {
-
-        forgotPasswordBtn.onclick = function (event) {
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            openForgotPassword();
-
-        };
-
-    }
+            closeAllAuthModals();
 
 
-    /* =====================================================
-       BACK TO LOGIN
-    ===================================================== */
+            if (registerModal) {
 
-    const backToLogin =
-        document.getElementById("backToLogin");
+                registerModal.style.display =
+                    "flex";
+
+            }
+
+        }
 
 
-    if (backToLogin) {
+        /* =================================================
+           OPEN FORGOT PASSWORD
+        ================================================= */
 
-        backToLogin.onclick = function () {
+        function openForgotPassword() {
+
+            closeAllAuthModals();
+
 
             if (forgotPasswordModal) {
 
                 forgotPasswordModal.style.display =
-                    "none";
+                    "flex";
 
-                forgotPasswordModal.classList.remove(
+
+                forgotPasswordModal.classList.add(
                     "show"
                 );
 
             }
 
-            openLogin();
-
-        };
-
-    }
+        }
 
 
-    /* =====================================================
-       USER UI
-    ===================================================== */
+        /* =================================================
+           LOGIN BUTTON
+        ================================================= */
 
-    function updateUserUI() {
+        if (loginBtn) {
 
-        const loggedUser =
-            localStorage.getItem("loggedUser");
+            loginBtn.onclick =
+                function () {
 
-        const savedUser =
-            localStorage.getItem("libraryUser");
+                    openLogin();
 
-        let user = null;
-
-        if (savedUser) {
-
-            try {
-
-                user = JSON.parse(savedUser);
-
-            }
-
-            catch (error) {
-
-                console.error(
-                    "User data error:",
-                    error
-                );
-
-            }
+                };
 
         }
 
 
-        if (loggedUser) {
+        /* =================================================
+           REGISTER BUTTON
+        ================================================= */
 
-            /* =============================================
-               PROFILE PHOTO
-            ============================================= */
+        if (registerBtn) {
 
-            const profilePhoto =
-                user && user.profile_photo
-                    ? user.profile_photo
-                    : "";
+            registerBtn.onclick =
+                function () {
 
+                    openRegister();
 
-            /* =============================================
-               DESKTOP
-            ============================================= */
-
-            if (userGreeting) {
-
-                if (profilePhoto) {
-
-                    userGreeting.innerHTML = `
-
-                        <span style="
-                            display:inline-flex;
-                            align-items:center;
-                            gap:8px;
-                        ">
-
-                            <img
-                                src="${profilePhoto}"
-                                alt="Profile"
-                                style="
-                                    width:35px;
-                                    height:35px;
-                                    border-radius:50%;
-                                    object-fit:cover;
-                                    border:2px solid #ffffff;
-                                "
-                            >
-
-                            <span>
-                                Hello, ${loggedUser} 👋
-                            </span>
-
-                        </span>
-
-                    `;
-
-                }
-
-                else {
-
-                    userGreeting.innerText =
-                        "Hello, " +
-                        loggedUser +
-                        " 👋";
-
-                }
-
-
-                userGreeting.style.display =
-                    "inline-block";
-
-            }
-
-
-            if (loginBtn) {
-                loginBtn.style.display = "none";
-            }
-
-            if (registerBtn) {
-                registerBtn.style.display = "none";
-            }
-
-            if (logoutBtn) {
-                logoutBtn.style.display = "inline-block";
-            }
-
-
-            /* =============================================
-               MOBILE
-            ============================================= */
-
-            if (mobileUserGreeting) {
-
-                if (profilePhoto) {
-
-                    mobileUserGreeting.innerHTML = `
-
-                        <span style="
-                            display:inline-flex;
-                            align-items:center;
-                            gap:8px;
-                        ">
-
-                            <img
-                                src="${profilePhoto}"
-                                alt="Profile"
-                                style="
-                                    width:35px;
-                                    height:35px;
-                                    border-radius:50%;
-                                    object-fit:cover;
-                                    border:2px solid #ffffff;
-                                "
-                            >
-
-                            <span>
-                                Hello, ${loggedUser} 👋
-                            </span>
-
-                        </span>
-
-                    `;
-
-                }
-
-                else {
-
-                    mobileUserGreeting.innerText =
-                        "Hello, " +
-                        loggedUser +
-                        " 👋";
-
-                }
-
-
-                mobileUserGreeting.style.display =
-                    "inline-block";
-
-            }
-
-
-            if (mobileLoginBtn) {
-                mobileLoginBtn.style.display = "none";
-            }
-
-            if (mobileRegisterBtn) {
-                mobileRegisterBtn.style.display = "none";
-            }
-
-            if (mobileLogoutBtn) {
-                mobileLogoutBtn.style.display =
-                    "inline-block";
-            }
+                };
 
         }
 
-        else {
 
-            /* =============================================
-               DESKTOP LOGGED OUT
-            ============================================= */
+        /* =================================================
+           MOBILE LOGIN
+        ================================================= */
 
-            if (userGreeting) {
-                userGreeting.style.display = "none";
-            }
+        if (mobileLoginBtn) {
 
-            if (loginBtn) {
-                loginBtn.style.display = "inline-block";
-            }
+            mobileLoginBtn.onclick =
+                function () {
 
-            if (registerBtn) {
-                registerBtn.style.display = "inline-block";
-            }
+                    openLogin();
 
-            if (logoutBtn) {
-                logoutBtn.style.display = "none";
-            }
 
+                    if (mainMenu) {
 
-            /* =============================================
-               MOBILE LOGGED OUT
-            ============================================= */
-
-            if (mobileUserGreeting) {
-                mobileUserGreeting.style.display = "none";
-            }
-
-            if (mobileLoginBtn) {
-                mobileLoginBtn.style.display =
-                    "inline-block";
-            }
-
-            if (mobileRegisterBtn) {
-                mobileRegisterBtn.style.display =
-                    "inline-block";
-            }
-
-            if (mobileLogoutBtn) {
-                mobileLogoutBtn.style.display = "none";
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       LOGOUT
-    ===================================================== */
-
-    function logoutUser() {
-
-        localStorage.removeItem("loggedUser");
-
-        localStorage.removeItem("libraryUser");
-
-        updateUserUI();
-
-        if (mainMenu) {
-            mainMenu.classList.remove("active");
-        }
-
-        alert("You have been logged out.");
-
-    }
-
-
-    if (logoutBtn) {
-        logoutBtn.onclick = logoutUser;
-    }
-
-
-    if (mobileLogoutBtn) {
-        mobileLogoutBtn.onclick = logoutUser;
-    }
-
-
-    /* =====================================================
-       REGISTER + EMAIL OTP
-    ===================================================== */
-
-    const registerForm =
-        document.getElementById("registerForm");
-
-    const sendEmailOtp =
-        document.getElementById("sendEmailOtp");
-
-    const verifyEmailOtp =
-        document.getElementById("verifyEmailOtp");
-
-    const emailOtpStatus =
-        document.getElementById("emailOtpStatus");
-
-    const emailOtpInput =
-        document.getElementById("emailOtp");
-
-    let emailVerified = false;
-
-
-    /* =====================================================
-       SEND EMAIL OTP
-    ===================================================== */
-
-    if (sendEmailOtp) {
-
-        sendEmailOtp.onclick = async function () {
-
-            const emailInput =
-                document.getElementById("registerEmail");
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim().toLowerCase()
-                    : "";
-
-
-            if (!email) {
-
-                alert(
-                    "Please enter your email first."
-                );
-
-                return;
-
-            }
-
-
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-
-                alert(
-                    "Please enter a valid email address."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                sendEmailOtp.disabled = true;
-
-                sendEmailOtp.innerText = "Sending...";
-
-
-                const response =
-                    await fetch(
-                        `${API_URL}/send-email-otp`,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-                                email: email
-                            })
-
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (!response.ok) {
-
-                    alert(
-                        data.message ||
-                        "Unable to send OTP."
-                    );
-
-                    return;
-
-                }
-
-
-                emailVerified = false;
-
-
-                if (emailOtpStatus) {
-
-                    emailOtpStatus.innerText =
-                        "OTP sent to your email. Please check your Gmail.";
-
-                    emailOtpStatus.style.color =
-                        "#2563eb";
-
-                }
-
-
-                alert(
-                    "OTP sent successfully. Check your email."
-                );
-
-            }
-
-
-            catch (error) {
-
-                console.error(
-                    "Send OTP Error:",
-                    error
-                );
-
-                alert(
-                    "Unable to connect to backend server."
-                );
-
-            }
-
-
-            finally {
-
-                sendEmailOtp.disabled = false;
-
-                sendEmailOtp.innerText =
-                    "Send OTP";
-
-            }
-
-        };
-
-    }
-
-
-    /* =====================================================
-       VERIFY EMAIL OTP
-    ===================================================== */
-
-    if (verifyEmailOtp) {
-
-        verifyEmailOtp.onclick = async function () {
-
-            const emailInput =
-                document.getElementById("registerEmail");
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim().toLowerCase()
-                    : "";
-
-            const otp =
-                emailOtpInput
-                    ? emailOtpInput.value.trim()
-                    : "";
-
-
-            if (!email) {
-
-                alert("Please enter your email.");
-
-                return;
-
-            }
-
-
-            if (!otp) {
-
-                alert("Please enter the OTP.");
-
-                return;
-
-            }
-
-
-            if (!/^\d{6}$/.test(otp)) {
-
-                alert(
-                    "Please enter a valid 6-digit OTP."
-                );
-
-                return;
-
-            }
-
-
-            try {
-
-                verifyEmailOtp.disabled = true;
-
-                verifyEmailOtp.innerText =
-                    "Verifying...";
-
-
-                const response =
-                    await fetch(
-                        `${API_URL}/verify-email-otp`,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                email: email,
-                                otp: otp
-
-                            })
-
-                        }
-                    );
-
-
-                const data =
-                    await response.json();
-
-
-                if (!response.ok) {
-
-                    emailVerified = false;
-
-
-                    if (emailOtpStatus) {
-
-                        emailOtpStatus.innerText =
-                            data.message ||
-                            "Invalid OTP.";
-
-                        emailOtpStatus.style.color =
-                            "#dc2626";
+                        mainMenu.classList.remove(
+                            "active"
+                        );
 
                     }
 
-                    return;
+                };
 
-                }
-
-
-                emailVerified = true;
+        }
 
 
-                if (emailOtpStatus) {
+        /* =================================================
+           MOBILE REGISTER
+        ================================================= */
 
-                    emailOtpStatus.innerText =
-                        "✓ Email verified successfully.";
+        if (mobileRegisterBtn) {
 
-                    emailOtpStatus.style.color =
-                        "#16a34a";
+            mobileRegisterBtn.onclick =
+                function () {
 
-                }
-
-
-                alert(
-                    "Email verified successfully!"
-                );
+                    openRegister();
 
 
-                const emailInputElement =
-                    document.getElementById(
-                        "registerEmail"
-                    );
+                    if (mainMenu) {
+
+                        mainMenu.classList.remove(
+                            "active"
+                        );
+
+                    }
+
+                };
+
+        }
 
 
-                if (emailInputElement) {
-                    emailInputElement.disabled = true;
-                }
+        /* =================================================
+           CLOSE BUTTONS
+        ================================================= */
 
-
-                if (emailOtpInput) {
-                    emailOtpInput.disabled = true;
-                }
-
-
-                verifyEmailOtp.disabled = true;
-
-                verifyEmailOtp.innerText =
-                    "Verified ✓";
-
-            }
-
-
-            catch (error) {
-
-                console.error(
-                    "Verify OTP Error:",
-                    error
-                );
-
-                emailVerified = false;
-
-                alert(
-                    "Unable to connect to backend server."
-                );
-
-            }
-
-
-            finally {
-
-                if (!emailVerified) {
-
-                    verifyEmailOtp.disabled = false;
-
-                    verifyEmailOtp.innerText =
-                        "Verify";
-
-                }
-
-            }
-
-        };
-
-    }
-
-
-    /* =====================================================
-       REGISTER ACCOUNT
-       WITH PROFILE PHOTO
-    ===================================================== */
-
-    if (registerForm) {
-
-        registerForm.onsubmit = async function (event) {
-
-            event.preventDefault();
-
-
-            console.log(
-                "REGISTER BUTTON CLICKED"
-            );
-
-            console.log(
-                "Email Verified:",
-                emailVerified
+        const loginClose =
+            document.getElementById(
+                "loginClose"
             );
 
 
-            const nameInput =
-                document.getElementById("registerName");
-
-            const emailInput =
-                document.getElementById("registerEmail");
-
-            const phoneInput =
-                document.getElementById("registerPhone");
-
-            const passwordInput =
-                document.getElementById("registerPassword");
-
-            const photoInput =
-                document.getElementById("registerPhoto");
+        const registerClose =
+            document.getElementById(
+                "registerClose"
+            );
 
 
-            const name =
-                nameInput
-                    ? nameInput.value.trim()
-                    : "";
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim().toLowerCase()
-                    : "";
-
-            const phone =
-                phoneInput
-                    ? phoneInput.value.trim()
-                    : "";
-
-            const password =
-                passwordInput
-                    ? passwordInput.value
-                    : "";
+        const forgotPasswordClose =
+            document.getElementById(
+                "forgotPasswordClose"
+            );
 
 
-            /* =================================================
-               PHOTO CHECK
-            ================================================= */
+        if (loginClose) {
 
-            if (
-                !photoInput ||
-                !photoInput.files ||
-                photoInput.files.length === 0
-            ) {
+            loginClose.onclick =
+                function () {
+
+                    if (loginModal) {
+
+                        loginModal.style.display =
+                            "none";
+
+                    }
+
+                };
+
+        }
+
+
+        if (registerClose) {
+
+            registerClose.onclick =
+                function () {
+
+                    if (registerModal) {
+
+                        registerModal.style.display =
+                            "none";
+
+                    }
+
+                };
+
+        }
+
+
+        if (forgotPasswordClose) {
+
+            forgotPasswordClose.onclick =
+                function () {
+
+                    if (forgotPasswordModal) {
+
+                        forgotPasswordModal.style.display =
+                            "none";
+
+
+                        forgotPasswordModal.classList.remove(
+                            "show"
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           SWITCH LOGIN / REGISTER
+        ================================================= */
+
+        const openRegisterBtn =
+            document.getElementById(
+                "openRegister"
+            );
+
+
+        const openLoginBtn =
+            document.getElementById(
+                "openLogin"
+            );
+
+
+        if (openRegisterBtn) {
+
+            openRegisterBtn.onclick =
+                function () {
+
+                    openRegister();
+
+                };
+
+        }
+
+
+        if (openLoginBtn) {
+
+            openLoginBtn.onclick =
+                function () {
+
+                    openLogin();
+
+                };
+
+        }
+
+
+        /* =================================================
+           FORGOT PASSWORD BUTTON
+        ================================================= */
+
+        const forgotPasswordBtn =
+            document.getElementById(
+                "forgotPasswordBtn"
+            );
+
+
+        if (forgotPasswordBtn) {
+
+            forgotPasswordBtn.onclick =
+                function (event) {
+
+                    event.preventDefault();
+
+                    event.stopPropagation();
+
+                    openForgotPassword();
+
+                };
+
+        }
+
+
+        /* =================================================
+           BACK TO LOGIN
+        ================================================= */
+
+        const backToLogin =
+            document.getElementById(
+                "backToLogin"
+            );
+
+
+        if (backToLogin) {
+
+            backToLogin.onclick =
+                function () {
+
+                    if (forgotPasswordModal) {
+
+                        forgotPasswordModal.style.display =
+                            "none";
+
+
+                        forgotPasswordModal.classList.remove(
+                            "show"
+                        );
+
+                    }
+
+
+                    openLogin();
+
+                };
+
+        }
+
+
+        /* =================================================
+           USER UI
+        ================================================= */
+
+        function updateUserUI() {
+
+            const user =
+                getSavedUser();
+
+
+            /*
+               IMPORTANT:
+               Attendance and login now use libraryUser.
+               loggedUser is kept only for old book features.
+            */
+
+            const isLoggedIn =
+                !!(user && user.email);
+
+
+            updateAttendanceVisibility();
+
+
+            if (isLoggedIn) {
+
+
+                /* ==============================
+                   DESKTOP
+                ============================== */
+
+                const profilePhoto =
+                    getProfilePhoto(user);
+
+
+                renderUserGreeting(
+                    userGreeting,
+                    user.name || "User",
+                    profilePhoto
+                );
+
+
+                if (userGreeting) {
+
+                    userGreeting.style.cursor =
+                        "pointer";
+
+
+                    userGreeting.title =
+                        "Click to change profile photo";
+
+
+                    userGreeting.onclick =
+                        openProfilePhotoPicker;
+
+                }
+
+
+                if (loginBtn) {
+
+                    loginBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (registerBtn) {
+
+                    registerBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (logoutBtn) {
+
+                    logoutBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                /* ==============================
+                   MOBILE
+                ============================== */
+
+                renderUserGreeting(
+                    mobileUserGreeting,
+                    user.name || "User",
+                    profilePhoto
+                );
+
+
+                if (mobileUserGreeting) {
+
+                    mobileUserGreeting.style.cursor =
+                        "pointer";
+
+
+                    mobileUserGreeting.title =
+                        "Click to change profile photo";
+
+
+                    mobileUserGreeting.onclick =
+                        openProfilePhotoPicker;
+
+                }
+
+
+                if (mobileLoginBtn) {
+
+                    mobileLoginBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (mobileRegisterBtn) {
+
+                    mobileRegisterBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (mobileLogoutBtn) {
+
+                    mobileLogoutBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                /* ==============================
+                   ATTENDANCE
+                ============================== */
+
+                loadAttendanceStatus();
+
+            }
+
+
+            else {
+
+
+                /* ==============================
+                   DESKTOP
+                ============================== */
+
+                if (userGreeting) {
+
+                    userGreeting.innerHTML = "";
+
+                    userGreeting.style.display =
+                        "none";
+
+                    userGreeting.onclick =
+                        null;
+
+                }
+
+
+                /* ==============================
+                   MOBILE
+                ============================== */
+
+                if (mobileUserGreeting) {
+
+                    mobileUserGreeting.innerHTML =
+                        "";
+
+                    mobileUserGreeting.style.display =
+                        "none";
+
+                    mobileUserGreeting.onclick =
+                        null;
+
+                }
+
+
+                if (loginBtn) {
+
+                    loginBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                if (registerBtn) {
+
+                    registerBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                if (logoutBtn) {
+
+                    logoutBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (mobileLoginBtn) {
+
+                    mobileLoginBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                if (mobileRegisterBtn) {
+
+                    mobileRegisterBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                if (mobileLogoutBtn) {
+
+                    mobileLogoutBtn.style.display =
+                        "none";
+
+                }
+
+
+                updateAttendanceUI(
+                    false,
+                    null
+                );
+
+            }
+
+        }
+
+
+        /* =================================================
+           CHANGE PROFILE PHOTO
+        ================================================= */
+
+        async function changeProfilePhoto(file) {
+
+            const user =
+                getSavedUser();
+
+
+            if (!user || !user.email) {
 
                 alert(
-                    "Please select your profile photo."
+                    "Please login first."
                 );
 
                 return;
@@ -1023,24 +950,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            const photo =
-                photoInput.files[0];
-
-
-            /* Maximum 5 MB */
-
-            if (photo.size > 5 * 1024 * 1024) {
-
-                alert(
-                    "Profile photo must be 5 MB or smaller."
-                );
+            if (!file) {
 
                 return;
 
             }
 
-
-            /* Allowed image types */
 
             const allowedTypes = [
 
@@ -1052,7 +967,7 @@ document.addEventListener("DOMContentLoaded", function () {
             ];
 
 
-            if (!allowedTypes.includes(photo.type)) {
+            if (!allowedTypes.includes(file.type)) {
 
                 alert(
                     "Please select JPG, PNG, WEBP or GIF image."
@@ -1063,47 +978,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
 
-            /* =================================================
-               BASIC VALIDATION
-            ================================================= */
-
-            if (!name || !email || !phone || !password) {
-
-                alert(
-                    "Please fill all fields."
-                );
-
-                return;
-
-            }
-
-
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            if (
+                file.size >
+                5 * 1024 * 1024
+            ) {
 
                 alert(
-                    "Please enter a valid email address."
-                );
-
-                return;
-
-            }
-
-
-            if (!emailVerified) {
-
-                alert(
-                    "Please verify your email before creating your account."
-                );
-
-                return;
-
-            }
-
-
-            if (!/^\d{10}$/.test(phone)) {
-
-                alert(
-                    "Please enter a valid 10-digit phone number."
+                    "Profile photo must be 5 MB or smaller."
                 );
 
                 return;
@@ -1112,81 +993,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
             try {
-
-                const createAccountBtn =
-                    document.getElementById(
-                        "createAccountBtn"
-                    );
-
-
-                if (createAccountBtn) {
-
-                    createAccountBtn.disabled = true;
-
-                    createAccountBtn.innerText =
-                        "Creating...";
-
-                }
-
-
-                console.log(
-                    "Sending registration request:",
-                    {
-                        name: name,
-                        email: email,
-                        phone: phone,
-                        photo: photo.name
-                    }
-                );
-
-
-                /* =================================================
-                   FORM DATA
-                ================================================= */
 
                 const formData =
                     new FormData();
 
 
                 formData.append(
-                    "name",
-                    name
-                );
-
-                formData.append(
                     "email",
-                    email
+                    user.email
                 );
 
-                formData.append(
-                    "phone",
-                    phone
-                );
-
-                formData.append(
-                    "password",
-                    password
-                );
 
                 formData.append(
                     "profile_photo",
-                    photo
+                    file
                 );
 
 
-                /* =================================================
-                   REGISTER API
-                ================================================= */
-
                 const response =
                     await fetch(
-                        `${API_URL}/register`,
+                        `${API_URL}/profile-photo`,
                         {
-
                             method: "POST",
-
                             body: formData
-
                         }
                     );
 
@@ -1195,17 +1024,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     await response.json();
 
 
-                console.log(
-                    "Register API Response:",
-                    data
-                );
-
-
                 if (!response.ok) {
 
                     alert(
                         data.message ||
-                        "Registration failed."
+                        "Profile photo update failed."
                     );
 
                     return;
@@ -1213,82 +1036,46 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
 
-                /* =================================================
-                   SAVE USER DATA
-                ================================================= */
-
-                const user = {
-
-                    name:
-                        data.user
-                            ? data.user.name
-                            : name,
-
-                    email:
-                        data.user
-                            ? data.user.email
-                            : email,
-
-                    phone:
-                        data.user
-                            ? data.user.phone
-                            : phone,
-
-                    profile_photo:
-                        data.user
-                            ? data.user.profile_photo
-                            : ""
-
-                };
+                const returnedUser =
+                    data.user ||
+                    data.profile ||
+                    data;
 
 
-                localStorage.setItem(
-                    "libraryUser",
-                    JSON.stringify(user)
-                );
+                const newPhoto =
+                    data.profile_photo ||
+                    data.ProfilePhoto ||
+                    data.profilePhoto ||
+                    returnedUser?.profile_photo ||
+                    returnedUser?.ProfilePhoto ||
+                    returnedUser?.profilePhoto ||
+                    "";
+
+
+                if (!newPhoto) {
+
+                    alert(
+                        "Photo uploaded, but photo URL was not returned."
+                    );
+
+                    return;
+
+                }
+
+
+                user.profile_photo =
+                    newPhoto;
+
+
+                saveUser(user);
+
+
+                updateUserUI();
 
 
                 alert(
-                    "Account created successfully! Please login."
+                    "Profile photo updated successfully! 📷"
                 );
-
-
-                registerForm.reset();
-
-                emailVerified = false;
-
-
-                if (emailOtpStatus) {
-                    emailOtpStatus.innerText = "";
-                }
-
-
-                if (emailInput) {
-                    emailInput.disabled = false;
-                }
-
-
-                if (emailOtpInput) {
-                    emailOtpInput.disabled = false;
-                }
-
-
-                if (verifyEmailOtp) {
-
-                    verifyEmailOtp.disabled = false;
-
-                    verifyEmailOtp.innerText =
-                        "Verify";
-
-                }
-
-
-                if (registerModal) {
-                    registerModal.style.display = "none";
-                }
-
-
-                openLogin();
 
             }
 
@@ -1296,9 +1083,10 @@ document.addEventListener("DOMContentLoaded", function () {
             catch (error) {
 
                 console.error(
-                    "Register Error:",
+                    "Profile Photo Error:",
                     error
                 );
+
 
                 alert(
                     "Unable to connect to backend server."
@@ -1306,69 +1094,89 @@ document.addEventListener("DOMContentLoaded", function () {
 
             }
 
-
-            finally {
-
-                const createAccountBtn =
-                    document.getElementById(
-                        "createAccountBtn"
-                    );
+        }
 
 
-                if (createAccountBtn) {
+        function openProfilePhotoPicker() {
 
-                    createAccountBtn.disabled = false;
+            const user =
+                getSavedUser();
 
-                    createAccountBtn.innerText =
-                        "Create Account";
 
-                }
+            if (!user || !user.email) {
+
+                alert(
+                    "Please login first."
+                );
+
+                return;
 
             }
 
-        };
 
-    }
-
-
-    /* =====================================================
-       LOGIN
-    ===================================================== */
-
-    const loginForm =
-        document.getElementById("loginForm");
-
-
-    if (loginForm) {
-
-        loginForm.onsubmit = async function (event) {
-
-            event.preventDefault();
-
-
-            const emailInput =
-                document.getElementById("loginEmail");
-
-            const passwordInput =
-                document.getElementById("loginPassword");
-
-
-            const email =
-                emailInput
-                    ? emailInput.value.trim().toLowerCase()
-                    : "";
-
-            const password =
-                passwordInput
-                    ? passwordInput.value
-                    : "";
-
-
-            if (!email || !password) {
-
-                alert(
-                    "Please fill all fields."
+            const input =
+                document.createElement(
+                    "input"
                 );
+
+
+            input.type = "file";
+
+
+            input.accept =
+                "image/jpeg,image/png,image/webp,image/gif";
+
+
+            input.style.display =
+                "none";
+
+
+            document.body.appendChild(input);
+
+
+            input.onchange =
+                async function () {
+
+                    const file =
+                        input.files &&
+                        input.files.length > 0
+                            ? input.files[0]
+                            : null;
+
+
+                    if (file) {
+
+                        await changeProfilePhoto(
+                            file
+                        );
+
+                    }
+
+
+                    input.remove();
+
+                };
+
+
+            input.click();
+
+        }
+
+
+        /* =================================================
+           REFRESH PROFILE
+        ================================================= */
+
+        async function refreshProfileFromBackend() {
+
+            const user =
+                getSavedUser();
+
+
+            if (
+                !user ||
+                !user.email
+            ) {
 
                 return;
 
@@ -1379,255 +1187,217 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const response =
                     await fetch(
-                        `${API_URL}/login`,
-                        {
-
-                            method: "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                email: email,
-                                password: password
-
-                            })
-
-                        }
+                        `${API_URL}/profile?email=${encodeURIComponent(user.email)}`
                     );
+
+
+                if (!response.ok) {
+
+                    return;
+
+                }
 
 
                 const data =
                     await response.json();
 
 
-                if (!response.ok) {
+                const serverUser =
+                    data.user ||
+                    data.profile ||
+                    data;
 
-                    alert(
-                        data.message ||
-                        "Login failed."
-                    );
+
+                if (!serverUser) {
 
                     return;
 
                 }
 
 
-                /* =================================================
-                   SAVE LOGGED USER
-                ================================================= */
-
-                localStorage.setItem(
-                    "loggedUser",
-                    data.user.name
-                );
+                user.id =
+                    serverUser.id ||
+                    serverUser.ID ||
+                    user.id ||
+                    "";
 
 
-                localStorage.setItem(
-                    "libraryUser",
-                    JSON.stringify({
-
-                        id:
-                            data.user.id || "",
-
-                        name:
-                            data.user.name,
-
-                        email:
-                            data.user.email,
-
-                        phone:
-                            data.user.phone || "",
-
-                        profile_photo:
-                            data.user.profile_photo ||
-                            data.user.ProfilePhoto ||
-                            data.user.profilePhoto ||
-                            ""
-
-                    })
-                );
+                user.name =
+                    serverUser.name ||
+                    serverUser.Name ||
+                    user.name ||
+                    "User";
 
 
-                alert(
-                    "Login successful! Welcome " +
-                    data.user.name
-                );
+                user.email =
+                    serverUser.email ||
+                    serverUser.Email ||
+                    user.email;
 
 
-                loginForm.reset();
+                user.phone =
+                    serverUser.phone ||
+                    serverUser.Phone ||
+                    user.phone ||
+                    "";
 
 
-                if (loginModal) {
-                    loginModal.style.display = "none";
+                const latestPhoto =
+                    serverUser.profile_photo ||
+                    serverUser.ProfilePhoto ||
+                    serverUser.profilePhoto ||
+                    data.profile_photo ||
+                    data.ProfilePhoto ||
+                    "";
+
+
+                if (latestPhoto) {
+
+                    user.profile_photo =
+                        latestPhoto;
+
                 }
 
 
+                saveUser(user);
+
+
                 updateUserUI();
+
 
             }
 
 
             catch (error) {
 
-                console.error(
-                    "Login Error:",
+                console.log(
+                    "Profile refresh skipped:",
                     error
-                );
-
-                alert(
-                    "Unable to connect to backend server."
                 );
 
             }
 
-        };
-
-    }
+        }
 
 
-    /* =====================================================
-       FORGOT PASSWORD
-    ===================================================== */
+        /* =================================================
+           LOGOUT
+        ================================================= */
 
-    const forgotPasswordForm =
-        document.getElementById(
-            "forgotPasswordForm"
-        );
+        function logoutUser() {
 
-
-    if (forgotPasswordForm) {
-
-        forgotPasswordForm.onsubmit =
-            async function (event) {
-
-                event.preventDefault();
+            localStorage.removeItem(
+                "loggedUser"
+            );
 
 
-                const emailInput =
-                    document.getElementById(
-                        "forgotEmail"
-                    );
-
-                const phoneInput =
-                    document.getElementById(
-                        "forgotPhone"
-                    );
-
-                const newPasswordInput =
-                    document.getElementById(
-                        "forgotNewPassword"
-                    );
-
-                const confirmPasswordInput =
-                    document.getElementById(
-                        "forgotConfirmPassword"
-                    );
+            localStorage.removeItem(
+                "libraryUser"
+            );
 
 
-                const email =
-                    emailInput
-                        ? emailInput.value
-                            .trim()
-                            .toLowerCase()
-                        : "";
-
-                const phone =
-                    phoneInput
-                        ? phoneInput.value.trim()
-                        : "";
-
-                const newPassword =
-                    newPasswordInput
-                        ? newPasswordInput.value
-                        : "";
-
-                const confirmPassword =
-                    confirmPasswordInput
-                        ? confirmPasswordInput.value
-                        : "";
+            updateUserUI();
 
 
-                if (
-                    !email ||
-                    !phone ||
-                    !newPassword ||
-                    !confirmPassword
-                ) {
-
-                    alert(
-                        "Please fill all fields."
-                    );
-
-                    return;
-
-                }
+            updateAttendanceVisibility();
 
 
-                if (!/^\d{10}$/.test(phone)) {
+            if (mainMenu) {
 
-                    alert(
-                        "Please enter a valid 10-digit phone number."
-                    );
+                mainMenu.classList.remove(
+                    "active"
+                );
 
-                    return;
-
-                }
+            }
 
 
-                if (
-                    newPassword !==
-                    confirmPassword
-                ) {
+            alert(
+                "You have been logged out."
+            );
 
-                    alert(
-                        "New password and confirm password do not match."
-                    );
-
-                    return;
-
-                }
+        }
 
 
-                try {
+        if (logoutBtn) {
 
-                    const response =
-                        await fetch(
-                            `${API_URL}/forgot-password`,
-                            {
+            logoutBtn.onclick =
+                logoutUser;
 
-                                method: "POST",
+        }
 
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
 
-                                body: JSON.stringify({
+        if (mobileLogoutBtn) {
 
-                                    email: email,
-                                    phone: phone,
-                                    newPassword:
-                                        newPassword
+            mobileLogoutBtn.onclick =
+                logoutUser;
 
-                                })
+        }
 
-                            }
+
+        /* =================================================
+           REGISTER + EMAIL OTP
+        ================================================= */
+
+        const registerForm =
+            document.getElementById(
+                "registerForm"
+            );
+
+
+        const sendEmailOtp =
+            document.getElementById(
+                "sendEmailOtp"
+            );
+
+
+        const verifyEmailOtp =
+            document.getElementById(
+                "verifyEmailOtp"
+            );
+
+
+        const emailOtpStatus =
+            document.getElementById(
+                "emailOtpStatus"
+            );
+
+
+        const emailOtpInput =
+            document.getElementById(
+                "emailOtp"
+            );
+
+
+        let emailVerified = false;
+
+
+        /* =================================================
+           SEND EMAIL OTP
+        ================================================= */
+
+        if (sendEmailOtp) {
+
+            sendEmailOtp.onclick =
+                async function () {
+
+                    const emailInput =
+                        document.getElementById(
+                            "registerEmail"
                         );
 
 
-                    const data =
-                        await response.json();
+                    const email =
+                        emailInput
+                            ? emailInput.value
+                                .trim()
+                                .toLowerCase()
+                            : "";
 
 
-                    if (!response.ok) {
+                    if (!email) {
 
                         alert(
-                            data.message ||
-                            "Password reset failed."
+                            "Please enter your email first."
                         );
 
                         return;
@@ -1635,303 +1405,1179 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
 
-                    alert(
-                        "Password changed successfully! Please login."
-                    );
+                    if (
+                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                            email
+                        )
+                    ) {
+
+                        alert(
+                            "Please enter a valid email address."
+                        );
+
+                        return;
+
+                    }
 
 
-                    forgotPasswordForm.reset();
+                    try {
+
+                        sendEmailOtp.disabled =
+                            true;
 
 
-                    if (forgotPasswordModal) {
+                        sendEmailOtp.innerText =
+                            "Sending...";
 
-                        forgotPasswordModal.style.display =
-                            "none";
 
-                        forgotPasswordModal.classList.remove(
-                            "show"
+                        const response =
+                            await fetch(
+                                `${API_URL}/send-email-otp`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+                                        email: email
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Unable to send OTP."
+                            );
+
+                            return;
+
+                        }
+
+
+                        emailVerified =
+                            false;
+
+
+                        if (emailOtpStatus) {
+
+                            emailOtpStatus.innerText =
+                                "OTP sent to your email. Please check your Gmail.";
+
+
+                            emailOtpStatus.style.color =
+                                "#2563eb";
+
+                        }
+
+
+                        alert(
+                            "OTP sent successfully. Check your email."
                         );
 
                     }
 
 
-                    openLogin();
+                    catch (error) {
 
-                }
-
-
-                catch (error) {
-
-                    console.error(
-                        "Forgot Password Error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to connect to backend server."
-                    );
-
-                }
-
-            };
-
-    }
+                        console.error(
+                            "Send OTP Error:",
+                            error
+                        );
 
 
-    /* =====================================================
-       BOOK DATA
-    ===================================================== */
+                        alert(
+                            "Unable to connect to backend server."
+                        );
 
-    let books = [];
-
-    let selectedBookId = null;
+                    }
 
 
-    /* =====================================================
-       BOOK CONTAINER
-    ===================================================== */
+                    finally {
 
-    const bookContainer =
-        document.getElementById(
-            "bookContainer"
-        );
+                        sendEmailOtp.disabled =
+                            false;
 
 
-    /* =====================================================
-       DISPLAY BOOKS
-    ===================================================== */
+                        sendEmailOtp.innerText =
+                            "Send OTP";
 
-    function displayBooks(bookList) {
+                    }
 
-        if (!bookContainer) {
-
-            console.error(
-                'Element with id="bookContainer" not found.'
-            );
-
-            return;
+                };
 
         }
 
 
-        bookContainer.innerHTML = "";
+        /* =================================================
+           VERIFY OTP
+        ================================================= */
+
+        if (verifyEmailOtp) {
+
+            verifyEmailOtp.onclick =
+                async function () {
+
+                    const emailInput =
+                        document.getElementById(
+                            "registerEmail"
+                        );
 
 
-        if (
-            !bookList ||
-            bookList.length === 0
-        ) {
+                    const email =
+                        emailInput
+                            ? emailInput.value
+                                .trim()
+                                .toLowerCase()
+                            : "";
 
-            bookContainer.innerHTML = `
 
-                <p style="
-                    grid-column: 1 / -1;
-                    text-align: center;
-                    padding: 40px;
-                    color: #64748b;
-                ">
+                    const otp =
+                        emailOtpInput
+                            ? emailOtpInput.value.trim()
+                            : "";
 
-                    No books found 📚
 
-                </p>
+                    if (!email) {
 
-            `;
+                        alert(
+                            "Please enter your email."
+                        );
 
-            return;
+                        return;
+
+                    }
+
+
+                    if (!otp) {
+
+                        alert(
+                            "Please enter the OTP."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (!/^\d{6}$/.test(otp)) {
+
+                        alert(
+                            "Please enter a valid 6-digit OTP."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        verifyEmailOtp.disabled =
+                            true;
+
+
+                        verifyEmailOtp.innerText =
+                            "Verifying...";
+
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/verify-email-otp`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        email: email,
+
+                                        otp: otp
+
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            emailVerified =
+                                false;
+
+
+                            if (emailOtpStatus) {
+
+                                emailOtpStatus.innerText =
+                                    data.message ||
+                                    "Invalid OTP.";
+
+
+                                emailOtpStatus.style.color =
+                                    "#dc2626";
+
+                            }
+
+                            return;
+
+                        }
+
+
+                        emailVerified =
+                            true;
+
+
+                        if (emailOtpStatus) {
+
+                            emailOtpStatus.innerText =
+                                "✓ Email verified successfully.";
+
+
+                            emailOtpStatus.style.color =
+                                "#16a34a";
+
+                        }
+
+
+                        alert(
+                            "Email verified successfully!"
+                        );
+
+
+                        if (emailInput) {
+
+                            emailInput.disabled =
+                                true;
+
+                        }
+
+
+                        if (emailOtpInput) {
+
+                            emailOtpInput.disabled =
+                                true;
+
+                        }
+
+
+                        verifyEmailOtp.disabled =
+                            true;
+
+
+                        verifyEmailOtp.innerText =
+                            "Verified ✓";
+
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Verify OTP Error:",
+                            error
+                        );
+
+
+                        emailVerified =
+                            false;
+
+
+                        alert(
+                            "Unable to connect to backend server."
+                        );
+
+                    }
+
+
+                    finally {
+
+                        if (!emailVerified) {
+
+                            verifyEmailOtp.disabled =
+                                false;
+
+
+                            verifyEmailOtp.innerText =
+                                "Verify";
+
+                        }
+
+                    }
+
+                };
 
         }
 
 
-        bookList.forEach(function (book) {
+        /* =================================================
+           REGISTER ACCOUNT
+        ================================================= */
 
-            let statusHTML = "";
+        if (registerForm) {
 
+            registerForm.onsubmit =
+                async function (event) {
 
-            if (book.rentedBy) {
-
-                statusHTML = `
-
-                    <div class="rented">
-                        🔴 Rented by ${book.rentedBy}
-                    </div>
-
-                `;
-
-            }
-
-            else {
-
-                statusHTML = `
-
-                    <div class="available">
-                        🟢 Available
-                    </div>
-
-                `;
-
-            }
+                    event.preventDefault();
 
 
-            const card =
-                document.createElement("div");
+                    const nameInput =
+                        document.getElementById(
+                            "registerName"
+                        );
 
 
-            card.className =
-                "book-card";
+                    const emailInput =
+                        document.getElementById(
+                            "registerEmail"
+                        );
 
 
-            card.innerHTML = `
-
-                <img
-                    src="${book.image}"
-                    alt="${book.name}"
-                >
-
-                <div class="book-card-content">
-
-                    <span class="category-badge">
-                        ${book.category}
-                    </span>
-
-                    <h3>
-                        ${book.name}
-                    </h3>
-
-                    <div class="book-author">
-                        By ${book.author}
-                    </div>
-
-                    ${statusHTML}
-
-                </div>
-
-            `;
+                    const phoneInput =
+                        document.getElementById(
+                            "registerPhone"
+                        );
 
 
-            card.onclick = function () {
-
-                openBookModal(book.id);
-
-            };
-
-
-            bookContainer.appendChild(card);
-
-        });
-
-    }
+                    const passwordInput =
+                        document.getElementById(
+                            "registerPassword"
+                        );
 
 
-    /* =====================================================
-       LOAD BOOKS FROM SUPABASE BACKEND
-    ===================================================== */
-
-    async function loadBooksFromBackend() {
-
-        try {
-
-            const response =
-                await fetch(
-                    `${API_URL}/books`
-                );
+                    const photoInput =
+                        document.getElementById(
+                            "registerPhoto"
+                        );
 
 
-            if (!response.ok) {
-
-                throw new Error(
-                    "Books load failed"
-                );
-
-            }
+                    const name =
+                        nameInput
+                            ? nameInput.value.trim()
+                            : "";
 
 
-            const backendBooks =
-                await response.json();
+                    const email =
+                        emailInput
+                            ? emailInput.value
+                                .trim()
+                                .toLowerCase()
+                            : "";
 
 
-            books =
-                backendBooks.map(
-                    function (book) {
+                    const phone =
+                        phoneInput
+                            ? phoneInput.value.trim()
+                            : "";
 
-                        return {
+
+                    const password =
+                        passwordInput
+                            ? passwordInput.value
+                            : "";
+
+
+                    if (
+                        !photoInput ||
+                        !photoInput.files ||
+                        photoInput.files.length === 0
+                    ) {
+
+                        alert(
+                            "Please select your profile photo."
+                        );
+
+                        return;
+
+                    }
+
+
+                    const photo =
+                        photoInput.files[0];
+
+
+                    if (
+                        photo.size >
+                        5 * 1024 * 1024
+                    ) {
+
+                        alert(
+                            "Profile photo must be 5 MB or smaller."
+                        );
+
+                        return;
+
+                    }
+
+
+                    const allowedTypes = [
+
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp",
+                        "image/gif"
+
+                    ];
+
+
+                    if (!allowedTypes.includes(photo.type)) {
+
+                        alert(
+                            "Please select JPG, PNG, WEBP or GIF image."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !name ||
+                        !email ||
+                        !phone ||
+                        !password
+                    ) {
+
+                        alert(
+                            "Please fill all fields."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                            email
+                        )
+                    ) {
+
+                        alert(
+                            "Please enter a valid email address."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (!emailVerified) {
+
+                        alert(
+                            "Please verify your email before creating your account."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (!/^\d{10}$/.test(phone)) {
+
+                        alert(
+                            "Please enter a valid 10-digit phone number."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const createAccountBtn =
+                            document.getElementById(
+                                "createAccountBtn"
+                            );
+
+
+                        if (createAccountBtn) {
+
+                            createAccountBtn.disabled =
+                                true;
+
+
+                            createAccountBtn.innerText =
+                                "Creating...";
+
+                        }
+
+
+                        const formData =
+                            new FormData();
+
+
+                        formData.append(
+                            "name",
+                            name
+                        );
+
+
+                        formData.append(
+                            "email",
+                            email
+                        );
+
+
+                        formData.append(
+                            "phone",
+                            phone
+                        );
+
+
+                        formData.append(
+                            "password",
+                            password
+                        );
+
+
+                        formData.append(
+                            "profile_photo",
+                            photo
+                        );
+
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/register`,
+                                {
+
+                                    method: "POST",
+
+                                    body: formData
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Registration failed."
+                            );
+
+                            return;
+
+                        }
+
+
+                        const user = {
 
                             id:
-                                Number(
-                                    book.id ??
-                                    book.ID
-                                ),
+                                data.user?.id ||
+                                "",
 
                             name:
-                                book.name ??
-                                book.Name ??
-                                "",
+                                data.user?.name ||
+                                name,
 
-                            author:
-                                book.author ??
-                                book.Author ??
-                                "",
+                            email:
+                                data.user?.email ||
+                                email,
 
-                            category:
-                                book.category ??
-                                book.Category ??
-                                "",
+                            phone:
+                                data.user?.phone ||
+                                phone,
 
-                            year:
-                                Number(
-                                    book.year ??
-                                    book.Year
-                                ) || "",
-
-                            price:
-                                Number(
-                                    book.price ??
-                                    book.Price
-                                ) || 0,
-
-                            image:
-                                book.image ??
-                                book.Image ??
-                                "",
-
-                            description:
-                                book.description ??
-                                book.Description ??
-                                "",
-
-                            rentedBy:
-                                book.rented_by ??
-                                book.rentedBy ??
-                                book.RentedBy ??
+                            profile_photo:
+                                data.user?.profile_photo ||
+                                data.user?.ProfilePhoto ||
+                                data.user?.profilePhoto ||
+                                data.profile_photo ||
+                                data.ProfilePhoto ||
                                 ""
 
                         };
 
+
+                        saveUser(user);
+
+
+                        /*
+                           Registration ke baad user
+                           automatically logged in nahi hoga.
+                           Sirf libraryUser saved rahega.
+                        */
+
+                        localStorage.removeItem(
+                            "loggedUser"
+                        );
+
+
+                        updateAttendanceVisibility();
+
+
+                        alert(
+                            "Account created successfully! Please login."
+                        );
+
+
+                        registerForm.reset();
+
+
+                        emailVerified =
+                            false;
+
+
+                        if (emailOtpStatus) {
+
+                            emailOtpStatus.innerText =
+                                "";
+
+                        }
+
+
+                        if (emailInput) {
+
+                            emailInput.disabled =
+                                false;
+
+                        }
+
+
+                        if (emailOtpInput) {
+
+                            emailOtpInput.disabled =
+                                false;
+
+                        }
+
+
+                        if (verifyEmailOtp) {
+
+                            verifyEmailOtp.disabled =
+                                false;
+
+
+                            verifyEmailOtp.innerText =
+                                "Verify";
+
+                        }
+
+
+                        if (registerModal) {
+
+                            registerModal.style.display =
+                                "none";
+
+                        }
+
+
+                        openLogin();
+
                     }
-                );
 
 
-            console.log(
-                "Books loaded from Supabase:",
-                books
-            );
+                    catch (error) {
+
+                        console.error(
+                            "Register Error:",
+                            error
+                        );
 
 
-            filterBooks();
+                        alert(
+                            "Unable to connect to backend server."
+                        );
 
-            updateBookStats();
+                    }
+
+
+                    finally {
+
+                        const createAccountBtn =
+                            document.getElementById(
+                                "createAccountBtn"
+                            );
+
+
+                        if (createAccountBtn) {
+
+                            createAccountBtn.disabled =
+                                false;
+
+
+                            createAccountBtn.innerText =
+                                "Create Account";
+
+                        }
+
+                    }
+
+                };
 
         }
 
 
-        catch (error) {
+        /* =================================================
+           LOGIN
+        ================================================= */
 
-            console.error(
-                "Book loading error:",
-                error
+        const loginForm =
+            document.getElementById(
+                "loginForm"
             );
 
 
-            if (bookContainer) {
+        if (loginForm) {
+
+            loginForm.onsubmit =
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const emailInput =
+                        document.getElementById(
+                            "loginEmail"
+                        );
+
+
+                    const passwordInput =
+                        document.getElementById(
+                            "loginPassword"
+                        );
+
+
+                    const email =
+                        emailInput
+                            ? emailInput.value
+                                .trim()
+                                .toLowerCase()
+                            : "";
+
+
+                    const password =
+                        passwordInput
+                            ? passwordInput.value
+                            : "";
+
+
+                    if (!email || !password) {
+
+                        alert(
+                            "Please fill all fields."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/login`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        email: email,
+
+                                        password: password
+
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Login failed."
+                            );
+
+                            return;
+
+                        }
+
+
+                        /* =================================
+                           SAVE LOGIN USER
+                        ================================= */
+
+                        const loggedUserData = {
+
+                            id:
+                                data.user?.id ||
+                                "",
+
+                            name:
+                                data.user?.name ||
+                                "",
+
+                            email:
+                                data.user?.email ||
+                                email,
+
+                            phone:
+                                data.user?.phone ||
+                                "",
+
+                            profile_photo:
+                                data.user?.profile_photo ||
+                                data.user?.ProfilePhoto ||
+                                data.user?.profilePhoto ||
+                                ""
+
+                        };
+
+
+                        /*
+                           Save both for compatibility
+                           with existing book functions.
+                        */
+
+                        localStorage.setItem(
+                            "loggedUser",
+                            loggedUserData.name
+                        );
+
+
+                        localStorage.setItem(
+                            "libraryUser",
+                            JSON.stringify(
+                                loggedUserData
+                            )
+                        );
+
+
+                        /* =================================
+                           UPDATE USER UI
+                        ================================= */
+
+                        updateUserUI();
+
+
+                        updateAttendanceVisibility();
+
+
+                        /* =================================
+                           CLOSE LOGIN
+                        ================================= */
+
+                        loginForm.reset();
+
+
+                        if (loginModal) {
+
+                            loginModal.style.display =
+                                "none";
+
+                        }
+
+
+                        alert(
+                            "Login successful! Welcome " +
+                            loggedUserData.name
+                        );
+
+
+                        /* =================================
+                           ATTENDANCE STATUS
+                        ================================= */
+
+                        await loadAttendanceStatus();
+
+
+                        updateAttendanceVisibility();
+
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Login Error:",
+                            error
+                        );
+
+
+                        alert(
+                            "Unable to connect to backend server."
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           FORGOT PASSWORD
+        ================================================= */
+
+        const forgotPasswordForm =
+            document.getElementById(
+                "forgotPasswordForm"
+            );
+
+
+        if (forgotPasswordForm) {
+
+            forgotPasswordForm.onsubmit =
+                async function (event) {
+
+                    event.preventDefault();
+
+
+                    const emailInput =
+                        document.getElementById(
+                            "forgotEmail"
+                        );
+
+
+                    const phoneInput =
+                        document.getElementById(
+                            "forgotPhone"
+                        );
+
+
+                    const newPasswordInput =
+                        document.getElementById(
+                            "forgotNewPassword"
+                        );
+
+
+                    const confirmPasswordInput =
+                        document.getElementById(
+                            "forgotConfirmPassword"
+                        );
+
+
+                    const email =
+                        emailInput
+                            ? emailInput.value
+                                .trim()
+                                .toLowerCase()
+                            : "";
+
+
+                    const phone =
+                        phoneInput
+                            ? phoneInput.value.trim()
+                            : "";
+
+
+                    const newPassword =
+                        newPasswordInput
+                            ? newPasswordInput.value
+                            : "";
+
+
+                    const confirmPassword =
+                        confirmPasswordInput
+                            ? confirmPasswordInput.value
+                            : "";
+
+
+                    if (
+                        !email ||
+                        !phone ||
+                        !newPassword ||
+                        !confirmPassword
+                    ) {
+
+                        alert(
+                            "Please fill all fields."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (!/^\d{10}$/.test(phone)) {
+
+                        alert(
+                            "Please enter a valid 10-digit phone number."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        newPassword !==
+                        confirmPassword
+                    ) {
+
+                        alert(
+                            "New password and confirm password do not match."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/forgot-password`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        email: email,
+
+                                        phone: phone,
+
+                                        newPassword:
+                                            newPassword
+
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Password reset failed."
+                            );
+
+                            return;
+
+                        }
+
+
+                        alert(
+                            "Password changed successfully! Please login."
+                        );
+
+
+                        forgotPasswordForm.reset();
+
+
+                        if (forgotPasswordModal) {
+
+                            forgotPasswordModal.style.display =
+                                "none";
+
+
+                            forgotPasswordModal.classList.remove(
+                                "show"
+                            );
+
+                        }
+
+
+                        openLogin();
+
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Forgot Password Error:",
+                            error
+                        );
+
+
+                        alert(
+                            "Unable to connect to backend server."
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           BOOK DATA
+        ================================================= */
+
+        let books = [];
+
+        let selectedBookId = null;
+
+
+        const bookContainer =
+            document.getElementById(
+                "bookContainer"
+            );
+
+
+        /* =================================================
+           DISPLAY BOOKS
+        ================================================= */
+
+        function displayBooks(bookList) {
+
+            if (!bookContainer) {
+
+                return;
+
+            }
+
+
+            bookContainer.innerHTML = "";
+
+
+            if (
+                !bookList ||
+                bookList.length === 0
+            ) {
 
                 bookContainer.innerHTML = `
 
@@ -1939,751 +2585,922 @@ document.addEventListener("DOMContentLoaded", function () {
                         grid-column: 1 / -1;
                         text-align: center;
                         padding: 40px;
-                        color: #dc2626;
+                        color: #64748b;
                     ">
 
-                        Unable to load books.
-                        Please try again later.
+                        No books found 📚
 
                     </p>
 
                 `;
 
-            }
+                return;
 
-        }
-
-    }
-
-
-    /* =====================================================
-       SEARCH / FILTER / SORT
-    ===================================================== */
-
-    const searchInput =
-        document.getElementById(
-            "searchInput"
-        );
-
-    const categoryFilter =
-        document.getElementById(
-            "categoryFilter"
-        );
-
-    const sortBooks =
-        document.getElementById(
-            "sortBooks"
-        );
-
-    const result =
-        document.getElementById(
-            "result"
-        );
-
-    const bookCount =
-        document.getElementById(
-            "bookCount"
-        );
-
-
-    function filterBooks() {
-
-        if (
-            !books ||
-            books.length === 0
-        ) {
-
-            displayBooks([]);
-
-
-            if (result) {
-                result.innerText =
-                    "0 books found";
             }
 
 
-            if (bookCount) {
-                bookCount.innerText =
-                    "Total: 0";
-            }
-
-
-            return;
-
-        }
-
-
-        const searchText =
-            searchInput
-                ? searchInput.value
-                    .toLowerCase()
-                    .trim()
-                : "";
-
-
-        const category =
-            categoryFilter
-                ? categoryFilter.value
-                : "all";
-
-
-        let filteredBooks =
-            books.filter(
+            bookList.forEach(
                 function (book) {
 
-                    const bookName =
-                        String(
-                            book.name || ""
-                        ).toLowerCase();
+                    let statusHTML = "";
 
 
-                    const bookAuthor =
-                        String(
-                            book.author || ""
-                        ).toLowerCase();
+                    if (book.rentedBy) {
 
+                        statusHTML = `
 
-                    const bookCategory =
-                        String(
-                            book.category || ""
-                        );
+                            <div class="rented">
+                                🔴 Rented by ${book.rentedBy}
+                            </div>
 
-
-                    const matchesSearch =
-                        bookName.includes(
-                            searchText
-                        ) ||
-                        bookAuthor.includes(
-                            searchText
-                        );
-
-
-                    const matchesCategory =
-                        category === "all" ||
-                        bookCategory === category;
-
-
-                    return (
-                        matchesSearch &&
-                        matchesCategory
-                    );
-
-                }
-            );
-
-
-        /* =================================================
-           SORT
-        ================================================= */
-
-        if (sortBooks) {
-
-            if (
-                sortBooks.value === "az"
-            ) {
-
-                filteredBooks.sort(
-                    function (a, b) {
-
-                        return String(
-                            a.name
-                        ).localeCompare(
-                            String(b.name)
-                        );
+                        `;
 
                     }
-                );
 
-            }
 
+                    else {
 
-            if (
-                sortBooks.value === "za"
-            ) {
+                        statusHTML = `
 
-                filteredBooks.sort(
-                    function (a, b) {
+                            <div class="available">
+                                🟢 Available
+                            </div>
 
-                        return String(
-                            b.name
-                        ).localeCompare(
-                            String(a.name)
-                        );
+                        `;
 
-                    }
-                );
-
-            }
-
-
-            if (
-                sortBooks.value === "newest"
-            ) {
-
-                filteredBooks.sort(
-                    function (a, b) {
-
-                        return (
-                            Number(b.year) -
-                            Number(a.year)
-                        );
-
-                    }
-                );
-
-            }
-
-
-            if (
-                sortBooks.value === "oldest"
-            ) {
-
-                filteredBooks.sort(
-                    function (a, b) {
-
-                        return (
-                            Number(a.year) -
-                            Number(b.year)
-                        );
-
-                    }
-                );
-
-            }
-
-        }
-
-
-        displayBooks(filteredBooks);
-
-
-        if (result) {
-
-            result.innerText =
-                filteredBooks.length +
-                " books found";
-
-        }
-
-
-        if (bookCount) {
-
-            bookCount.innerText =
-                "Total: " +
-                books.length;
-
-        }
-
-    }
-
-
-    if (searchInput) {
-        searchInput.oninput =
-            filterBooks;
-    }
-
-
-    if (categoryFilter) {
-        categoryFilter.onchange =
-            filterBooks;
-    }
-
-
-    if (sortBooks) {
-        sortBooks.onchange =
-            filterBooks;
-    }
-
-
-    /* =====================================================
-       CLEAR SEARCH
-    ===================================================== */
-
-    const clearBtn =
-        document.getElementById(
-            "clearBtn"
-        );
-
-
-    if (clearBtn) {
-
-        clearBtn.onclick =
-            function () {
-
-                if (searchInput) {
-                    searchInput.value = "";
-                }
-
-                if (categoryFilter) {
-                    categoryFilter.value =
-                        "all";
-                }
-
-                if (sortBooks) {
-                    sortBooks.value =
-                        "default";
-                }
-
-                filterBooks();
-
-            };
-
-    }
-
-
-    /* =====================================================
-       BOOK STATS
-    ===================================================== */
-
-    function updateBookStats() {
-
-        const totalBooks =
-            document.getElementById(
-                "totalBooks"
-            );
-
-        const availableBooks =
-            document.getElementById(
-                "availableBooks"
-            );
-
-
-        if (totalBooks) {
-
-            totalBooks.innerText =
-                books.length;
-
-        }
-
-
-        const available =
-            books.filter(
-                function (book) {
-
-                    return !book.rentedBy;
-
-                }
-            );
-
-
-        if (availableBooks) {
-
-            availableBooks.innerText =
-                available.length;
-
-        }
-
-    }
-
-
-    /* =====================================================
-       BOOK MODAL
-    ===================================================== */
-
-    const bookModal =
-        document.getElementById(
-            "bookModal"
-        );
-
-    const modalImage =
-        document.getElementById(
-            "modalImage"
-        );
-
-    const modalTitle =
-        document.getElementById(
-            "modalTitle"
-        );
-
-    const modalAuthor =
-        document.getElementById(
-            "modalAuthor"
-        );
-
-    const modalCategory =
-        document.getElementById(
-            "modalCategory"
-        );
-
-    const modalDescription =
-        document.getElementById(
-            "modalDescription"
-        );
-
-    const modalYear =
-        document.getElementById(
-            "year"
-        );
-
-    const modalPrice =
-        document.getElementById(
-            "modalPrice"
-        );
-
-    const modalStatus =
-        document.getElementById(
-            "modalStatus"
-        );
-
-    const rentModalBtn =
-        document.getElementById(
-            "rentModalBtn"
-        );
-
-    const submitModalBtn =
-        document.getElementById(
-            "submitModalBtn"
-        );
-
-
-    function openBookModal(bookId) {
-
-        selectedBookId =
-            Number(bookId);
-
-
-        const book =
-            books.find(
-                function (item) {
-
-                    return (
-                        Number(item.id) ===
-                        Number(bookId)
-                    );
-
-                }
-            );
-
-
-        if (!book) {
-            return;
-        }
-
-
-        if (modalImage) {
-            modalImage.src =
-                book.image;
-        }
-
-
-        if (modalTitle) {
-            modalTitle.innerText =
-                book.name;
-        }
-
-
-        if (modalAuthor) {
-
-            modalAuthor.innerText =
-                "Author: " +
-                book.author;
-
-        }
-
-
-        if (modalCategory) {
-
-            modalCategory.innerText =
-                book.category;
-
-        }
-
-
-        if (modalYear) {
-
-            modalYear.innerText =
-                "Year: " +
-                book.year;
-
-        }
-
-
-        if (modalPrice) {
-
-            modalPrice.innerText =
-                "Price: ₹" +
-                book.price;
-
-        }
-
-
-        if (modalDescription) {
-
-            modalDescription.innerText =
-                book.description;
-
-        }
-
-
-        /* =================================================
-           RENTED
-        ================================================= */
-
-        if (book.rentedBy) {
-
-            if (modalStatus) {
-
-                modalStatus.innerHTML = `
-
-                    <p style="
-                        color: #dc2626;
-                        font-weight: bold;
-                    ">
-
-                        🔴 Rented by
-                        ${book.rentedBy}
-
-                    </p>
-
-                `;
-
-            }
-
-
-            if (rentModalBtn) {
-                rentModalBtn.style.display =
-                    "none";
-            }
-
-
-            if (submitModalBtn) {
-                submitModalBtn.style.display =
-                    "inline-block";
-            }
-
-        }
-
-
-        /* =================================================
-           AVAILABLE
-        ================================================= */
-
-        else {
-
-            if (modalStatus) {
-
-                modalStatus.innerHTML = `
-
-                    <p style="
-                        color: #16a34a;
-                        font-weight: bold;
-                    ">
-
-                        🟢 Book Available
-
-                    </p>
-
-                `;
-
-            }
-
-
-            if (rentModalBtn) {
-                rentModalBtn.style.display =
-                    "inline-block";
-            }
-
-
-            if (submitModalBtn) {
-                submitModalBtn.style.display =
-                    "none";
-            }
-
-        }
-
-
-        if (bookModal) {
-            bookModal.style.display =
-                "flex";
-        }
-
-    }
-
-
-    /* =====================================================
-       CLOSE BOOK MODAL
-    ===================================================== */
-
-    const closeBtn =
-        document.getElementById(
-            "closeBtn"
-        );
-
-
-    if (closeBtn) {
-
-        closeBtn.onclick =
-            function () {
-
-                if (bookModal) {
-                    bookModal.style.display =
-                        "none";
-                }
-
-            };
-
-    }
-
-
-    /* =====================================================
-       RENT BOOK
-    ===================================================== */
-
-    if (rentModalBtn) {
-
-        rentModalBtn.onclick =
-            async function () {
-
-                const loggedUser =
-                    localStorage.getItem(
-                        "loggedUser"
-                    );
-
-
-                if (!loggedUser) {
-
-                    alert(
-                        "Please login first to rent a book."
-                    );
-
-
-                    if (bookModal) {
-                        bookModal.style.display =
-                            "none";
                     }
 
 
-                    openLogin();
+                    const card =
+                        document.createElement(
+                            "div"
+                        );
 
-                    return;
 
-                }
+                    card.className =
+                        "book-card";
 
 
-                const book =
-                    books.find(
-                        function (item) {
+                    card.innerHTML = `
 
-                            return (
-                                Number(item.id) ===
-                                Number(selectedBookId)
+                        <img
+                            src="${book.image}"
+                            alt="${book.name}"
+                        >
+
+                        <div class="book-card-content">
+
+                            <span class="category-badge">
+                                ${book.category}
+                            </span>
+
+                            <h3>
+                                ${book.name}
+                            </h3>
+
+                            <div class="book-author">
+                                By ${book.author}
+                            </div>
+
+                            ${statusHTML}
+
+                        </div>
+
+                    `;
+
+
+                    card.onclick =
+                        function () {
+
+                            openBookModal(
+                                book.id
                             );
+
+                        };
+
+
+                    bookContainer.appendChild(
+                        card
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           LOAD BOOKS
+        ================================================= */
+
+        async function loadBooksFromBackend() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${API_URL}/books`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Books load failed"
+                    );
+
+                }
+
+
+                const backendBooks =
+                    await response.json();
+
+
+                books =
+                    backendBooks.map(
+                        function (book) {
+
+                            return {
+
+                                id:
+                                    Number(
+                                        book.id ??
+                                        book.ID
+                                    ),
+
+                                name:
+                                    book.name ??
+                                    book.Name ??
+                                    "",
+
+                                author:
+                                    book.author ??
+                                    book.Author ??
+                                    "",
+
+                                category:
+                                    book.category ??
+                                    book.Category ??
+                                    "",
+
+                                year:
+                                    Number(
+                                        book.year ??
+                                        book.Year
+                                    ) || "",
+
+                                price:
+                                    Number(
+                                        book.price ??
+                                        book.Price
+                                    ) || 0,
+
+                                image:
+                                    book.image ??
+                                    book.Image ??
+                                    "",
+
+                                description:
+                                    book.description ??
+                                    book.Description ??
+                                    "",
+
+                                rentedBy:
+                                    book.rented_by ??
+                                    book.rentedBy ??
+                                    book.RentedBy ??
+                                    ""
+
+                            };
 
                         }
                     );
 
 
-                if (!book) {
+                filterBooks();
 
-                    alert(
-                        "Book not found."
-                    );
+                updateBookStats();
 
-                    return;
+            }
+
+
+            catch (error) {
+
+                console.error(
+                    "Book loading error:",
+                    error
+                );
+
+
+                if (bookContainer) {
+
+                    bookContainer.innerHTML = `
+
+                        <p style="
+                            grid-column: 1 / -1;
+                            text-align: center;
+                            padding: 40px;
+                            color: #dc2626;
+                        ">
+
+                            Unable to load books.
+                            Please try again later.
+
+                        </p>
+
+                    `;
+
+                }
+
+            }
+
+        }
+
+
+        /* =================================================
+           SEARCH FILTER SORT
+        ================================================= */
+
+        const searchInput =
+            document.getElementById(
+                "searchInput"
+            );
+
+
+        const categoryFilter =
+            document.getElementById(
+                "categoryFilter"
+            );
+
+
+        const sortBooks =
+            document.getElementById(
+                "sortBooks"
+            );
+
+
+        const result =
+            document.getElementById(
+                "result"
+            );
+
+
+        const bookCount =
+            document.getElementById(
+                "bookCount"
+            );
+
+
+        function filterBooks() {
+
+            if (
+                !books ||
+                books.length === 0
+            ) {
+
+                displayBooks([]);
+
+
+                if (result) {
+
+                    result.innerText =
+                        "0 books found";
 
                 }
 
 
-                if (book.rentedBy) {
+                if (bookCount) {
 
-                    alert(
-                        "This book is already rented."
-                    );
-
-                    return;
+                    bookCount.innerText =
+                        "Total: 0";
 
                 }
 
 
-                const savedUser =
-                    localStorage.getItem(
-                        "libraryUser"
-                    );
+                return;
+
+            }
 
 
-                if (!savedUser) {
-
-                    alert(
-                        "User data not found."
-                    );
-
-                    return;
-
-                }
+            const searchText =
+                searchInput
+                    ? searchInput.value
+                        .toLowerCase()
+                        .trim()
+                    : "";
 
 
-                let user;
+            const category =
+                categoryFilter
+                    ? categoryFilter.value
+                    : "all";
 
 
-                try {
+            let filteredBooks =
+                books.filter(
+                    function (book) {
 
-                    user =
-                        JSON.parse(
-                            savedUser
+                        const bookName =
+                            String(
+                                book.name || ""
+                            ).toLowerCase();
+
+
+                        const bookAuthor =
+                            String(
+                                book.author || ""
+                            ).toLowerCase();
+
+
+                        const bookCategory =
+                            String(
+                                book.category || ""
+                            );
+
+
+                        const matchesSearch =
+                            bookName.includes(
+                                searchText
+                            ) ||
+                            bookAuthor.includes(
+                                searchText
+                            );
+
+
+                        const matchesCategory =
+                            category === "all" ||
+                            bookCategory === category;
+
+
+                        return (
+                            matchesSearch &&
+                            matchesCategory
                         );
 
-                }
+                    }
+                );
 
 
-                catch (error) {
+            if (sortBooks) {
 
-                    console.error(error);
+                if (
+                    sortBooks.value ===
+                    "az"
+                ) {
 
-                    alert(
-                        "User data is corrupted."
+                    filteredBooks.sort(
+                        function (a, b) {
+
+                            return String(
+                                a.name
+                            ).localeCompare(
+                                String(
+                                    b.name
+                                )
+                            );
+
+                        }
                     );
 
-                    return;
+                }
+
+
+                if (
+                    sortBooks.value ===
+                    "za"
+                ) {
+
+                    filteredBooks.sort(
+                        function (a, b) {
+
+                            return String(
+                                b.name
+                            ).localeCompare(
+                                String(
+                                    a.name
+                                )
+                            );
+
+                        }
+                    );
 
                 }
 
 
-                try {
+                if (
+                    sortBooks.value ===
+                    "newest"
+                ) {
 
-                    const response =
-                        await fetch(
-                            `${API_URL}/rent`,
-                            {
+                    filteredBooks.sort(
+                        function (a, b) {
 
-                                method: "POST",
+                            return (
+                                Number(
+                                    b.year
+                                ) -
+                                Number(
+                                    a.year
+                                )
+                            );
 
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
+                        }
+                    );
 
-                                body: JSON.stringify({
+                }
 
-                                    name:
-                                        user.name,
 
-                                    email:
-                                        user.email,
+                if (
+                    sortBooks.value ===
+                    "oldest"
+                ) {
 
-                                    book:
-                                        book.name,
+                    filteredBooks.sort(
+                        function (a, b) {
 
-                                    author:
-                                        book.author,
+                            return (
+                                Number(
+                                    a.year
+                                ) -
+                                Number(
+                                    b.year
+                                )
+                            );
 
-                                    bookId:
-                                        book.id
+                        }
+                    );
 
-                                })
+                }
+
+            }
+
+
+            displayBooks(
+                filteredBooks
+            );
+
+
+            if (result) {
+
+                result.innerText =
+                    filteredBooks.length +
+                    " books found";
+
+            }
+
+
+            if (bookCount) {
+
+                bookCount.innerText =
+                    "Total: " +
+                    books.length;
+
+            }
+
+        }
+
+
+        if (searchInput) {
+
+            searchInput.oninput =
+                filterBooks;
+
+        }
+
+
+        if (categoryFilter) {
+
+            categoryFilter.onchange =
+                filterBooks;
+
+        }
+
+
+        if (sortBooks) {
+
+            sortBooks.onchange =
+                filterBooks;
+
+        }
+
+
+        /* =================================================
+           CLEAR SEARCH
+        ================================================= */
+
+        const clearBtn =
+            document.getElementById(
+                "clearBtn"
+            );
+
+
+        if (clearBtn) {
+
+            clearBtn.onclick =
+                function () {
+
+                    if (searchInput) {
+
+                        searchInput.value =
+                            "";
+
+                    }
+
+
+                    if (categoryFilter) {
+
+                        categoryFilter.value =
+                            "all";
+
+                    }
+
+
+                    if (sortBooks) {
+
+                        sortBooks.value =
+                            "default";
+
+                    }
+
+
+                    filterBooks();
+
+                };
+
+        }
+
+
+        /* =================================================
+           BOOK STATS
+        ================================================= */
+
+        function updateBookStats() {
+
+            const totalBooks =
+                document.getElementById(
+                    "totalBooks"
+                );
+
+
+            const availableBooks =
+                document.getElementById(
+                    "availableBooks"
+                );
+
+
+            if (totalBooks) {
+
+                totalBooks.innerText =
+                    books.length;
+
+            }
+
+
+            const available =
+                books.filter(
+                    function (book) {
+
+                        return !book.rentedBy;
+
+                    }
+                );
+
+
+            if (availableBooks) {
+
+                availableBooks.innerText =
+                    available.length;
+
+            }
+
+        }
+
+
+        /* =================================================
+           BOOK MODAL
+        ================================================= */
+
+        const bookModal =
+            document.getElementById(
+                "bookModal"
+            );
+
+
+        const modalImage =
+            document.getElementById(
+                "modalImage"
+            );
+
+
+        const modalTitle =
+            document.getElementById(
+                "modalTitle"
+            );
+
+
+        const modalAuthor =
+            document.getElementById(
+                "modalAuthor"
+            );
+
+
+        const modalCategory =
+            document.getElementById(
+                "modalCategory"
+            );
+
+
+        const modalDescription =
+            document.getElementById(
+                "modalDescription"
+            );
+
+
+        const modalYear =
+            document.getElementById(
+                "year"
+            );
+
+
+        const modalPrice =
+            document.getElementById(
+                "modalPrice"
+            );
+
+
+        const modalStatus =
+            document.getElementById(
+                "modalStatus"
+            );
+
+
+        const rentModalBtn =
+            document.getElementById(
+                "rentModalBtn"
+            );
+
+
+        const submitModalBtn =
+            document.getElementById(
+                "submitModalBtn"
+            );
+
+
+        function openBookModal(bookId) {
+
+            selectedBookId =
+                Number(bookId);
+
+
+            const book =
+                books.find(
+                    function (item) {
+
+                        return (
+                            Number(item.id) ===
+                            Number(bookId)
+                        );
+
+                    }
+                );
+
+
+            if (!book) {
+
+                return;
+
+            }
+
+
+            if (modalImage) {
+
+                modalImage.src =
+                    book.image;
+
+            }
+
+
+            if (modalTitle) {
+
+                modalTitle.innerText =
+                    book.name;
+
+            }
+
+
+            if (modalAuthor) {
+
+                modalAuthor.innerText =
+                    "Author: " +
+                    book.author;
+
+            }
+
+
+            if (modalCategory) {
+
+                modalCategory.innerText =
+                    book.category;
+
+            }
+
+
+            if (modalYear) {
+
+                modalYear.innerText =
+                    "Year: " +
+                    book.year;
+
+            }
+
+
+            if (modalPrice) {
+
+                modalPrice.innerText =
+                    "Price: ₹" +
+                    book.price;
+
+            }
+
+
+            if (modalDescription) {
+
+                modalDescription.innerText =
+                    book.description;
+
+            }
+
+
+            if (book.rentedBy) {
+
+                if (modalStatus) {
+
+                    modalStatus.innerHTML = `
+
+                        <p style="
+                            color: #dc2626;
+                            font-weight: bold;
+                        ">
+
+                            🔴 Rented by
+                            ${book.rentedBy}
+
+                        </p>
+
+                    `;
+
+                }
+
+
+                if (rentModalBtn) {
+
+                    rentModalBtn.style.display =
+                        "none";
+
+                }
+
+
+                if (submitModalBtn) {
+
+                    submitModalBtn.style.display =
+                        "inline-block";
+
+                }
+
+            }
+
+
+            else {
+
+                if (modalStatus) {
+
+                    modalStatus.innerHTML = `
+
+                        <p style="
+                            color: #16a34a;
+                            font-weight: bold;
+                        ">
+
+                            🟢 Book Available
+
+                        </p>
+
+                    `;
+
+                }
+
+
+                if (rentModalBtn) {
+
+                    rentModalBtn.style.display =
+                        "inline-block";
+
+                }
+
+
+                if (submitModalBtn) {
+
+                    submitModalBtn.style.display =
+                        "none";
+
+                }
+
+            }
+
+
+            if (bookModal) {
+
+                bookModal.style.display =
+                    "flex";
+
+            }
+
+        }
+
+
+        /* =================================================
+           CLOSE BOOK MODAL
+        ================================================= */
+
+        const closeBtn =
+            document.getElementById(
+                "closeBtn"
+            );
+
+
+        if (closeBtn) {
+
+            closeBtn.onclick =
+                function () {
+
+                    if (bookModal) {
+
+                        bookModal.style.display =
+                            "none";
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           RENT BOOK
+        ================================================= */
+
+        if (rentModalBtn) {
+
+            rentModalBtn.onclick =
+                async function () {
+
+                    const loggedUser =
+                        localStorage.getItem(
+                            "loggedUser"
+                        );
+
+
+                    if (!loggedUser) {
+
+                        alert(
+                            "Please login first to rent a book."
+                        );
+
+
+                        if (bookModal) {
+
+                            bookModal.style.display =
+                                "none";
+
+                        }
+
+
+                        openLogin();
+
+                        return;
+
+                    }
+
+
+                    const book =
+                        books.find(
+                            function (item) {
+
+                                return (
+                                    Number(item.id) ===
+                                    Number(
+                                        selectedBookId
+                                    )
+                                );
 
                             }
                         );
 
 
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
+                    if (!book) {
 
                         alert(
-                            data.message ||
-                            "Rent failed."
+                            "Book not found."
                         );
 
                         return;
@@ -2691,86 +3508,509 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
 
 
-                    alert(
-                        "Book rented successfully!"
-                    );
+                    if (book.rentedBy) {
 
+                        alert(
+                            "This book is already rented."
+                        );
 
-                    if (bookModal) {
-
-                        bookModal.style.display =
-                            "none";
+                        return;
 
                     }
 
 
-                    await loadBooksFromBackend();
-
-                }
-
-
-                catch (error) {
-
-                    console.error(
-                        "Rent Error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to connect to backend server."
-                    );
-
-                }
-
-            };
-
-    }
+                    const savedUser =
+                        localStorage.getItem(
+                            "libraryUser"
+                        );
 
 
-    /* =====================================================
-       SUBMIT BOOK
-    ===================================================== */
+                    if (!savedUser) {
 
-    if (submitModalBtn) {
+                        alert(
+                            "User data not found."
+                        );
 
-        submitModalBtn.onclick =
-            async function () {
+                        return;
 
-                const book =
-                    books.find(
-                        function (item) {
+                    }
 
-                            return (
-                                Number(item.id) ===
-                                Number(selectedBookId)
+
+                    let user;
+
+
+                    try {
+
+                        user =
+                            JSON.parse(
+                                savedUser
                             );
 
+                    }
+
+
+                    catch (error) {
+
+                        alert(
+                            "User data is corrupted."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/rent`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        name:
+                                            user.name,
+
+                                        email:
+                                            user.email,
+
+                                        book:
+                                            book.name,
+
+                                        author:
+                                            book.author,
+
+                                        bookId:
+                                            book.id
+
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Rent failed."
+                            );
+
+                            return;
+
                         }
-                    );
 
 
-                if (!book) {
-
-                    alert(
-                        "Book not found."
-                    );
-
-                    return;
-
-                }
+                        alert(
+                            "Book rented successfully!"
+                        );
 
 
-                const loggedUser =
-                    localStorage.getItem(
-                        "loggedUser"
-                    );
+                        if (bookModal) {
+
+                            bookModal.style.display =
+                                "none";
+
+                        }
 
 
-                if (!loggedUser) {
+                        await loadBooksFromBackend();
 
-                    alert(
-                        "Please login first."
-                    );
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Rent Error:",
+                            error
+                        );
+
+
+                        alert(
+                            "Unable to connect to backend server."
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           SUBMIT BOOK
+        ================================================= */
+
+        if (submitModalBtn) {
+
+            submitModalBtn.onclick =
+                async function () {
+
+                    const book =
+                        books.find(
+                            function (item) {
+
+                                return (
+                                    Number(item.id) ===
+                                    Number(
+                                        selectedBookId
+                                    )
+                                );
+
+                            }
+                        );
+
+
+                    if (!book) {
+
+                        alert(
+                            "Book not found."
+                        );
+
+                        return;
+
+                    }
+
+
+                    const loggedUser =
+                        localStorage.getItem(
+                            "loggedUser"
+                        );
+
+
+                    if (!loggedUser) {
+
+                        alert(
+                            "Please login first."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        book.rentedBy !==
+                        loggedUser
+                    ) {
+
+                        alert(
+                            "Only the person who rented this book can submit it."
+                        );
+
+                        return;
+
+                    }
+
+
+                    const savedUser =
+                        localStorage.getItem(
+                            "libraryUser"
+                        );
+
+
+                    if (!savedUser) {
+
+                        alert(
+                            "User data not found."
+                        );
+
+                        return;
+
+                    }
+
+
+                    let user;
+
+
+                    try {
+
+                        user =
+                            JSON.parse(
+                                savedUser
+                            );
+
+                    }
+
+
+                    catch (error) {
+
+                        alert(
+                            "User data is corrupted."
+                        );
+
+                        return;
+
+                    }
+
+
+                    try {
+
+                        const response =
+                            await fetch(
+                                `${API_URL}/submit`,
+                                {
+
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        name:
+                                            user.name,
+
+                                        email:
+                                            user.email,
+
+                                        book:
+                                            book.name,
+
+                                        author:
+                                            book.author,
+
+                                        bookId:
+                                            book.id
+
+                                    })
+
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            alert(
+                                data.message ||
+                                "Submit failed."
+                            );
+
+                            return;
+
+                        }
+
+
+                        alert(
+                            "Book submitted successfully! 📚"
+                        );
+
+
+                        if (bookModal) {
+
+                            bookModal.style.display =
+                                "none";
+
+                        }
+
+
+                        await loadBooksFromBackend();
+
+                    }
+
+
+                    catch (error) {
+
+                        console.error(
+                            "Submit Error:",
+                            error
+                        );
+
+
+                        alert(
+                            "Unable to connect to backend server."
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           EXPLORE
+        ================================================= */
+
+        const exploreBtn =
+            document.getElementById(
+                "exploreBtn"
+            );
+
+
+        if (exploreBtn) {
+
+            exploreBtn.onclick =
+                function () {
+
+                    const booksSection =
+                        document.getElementById(
+                            "books"
+                        );
+
+
+                    if (booksSection) {
+
+                        booksSection.scrollIntoView({
+                            behavior: "smooth"
+                        });
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           THEME
+        ================================================= */
+
+        const themeBtn =
+            document.getElementById(
+                "themeBtn"
+            );
+
+
+        const mobileThemeBtn =
+            document.getElementById(
+                "mobileThemeBtn"
+            );
+
+
+        function updateThemeButton() {
+
+            const isDark =
+                document.body.classList.contains(
+                    "dark"
+                );
+
+
+            if (themeBtn) {
+
+                themeBtn.innerText =
+                    isDark
+                        ? "☀️"
+                        : "🌙";
+
+            }
+
+
+            if (mobileThemeBtn) {
+
+                mobileThemeBtn.innerText =
+                    isDark
+                        ? "☀️ Light"
+                        : "🌙 Dark";
+
+            }
+
+        }
+
+
+        function toggleTheme() {
+
+            document.body.classList.toggle(
+                "dark"
+            );
+
+
+            const isDark =
+                document.body.classList.contains(
+                    "dark"
+                );
+
+
+            localStorage.setItem(
+                "darkMode",
+                isDark
+            );
+
+
+            updateThemeButton();
+
+        }
+
+
+        if (themeBtn) {
+
+            themeBtn.onclick =
+                toggleTheme;
+
+        }
+
+
+        if (mobileThemeBtn) {
+
+            mobileThemeBtn.onclick =
+                function () {
+
+                    toggleTheme();
+
+
+                    if (mainMenu) {
+
+                        mainMenu.classList.remove(
+                            "active"
+                        );
+
+                    }
+
+                };
+
+        }
+
+
+        if (
+            localStorage.getItem(
+                "darkMode"
+            ) === "true"
+        ) {
+
+            document.body.classList.add(
+                "dark"
+            );
+
+        }
+
+
+        updateThemeButton();
+
+
+        /* =================================================
+           TOP BUTTON
+        ================================================= */
+
+        const topBtn =
+            document.getElementById(
+                "topBtn"
+            );
+
+
+        window.addEventListener(
+            "scroll",
+            function () {
+
+                if (!topBtn) {
 
                     return;
 
@@ -2778,448 +4018,216 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
                 if (
-                    book.rentedBy !==
-                    loggedUser
+                    window.scrollY >
+                    400
                 ) {
 
-                    alert(
-                        "Only the person who rented this book can submit it."
-                    );
-
-                    return;
+                    topBtn.style.display =
+                        "block";
 
                 }
 
+                else {
 
-                const savedUser =
-                    localStorage.getItem(
-                        "libraryUser"
-                    );
-
-
-                if (!savedUser) {
-
-                    alert(
-                        "User data not found."
-                    );
-
-                    return;
+                    topBtn.style.display =
+                        "none";
 
                 }
 
-
-                let user;
-
-
-                try {
-
-                    user =
-                        JSON.parse(
-                            savedUser
-                        );
-
-                }
-
-
-                catch (error) {
-
-                    console.error(error);
-
-                    alert(
-                        "User data is corrupted."
-                    );
-
-                    return;
-
-                }
-
-
-                try {
-
-                    const response =
-                        await fetch(
-                            `${API_URL}/submit`,
-                            {
-
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-
-                                body: JSON.stringify({
-
-                                    name:
-                                        user.name,
-
-                                    email:
-                                        user.email,
-
-                                    book:
-                                        book.name,
-
-                                    author:
-                                        book.author,
-
-                                    bookId:
-                                        book.id
-
-                                })
-
-                            }
-                        );
-
-
-                    const data =
-                        await response.json();
-
-
-                    if (!response.ok) {
-
-                        alert(
-                            data.message ||
-                            "Submit failed."
-                        );
-
-                        return;
-
-                    }
-
-
-                    alert(
-                        "Book submitted successfully! 📚"
-                    );
-
-
-                    if (bookModal) {
-
-                        bookModal.style.display =
-                            "none";
-
-                    }
-
-
-                    await loadBooksFromBackend();
-
-                }
-
-
-                catch (error) {
-
-                    console.error(
-                        "Submit Error:",
-                        error
-                    );
-
-                    alert(
-                        "Unable to connect to backend server."
-                    );
-
-                }
-
-            };
-
-    }
-
-
-    /* =====================================================
-       EXPLORE BUTTON
-    ===================================================== */
-
-    const exploreBtn =
-        document.getElementById(
-            "exploreBtn"
+            }
         );
 
 
-    if (exploreBtn) {
+        if (topBtn) {
 
-        exploreBtn.onclick =
-            function () {
+            topBtn.onclick =
+                function () {
 
-                const booksSection =
-                    document.getElementById(
-                        "books"
-                    );
+                    window.scrollTo({
 
+                        top: 0,
 
-                if (booksSection) {
-
-                    booksSection.scrollIntoView({
                         behavior: "smooth"
+
                     });
 
+                };
+
+        }
+
+
+        /* =================================================
+           CLOSE MODALS OUTSIDE
+        ================================================= */
+
+        window.addEventListener(
+            "click",
+            function (event) {
+
+
+                if (
+                    bookModal &&
+                    event.target ===
+                    bookModal
+                ) {
+
+                    bookModal.style.display =
+                        "none";
+
                 }
 
-            };
 
-    }
+                if (
+                    loginModal &&
+                    event.target ===
+                    loginModal
+                ) {
 
+                    loginModal.style.display =
+                        "none";
 
-    /* =====================================================
-       THEME
-    ===================================================== */
-
-    const themeBtn =
-        document.getElementById(
-            "themeBtn"
-        );
-
-    const mobileThemeBtn =
-        document.getElementById(
-            "mobileThemeBtn"
-        );
-
-
-    function updateThemeButton() {
-
-        const isDark =
-            document.body.classList.contains(
-                "dark"
-            );
-
-
-        if (themeBtn) {
-
-            themeBtn.innerText =
-                isDark
-                    ? "☀️"
-                    : "🌙";
-
-        }
-
-
-        if (mobileThemeBtn) {
-
-            mobileThemeBtn.innerText =
-                isDark
-                    ? "☀️ Light"
-                    : "🌙 Dark";
-
-        }
-
-    }
-
-
-    function toggleTheme() {
-
-        document.body.classList.toggle(
-            "dark"
-        );
-
-
-        const isDark =
-            document.body.classList.contains(
-                "dark"
-            );
-
-
-        localStorage.setItem(
-            "darkMode",
-            isDark
-        );
-
-
-        updateThemeButton();
-
-    }
-
-
-    if (themeBtn) {
-        themeBtn.onclick =
-            toggleTheme;
-    }
-
-
-    if (mobileThemeBtn) {
-
-        mobileThemeBtn.onclick =
-            function () {
-
-                toggleTheme();
-
-                if (mainMenu) {
-                    mainMenu.classList.remove(
-                        "active"
-                    );
                 }
 
-            };
 
-    }
+                if (
+                    registerModal &&
+                    event.target ===
+                    registerModal
+                ) {
 
+                    registerModal.style.display =
+                        "none";
 
-    /* =====================================================
-       LOAD THEME
-    ===================================================== */
-
-    if (
-        localStorage.getItem(
-            "darkMode"
-        ) === "true"
-    ) {
-
-        document.body.classList.add(
-            "dark"
-        );
-
-    }
+                }
 
 
-    updateThemeButton();
-
-
-    /* =====================================================
-       TOP BUTTON
-    ===================================================== */
-
-    const topBtn =
-        document.getElementById(
-            "topBtn"
-        );
-
-
-    window.addEventListener(
-        "scroll",
-        function () {
-
-            if (!topBtn) {
-                return;
-            }
-
-
-            if (window.scrollY > 400) {
-
-                topBtn.style.display =
-                    "block";
-
-            }
-
-            else {
-
-                topBtn.style.display =
-                    "none";
-
-            }
-
-        }
-    );
-
-
-    if (topBtn) {
-
-        topBtn.onclick =
-            function () {
-
-                window.scrollTo({
-
-                    top: 0,
-
-                    behavior: "smooth"
-
-                });
-
-            };
-
-    }
-
-
-    /* =====================================================
-       CLOSE MODALS BY CLICKING OUTSIDE
-    ===================================================== */
-
-    window.addEventListener(
-        "click",
-        function (event) {
-
-            if (
-                bookModal &&
-                event.target === bookModal
-            ) {
-
-                bookModal.style.display =
-                    "none";
-
-            }
-
-
-            if (
-                loginModal &&
-                event.target === loginModal
-            ) {
-
-                loginModal.style.display =
-                    "none";
-
-            }
-
-
-            if (
-                registerModal &&
-                event.target === registerModal
-            ) {
-
-                registerModal.style.display =
-                    "none";
-
-            }
-
-
-            if (
-                forgotPasswordModal &&
-                event.target ===
+                if (
+                    forgotPasswordModal &&
+                    event.target ===
                     forgotPasswordModal
-            ) {
+                ) {
 
-                forgotPasswordModal.style.display =
-                    "none";
+                    forgotPasswordModal.style.display =
+                        "none";
 
-                forgotPasswordModal.classList.remove(
-                    "show"
-                );
+
+                    forgotPasswordModal.classList.remove(
+                        "show"
+                    );
+
+                }
 
             }
-
-        }
-    );
+        );
 
 
-    /* =====================================================
-       INITIAL LOAD
-    ===================================================== */
+        /* =================================================
+           INITIAL LOAD
+        ================================================= */
 
-    loadBooksFromBackend();
+        updateAttendanceVisibility();
 
-    updateUserUI();
+        loadBooksFromBackend();
+
+        updateUserUI();
+
+        refreshProfileFromBackend();
 
 
-    console.log(
-        "Atal Library JavaScript loaded successfully."
-    );
+        console.log(
+            "Atal Library JavaScript loaded successfully."
+        );
 
-});
+    }
+);
 
 
 /* =====================================================
    ADMIN LOGIN BUTTON
 ===================================================== */
 
-const adminLoginBtn =
-    document.getElementById(
-        "adminLoginBtn"
-    );
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const adminLoginBtn =
+            document.getElementById(
+                "adminLoginBtn"
+            );
 
 
-if (adminLoginBtn) {
+        if (adminLoginBtn) {
 
-    adminLoginBtn.addEventListener(
-        "click",
-        function () {
+            adminLoginBtn.addEventListener(
+                "click",
+                function () {
 
-            window.location.href =
-                "admin-login.html";
+                    window.location.href =
+                        "admin-login.html";
 
+                }
+            );
+
+        }
+
+
+        /* =============================================
+           MOBILE ADMIN LOGIN
+        ============================================= */
+
+        const mobileAdminLoginBtn =
+            document.getElementById(
+                "mobileAdminLoginBtn"
+            );
+
+
+        if (mobileAdminLoginBtn) {
+
+            mobileAdminLoginBtn.addEventListener(
+                "click",
+                function () {
+
+                    window.location.href =
+                        "admin-login.html";
+
+                }
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================================
+   FORMAT ATTENDANCE TIME
+===================================================== */
+
+function formatAttendanceTime(value) {
+
+    if (!value) {
+
+        return "-";
+
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (isNaN(date.getTime())) {
+
+        return value;
+
+    }
+
+
+    return date.toLocaleString(
+        "en-IN",
+        {
+            dateStyle: "medium",
+            timeStyle: "medium"
         }
     );
 
@@ -3227,25 +4235,798 @@ if (adminLoginBtn) {
 
 
 /* =====================================================
-   MOBILE ADMIN LOGIN
+   UPDATE ATTENDANCE UI
 ===================================================== */
 
-const mobileAdminLoginBtn =
-    document.getElementById(
-        "mobileAdminLoginBtn"
-    );
+function updateAttendanceUI(
+    inside,
+    attendance
+) {
+
+    const loginMessage =
+        document.getElementById(
+            "attendanceLoginMessage"
+        );
 
 
-if (mobileAdminLoginBtn) {
+    const controls =
+        document.getElementById(
+            "attendanceControls"
+        );
 
-    mobileAdminLoginBtn.addEventListener(
-        "click",
-        function () {
 
-            window.location.href =
-                "admin-login.html";
+    const welcome =
+        document.getElementById(
+            "attendanceWelcome"
+        );
+
+
+    const status =
+        document.getElementById(
+            "attendanceStatus"
+        );
+
+
+    const time =
+        document.getElementById(
+            "attendanceTime"
+        );
+
+
+    const enterBtn =
+        document.getElementById(
+            "enterLibraryBtn"
+        );
+
+
+    const exitBtn =
+        document.getElementById(
+            "exitLibraryBtn"
+        );
+
+
+    const deleteBtn =
+        document.getElementById(
+            "deleteAccountBtn"
+        );
+
+
+    const user =
+        getAttendanceUser();
+
+
+    /* =================================================
+       NOT LOGGED IN
+    ================================================= */
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        if (loginMessage) {
+
+            loginMessage.style.display =
+                "block";
 
         }
-    );
+
+
+        if (controls) {
+
+            controls.style.display =
+                "none";
+
+        }
+
+
+        updateAttendanceVisibility();
+
+
+        return;
+
+    }
+
+
+    /* =================================================
+       LOGGED IN
+    ================================================= */
+
+    if (loginMessage) {
+
+        loginMessage.style.display =
+            "none";
+
+    }
+
+
+    if (controls) {
+
+        controls.style.display =
+            "block";
+
+    }
+
+
+    if (welcome) {
+
+        welcome.textContent =
+            "Welcome, " +
+            (user.name || "User") +
+            " 👋";
+
+    }
+
+
+    /* =================================================
+       DELETE BUTTON
+    ================================================= */
+
+    if (deleteBtn) {
+
+        deleteBtn.style.display =
+            "inline-block";
+
+    }
+
+
+    /* =================================================
+       INSIDE
+    ================================================= */
+
+    if (inside) {
+
+        if (status) {
+
+            status.textContent =
+                "🟢 You are currently inside the library.";
+
+
+            status.style.color =
+                "#16a34a";
+
+        }
+
+
+        if (time) {
+
+            time.textContent =
+                "Entry Time: " +
+                formatAttendanceTime(
+                    attendance?.entry_time ||
+                    attendance?.EntryTime
+                );
+
+        }
+
+
+        if (enterBtn) {
+
+            enterBtn.disabled =
+                true;
+
+
+            enterBtn.style.opacity =
+                "0.6";
+
+
+            enterBtn.style.cursor =
+                "not-allowed";
+
+        }
+
+
+        if (exitBtn) {
+
+            exitBtn.disabled =
+                false;
+
+
+            exitBtn.style.opacity =
+                "1";
+
+
+            exitBtn.style.cursor =
+                "pointer";
+
+        }
+
+    }
+
+
+    /* =================================================
+       OUTSIDE
+    ================================================= */
+
+    else {
+
+        if (status) {
+
+            status.textContent =
+                "⚪ You are currently outside the library.";
+
+
+            status.style.color =
+                "#64748b";
+
+        }
+
+
+        if (time) {
+
+            time.textContent =
+                "No active library entry.";
+
+        }
+
+
+        if (enterBtn) {
+
+            enterBtn.disabled =
+                false;
+
+
+            enterBtn.style.opacity =
+                "1";
+
+
+            enterBtn.style.cursor =
+                "pointer";
+
+        }
+
+
+        if (exitBtn) {
+
+            exitBtn.disabled =
+                true;
+
+
+            exitBtn.style.opacity =
+                "0.6";
+
+
+            exitBtn.style.cursor =
+                "not-allowed";
+
+        }
+
+    }
+
+
+    updateAttendanceVisibility();
 
 }
+
+
+/* =====================================================
+   LOAD ATTENDANCE STATUS
+===================================================== */
+
+async function loadAttendanceStatus() {
+
+    const user = getAttendanceUser();
+
+    // User login nahi hai
+    if (!user || !user.email) {
+
+        updateAttendanceUI(false, null);
+
+        return;
+    }
+
+    try {
+
+        const response = await fetch(
+            `${API_URL}/attendance/status?email=${encodeURIComponent(user.email)}`
+        );
+
+        const data = await response.json();
+
+        console.log("Attendance Status Response:", data);
+
+        if (!response.ok) {
+
+            console.error(
+                "Attendance status error:",
+                data
+            );
+
+            updateAttendanceUI(false, null);
+
+            return;
+        }
+
+        updateAttendanceUI(
+            data.inside === true,
+            data.attendance || null
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Attendance status connection error:",
+            error
+        );
+
+        updateAttendanceUI(false, null);
+    }
+}
+
+/* =====================================================
+   ENTER LIBRARY
+===================================================== */
+
+async function enterLibrary() {
+
+    const user =
+        getAttendanceUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        document.getElementById(
+            "enterLibraryBtn"
+        );
+
+
+    try {
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "Recording...";
+
+        }
+
+
+        const response =
+            await fetch(
+                `${API_URL}/attendance/enter`,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        email:
+                            user.email
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(
+                data.message ||
+                "Unable to record entry."
+            );
+
+            return;
+
+        }
+
+
+        alert(
+            "Entry recorded successfully. Welcome to Atal Library! 📚"
+        );
+
+
+        updateAttendanceUI(
+            true,
+            data.attendance
+        );
+
+
+        await loadAttendanceStatus();
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Enter library error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to backend server."
+        );
+
+    }
+
+
+    finally {
+
+        if (button) {
+
+            button.textContent =
+                "🚪 Enter in Library";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   EXIT LIBRARY
+===================================================== */
+
+async function exitLibrary() {
+
+    const user =
+        getAttendanceUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        document.getElementById(
+            "exitLibraryBtn"
+        );
+
+
+    try {
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+
+            button.textContent =
+                "Recording...";
+
+        }
+
+
+        const response =
+            await fetch(
+                `${API_URL}/attendance/exit`,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        email:
+                            user.email
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(
+                data.message ||
+                "Unable to record exit."
+            );
+
+            return;
+
+        }
+
+
+        alert(
+            "Exit recorded successfully. Goodbye! 👋"
+        );
+
+
+        updateAttendanceUI(
+            false,
+            null
+        );
+
+
+        await loadAttendanceStatus();
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Exit library error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to backend server."
+        );
+
+    }
+
+
+    finally {
+
+        if (button) {
+
+            button.textContent =
+                "🚶 Exit from Library";
+
+        }
+
+    }
+
+}
+
+
+/* =====================================================
+   DELETE MY ACCOUNT
+===================================================== */
+
+async function deleteMyAccount() {
+
+    const user =
+        getAttendanceUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    const firstConfirm =
+        confirm(
+            "Are you sure you want to permanently delete your Atal Library account?"
+        );
+
+
+    if (!firstConfirm) {
+
+        return;
+
+    }
+
+
+    const password =
+        prompt(
+            "Enter your account password to confirm deletion:"
+        );
+
+
+    if (!password) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/account`,
+                {
+
+                    method: "DELETE",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        email:
+                            user.email,
+
+                        password:
+                            password
+
+                    })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            alert(
+                data.message ||
+                "Unable to delete account."
+            );
+
+            return;
+
+        }
+
+
+        /* =============================================
+           CLEAR LOGIN DATA
+        ============================================= */
+
+        localStorage.removeItem(
+            "loggedUser"
+        );
+
+
+        localStorage.removeItem(
+            "libraryUser"
+        );
+
+
+        updateUserUI();
+
+
+        updateAttendanceUI(
+            false,
+            null
+        );
+
+
+        updateAttendanceVisibility();
+
+
+        alert(
+            "Your account has been deleted successfully."
+        );
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Delete account error:",
+            error
+        );
+
+
+        alert(
+            "Unable to connect to backend server."
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   ATTENDANCE BUTTONS
+===================================================== */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const enterLibraryBtn =
+            document.getElementById(
+                "enterLibraryBtn"
+            );
+
+
+        const exitLibraryBtn =
+            document.getElementById(
+                "exitLibraryBtn"
+            );
+
+
+        const deleteAccountBtn =
+            document.getElementById(
+                "deleteAccountBtn"
+            );
+
+
+        if (enterLibraryBtn) {
+
+            enterLibraryBtn.onclick =
+                enterLibrary;
+
+        }
+
+
+        if (exitLibraryBtn) {
+
+            exitLibraryBtn.onclick =
+                exitLibrary;
+
+        }
+
+
+        if (deleteAccountBtn) {
+
+            deleteAccountBtn.onclick =
+                deleteMyAccount;
+
+        }
+
+
+        /* =============================================
+           INITIAL ATTENDANCE
+        ============================================= */
+
+        updateAttendanceVisibility();
+
+        loadAttendanceStatus();
+
+    }
+);
+
+
+/* =====================================================
+   EXTRA SAFETY:
+   Keep attendance visibility synchronized
+===================================================== */
+
+setInterval(
+    function () {
+
+        updateAttendanceVisibility();
+
+    },
+    1000
+);

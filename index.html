@@ -37,6 +37,7 @@
         <button
             id="menuBtn"
             class="menu-btn"
+            type="button"
         >
             ☰
         </button>
@@ -59,6 +60,16 @@
                     Books
                 </a>
 
+                <!-- Attendance -->
+
+                <a
+                    href="#attendance"
+                    id="attendanceNavLink"
+                    style="display: none;"
+                >
+                    Attendance
+                </a>
+
                 <a href="#about">
                     About
                 </a>
@@ -70,36 +81,51 @@
             </div>
 
 
-            <!-- Desktop Auth -->
+            <!-- ================= DESKTOP AUTH ================= -->
 
             <div class="auth-buttons">
 
                 <span id="userGreeting"></span>
 
-                <button id="loginBtn">
+                <button
+                    id="loginBtn"
+                    type="button"
+                >
                     Login
                 </button>
 
-                <button id="registerBtn">
+                <button
+                    id="registerBtn"
+                    type="button"
+                >
                     Register
                 </button>
 
-                <button id="adminLoginBtn">
+                <button
+                    id="adminLoginBtn"
+                    type="button"
+                >
                     Admin Login
                 </button>
 
-                <button id="logoutBtn">
+                <button
+                    id="logoutBtn"
+                    type="button"
+                >
                     Logout
                 </button>
 
-                <button id="themeBtn">
+                <button
+                    id="themeBtn"
+                    type="button"
+                >
                     🌙
                 </button>
 
             </div>
 
 
-            <!-- Mobile Auth -->
+            <!-- ================= MOBILE AUTH ================= -->
 
             <div
                 class="mobile-auth"
@@ -108,23 +134,38 @@
 
                 <span id="mobileUserGreeting"></span>
 
-                <button id="mobileLoginBtn">
+                <button
+                    id="mobileLoginBtn"
+                    type="button"
+                >
                     Login
                 </button>
 
-                <button id="mobileRegisterBtn">
+                <button
+                    id="mobileRegisterBtn"
+                    type="button"
+                >
                     Register
                 </button>
 
-                <button id="mobileAdminLoginBtn">
+                <button
+                    id="mobileAdminLoginBtn"
+                    type="button"
+                >
                     Admin Login
                 </button>
 
-                <button id="mobileLogoutBtn">
+                <button
+                    id="mobileLogoutBtn"
+                    type="button"
+                >
                     Logout
                 </button>
 
-                <button id="mobileThemeBtn">
+                <button
+                    id="mobileThemeBtn"
+                    type="button"
+                >
                     🌙 Dark
                 </button>
 
@@ -133,6 +174,177 @@
         </div>
 
     </nav>
+
+
+
+    <!-- =========================================================
+         LIBRARY ATTENDANCE
+    ========================================================== -->
+
+    <section
+        id="attendance"
+        style="display: none; padding: 70px 20px;"
+    >
+
+        <div
+            style="
+                max-width: 850px;
+                margin: 0 auto;
+            "
+        >
+
+            <div class="section-heading">
+
+                <span>
+                    LIBRARY ATTENDANCE
+                </span>
+
+                <h2>
+                    Library Entry & Exit
+                </h2>
+
+                <p>
+                    Record your entry and exit from the library.
+                </p>
+
+            </div>
+
+
+            <div
+                id="attendanceCard"
+                style="
+                    background: #ffffff;
+                    border-radius: 16px;
+                    padding: 25px;
+                    box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+                    text-align: center;
+                "
+            >
+
+
+                <!-- LOGIN MESSAGE -->
+
+                <div
+                    id="attendanceLoginMessage"
+                    style="
+                        padding: 15px;
+                        color: #64748b;
+                    "
+                >
+                    Please login to use library attendance.
+                </div>
+
+
+                <!-- ================= ATTENDANCE CONTROLS ================= -->
+
+                <div
+                    id="attendanceControls"
+                    style="display: none;"
+                >
+
+                    <h3
+                        id="attendanceWelcome"
+                        style="margin-top: 0;"
+                    >
+                        Welcome
+                    </h3>
+
+
+                    <p
+                        id="attendanceStatus"
+                        style="
+                            font-weight: bold;
+                            margin: 15px 0;
+                        "
+                    >
+                        Checking attendance...
+                    </p>
+
+
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: center;
+                            gap: 12px;
+                            flex-wrap: wrap;
+                        "
+                    >
+
+
+                        <!-- ENTER -->
+
+                        <button
+                            id="enterLibraryBtn"
+                            type="button"
+                            style="
+                                border: none;
+                                padding: 12px 20px;
+                                border-radius: 8px;
+                                background: #16a34a;
+                                color: white;
+                                font-weight: bold;
+                                cursor: pointer;
+                            "
+                        >
+                            🚪 Enter in Library
+                        </button>
+
+
+                        <!-- EXIT -->
+
+                        <button
+                            id="exitLibraryBtn"
+                            type="button"
+                            style="
+                                border: none;
+                                padding: 12px 20px;
+                                border-radius: 8px;
+                                background: #dc2626;
+                                color: white;
+                                font-weight: bold;
+                                cursor: pointer;
+                            "
+                        >
+                            🚶 Exit from Library
+                        </button>
+
+
+                        <!-- DELETE ACCOUNT -->
+
+                        <button
+                            id="deleteAccountBtn"
+                            type="button"
+                            style="
+                                border: none;
+                                padding: 12px 20px;
+                                border-radius: 8px;
+                                background: #111827;
+                                color: white;
+                                font-weight: bold;
+                                cursor: pointer;
+                            "
+                        >
+                            🗑️ Delete Account
+                        </button>
+
+                    </div>
+
+
+                    <p
+                        id="attendanceTime"
+                        style="
+                            margin-top: 18px;
+                            color: #64748b;
+                        "
+                    ></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
 
 
 
@@ -174,6 +386,7 @@
                 <button
                     id="exploreBtn"
                     class="primary-btn"
+                    type="button"
                 >
                     📚 Explore Books
                 </button>
@@ -297,7 +510,7 @@
         </div>
 
 
-        <!-- Search -->
+        <!-- SEARCH -->
 
         <div class="search-area">
 
@@ -314,7 +527,10 @@
                     placeholder="Search books..."
                 >
 
-                <button id="clearBtn">
+                <button
+                    id="clearBtn"
+                    type="button"
+                >
                     ✕
                 </button>
 
@@ -594,6 +810,7 @@
             <button
                 id="closeBtn"
                 class="modal-close"
+                type="button"
             >
                 ×
             </button>
@@ -643,6 +860,7 @@
                 <button
                     id="rentModalBtn"
                     class="rent-btn"
+                    type="button"
                 >
                     Rent Book
                 </button>
@@ -651,6 +869,7 @@
                 <button
                     id="submitModalBtn"
                     class="submit-btn"
+                    type="button"
                 >
                     Submit Book
                 </button>
@@ -677,6 +896,7 @@
             <button
                 id="loginClose"
                 class="auth-close"
+                type="button"
             >
                 ×
             </button>
@@ -781,6 +1001,7 @@
             <button
                 id="registerClose"
                 class="auth-close"
+                type="button"
             >
                 ×
             </button>
@@ -873,7 +1094,10 @@
 
                 <p
                     id="emailOtpStatus"
-                    style="margin: 5px 0; font-size: 14px;"
+                    style="
+                        margin: 5px 0;
+                        font-size: 14px;
+                    "
                 ></p>
 
 
@@ -907,7 +1131,7 @@
                 >
 
 
-                <!-- ================= PROFILE PHOTO ================= -->
+                <!-- PROFILE PHOTO -->
 
                 <label for="registerPhoto">
                     Profile Photo
@@ -920,7 +1144,12 @@
                     required
                 >
 
-                <small style="display:block; margin-top:5px;">
+                <small
+                    style="
+                        display:block;
+                        margin-top:5px;
+                    "
+                >
                     JPG, PNG, WEBP or GIF — Maximum 10 KB
                 </small>
 
@@ -972,6 +1201,7 @@
             <button
                 id="forgotPasswordClose"
                 class="auth-close"
+                type="button"
             >
                 ×
             </button>
@@ -995,7 +1225,7 @@
             <form id="forgotPasswordForm">
 
 
-                <!-- Email -->
+                <!-- EMAIL -->
 
                 <label>
                     Email
@@ -1010,7 +1240,7 @@
                 >
 
 
-                <!-- Phone -->
+                <!-- PHONE -->
 
                 <label>
                     Phone Number
@@ -1027,7 +1257,7 @@
                 >
 
 
-                <!-- New Password -->
+                <!-- NEW PASSWORD -->
 
                 <label>
                     New Password
@@ -1042,7 +1272,7 @@
                 >
 
 
-                <!-- Confirm Password -->
+                <!-- CONFIRM PASSWORD -->
 
                 <label>
                     Confirm Password
@@ -1150,7 +1380,10 @@
 
     <!-- ================= TOP BUTTON ================= -->
 
-    <button id="topBtn">
+    <button
+        id="topBtn"
+        type="button"
+    >
         ↑
     </button>
 
@@ -1159,6 +1392,234 @@
     <!-- ================= JAVASCRIPT ================= -->
 
     <script src="script.js"></script>
+
+
+    <!-- =========================================================
+         ATTENDANCE VISIBILITY CONTROL
+    ========================================================== -->
+
+    <script>
+
+        /*
+        =========================================================
+        GET LOGGED-IN USER
+        =========================================================
+        */
+
+        function getAttendanceLoggedUser() {
+
+            const libraryUser =
+                localStorage.getItem("libraryUser");
+
+            if (libraryUser) {
+
+                try {
+
+                    const user =
+                        JSON.parse(libraryUser);
+
+                    if (
+                        user &&
+                        user.email
+                    ) {
+
+                        return user;
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "libraryUser JSON error:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            /*
+            -----------------------------------------------------
+            BACKUP CHECK
+            -----------------------------------------------------
+            */
+
+            const loggedUser =
+                localStorage.getItem("loggedUser");
+
+            if (loggedUser) {
+
+                /*
+                    loggedUser in your current script.js
+                    is normally just the user's name.
+
+                    So we DON'T try JSON.parse() here.
+                */
+
+                const user = {
+
+                    name: loggedUser
+
+                };
+
+                return user;
+
+            }
+
+
+            return null;
+
+        }
+
+
+
+        /*
+        =========================================================
+        UPDATE ATTENDANCE VISIBILITY
+        =========================================================
+        */
+
+        function updateAttendanceVisibility() {
+
+            const attendanceSection =
+                document.getElementById("attendance");
+
+            const attendanceNavLink =
+                document.getElementById(
+                    "attendanceNavLink"
+                );
+
+
+            if (!attendanceSection) {
+                return;
+            }
+
+
+            const user =
+                getAttendanceLoggedUser();
+
+
+            /*
+            =====================================================
+            USER LOGGED IN
+            =====================================================
+            */
+
+            if (
+                user &&
+                user.email
+            ) {
+
+                attendanceSection.style.display =
+                    "block";
+
+                if (attendanceNavLink) {
+
+                    attendanceNavLink.style.display =
+                        "inline-block";
+
+                }
+
+                console.log(
+                    "Attendance visible for:",
+                    user.email
+                );
+
+            }
+
+
+            /*
+            =====================================================
+            USER NOT LOGGED IN
+            =====================================================
+            */
+
+            else {
+
+                attendanceSection.style.display =
+                    "none";
+
+                if (attendanceNavLink) {
+
+                    attendanceNavLink.style.display =
+                        "none";
+
+                }
+
+                console.log(
+                    "Attendance hidden - user not logged in"
+                );
+
+            }
+
+        }
+
+
+
+        /*
+        =========================================================
+        PAGE LOAD
+        =========================================================
+        */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                updateAttendanceVisibility();
+
+            }
+        );
+
+
+
+        /*
+        =========================================================
+        STORAGE CHANGE
+        =========================================================
+
+        This works when localStorage is changed from
+        another browser tab/window.
+        */
+
+        window.addEventListener(
+            "storage",
+            function () {
+
+                updateAttendanceVisibility();
+
+            }
+        );
+
+
+
+        /*
+        =========================================================
+        CUSTOM EVENT
+        =========================================================
+
+        script.js can call:
+
+        window.dispatchEvent(
+            new Event("attendanceLoginChanged")
+        );
+
+        This allows attendance visibility to update
+        immediately after login/logout.
+        */
+
+        window.addEventListener(
+            "attendanceLoginChanged",
+            function () {
+
+                updateAttendanceVisibility();
+
+            }
+        );
+
+    </script>
 
 
 </body>
