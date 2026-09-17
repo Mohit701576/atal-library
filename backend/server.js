@@ -273,21 +273,33 @@ app.use(
 // ==================================================
 
 const transporter = nodemailer.createTransport({
-
     service: "gmail",
 
     auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD
+    },
 
-        user:
-            process.env.GMAIL_USER,
-
-        pass:
-            process.env.GMAIL_APP_PASSWORD
-
-    }
-
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000
 });
 
+transporter.verify()
+    .then(() => {
+        console.log("====================================");
+        console.log("GMAIL SMTP READY");
+        console.log("GMAIL USER:", process.env.GMAIL_USER);
+        console.log("====================================");
+    })
+    .catch((error) => {
+        console.log("====================================");
+        console.log("GMAIL SMTP CONNECTION ERROR");
+        console.log("====================================");
+        console.log(error.message);
+        console.log(error);
+    });
+    
 // ==================================================
 // VERIFY GMAIL SMTP CONNECTION
 // ==================================================
