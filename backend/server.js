@@ -3,26 +3,8 @@ require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
 const crypto = require("crypto");
-const multer = require("multer");
 const { Resend } = require("resend");
-
-// ==================================================
-// ENVIRONMENT
-// ==================================================
-
-if (!process.env.SUPABASE_URL) {
-    console.log("WARNING: SUPABASE_URL is missing.");
-}
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.log("WARNING: SUPABASE_SERVICE_ROLE_KEY is missing.");
-}
-
-if (!process.env.RESEND_API_KEY) {
-    console.log("WARNING: RESEND_API_KEY is missing.");
-}
 
 // ==================================================
 // SUPABASE
@@ -39,1812 +21,97 @@ const supabase = createClient(
 
 const app = express();
 
-const PORT =
-    process.env.PORT || 3000;
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
 
-app.set("trust proxy", 1);
-
-// ==================================================
-// CORS
-// ==================================================
-
-app.use(
-    cors({
-        origin: true,
-
-        methods: [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS"
-        ],
-
-        allowedHeaders: [
-            "Content-Type",
-            "Authorization"
-        ]
-    })
-);
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 // ==================================================
-// BODY PARSER
+// ENVIRONMENT
 // ==================================================
 
-app.use(
-    express.json({
-        limit: "10mb"
-    })
-);
+const PORT = process.env.PORT || 3000;
 
-app.use(
-    express.urlencoded({
-        extended: true
-    })
-);
+const resend = process.env.RESEND_API_KEY
+    ? new Resend(process.env.RESEND_API_KEY)
+    : null;
 
 // ==================================================
-// STATIC FILES
+// HELPER FUNCTIONS
 // ==================================================
 
-app.use(
-    express.static(
-        path.join(__dirname, "..")
-    )
-);
+function cleanEmail(email) {
+    return String(email || "").trim().toLowerCase();
+}
 
-// ==================================================
-// PROFILE PHOTO
-// ==================================================
+function cleanName(name) {
+    return String(name || "").trim();
+}
 
-const PROFILE_PHOTOS_BUCKET =
-    "profile-photos";
+function cleanValue(value) {
+    return String(value || "").trim();
+}
 
-const upload = multer({
-    storage: multer.memoryStorage(),
+function normalizeName(name) {
+    return cleanName(name).toLowerCase().replace(/\s+/g, " ");
+}
 
-    limits: {
-        fileSize: 5 * 1024 * 1024
-    },
+function cleanRentedBy(value) {
+    const valueClean = cleanName(value);
 
-    fileFilter: (
-        req,
-        file,
-        cb
-    ) => {
-
-        const allowedTypes = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif"
-        ];
-
-        if (
-            allowedTypes.includes(
-                file.mimetype
-            )
-        ) {
-            cb(null, true);
-        } else {
-            cb(
-                new Error(
-                    "Only JPG, PNG, WEBP and GIF images are allowed."
-                )
-            );
-        }
+    if (
+        !valueClean ||
+        valueClean.toLowerCase() === "null" ||
+        valueClean.toLowerCase() === "undefined"
+    ) {
+        return "";
     }
-});
 
-function uploadProfilePhoto(
-    req,
-    res,
-    next
-) {
+    return valueClean;
+}
 
-    upload.single("profile_photo")(
-        req,
-        res,
-        function (err) {
+// ==================================================
+// INDIA DATE RANGE
+// ==================================================
 
-            if (
-                err instanceof
-                multer.MulterError
-            ) {
+function getIndiaDateRange() {
+    const now = new Date();
 
-                if (
-                    err.code ===
-                    "LIMIT_FILE_SIZE"
-                ) {
+    const indiaDate = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Kolkata",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).format(now);
 
-                    return res.status(400).json({
-                        success: false,
-                        message:
-                            "Profile photo must be 5 MB or smaller."
-                    });
-                }
+    const [year, month, day] = indiaDate.split("-").map(Number);
 
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        err.message
-                });
-            }
-
-            if (err) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        err.message
-                });
-            }
-
-            next();
-        }
+    const todayUTC = new Date(
+        Date.UTC(year, month - 1, day)
     );
-}
 
-function getPhotoExtension(
-    mimetype
-) {
+    const tomorrowUTC = new Date(todayUTC);
+    tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
 
-    if (
-        mimetype ===
-        "image/png"
-    ) {
-        return "png";
-    }
+    const tomorrowYear = tomorrowUTC.getUTCFullYear();
+    const tomorrowMonth = String(
+        tomorrowUTC.getUTCMonth() + 1
+    ).padStart(2, "0");
 
-    if (
-        mimetype ===
-        "image/webp"
-    ) {
-        return "webp";
-    }
+    const tomorrowDay = String(
+        tomorrowUTC.getUTCDate()
+    ).padStart(2, "0");
 
-    if (
-        mimetype ===
-        "image/gif"
-    ) {
-        return "gif";
-    }
-
-    return "jpg";
-}
-
-async function saveProfilePhoto(
-    userId,
-    file
-) {
-
-    const extension =
-        getPhotoExtension(
-            file.mimetype
-        );
-
-    const filePath =
-        `users/${userId}/profile.${extension}`;
-
-    const {
-        error
-    } = await supabase
-        .storage
-        .from(
-            PROFILE_PHOTOS_BUCKET
-        )
-        .upload(
-            filePath,
-            file.buffer,
-            {
-                contentType:
-                    file.mimetype,
-                upsert: true
-            }
-        );
-
-    if (error) {
-        throw error;
-    }
-
-    const {
-        data
-    } =
-        supabase
-            .storage
-            .from(
-                PROFILE_PHOTOS_BUCKET
-            )
-            .getPublicUrl(
-                filePath
-            );
-
-    if (
-        !data ||
-        !data.publicUrl
-    ) {
-
-        throw new Error(
-            "Unable to create profile photo URL."
-        );
-    }
-
-    return (
-        data.publicUrl +
-        "?v=" +
-        Date.now()
-    );
-}
-
-async function deleteOldProfilePhotos(
-    userId,
-    currentFilePath
-) {
-
-    const possibleFiles = [
-
-        `users/${userId}/profile.jpg`,
-        `users/${userId}/profile.png`,
-        `users/${userId}/profile.webp`,
-        `users/${userId}/profile.gif`
-
-    ];
-
-    const filesToDelete =
-        possibleFiles.filter(
-            filePath =>
-                filePath !==
-                currentFilePath
-        );
-
-    try {
-
-        const {
-            error
-        } = await supabase
-            .storage
-            .from(
-                PROFILE_PHOTOS_BUCKET
-            )
-            .remove(
-                filesToDelete
-            );
-
-        if (error) {
-
-            console.log(
-                "Old profile photo delete warning:",
-                error
-            );
-        }
-
-    } catch (error) {
-
-        console.log(
-            "Old profile photo delete warning:",
-            error
-        );
-    }
-}
-
-async function deleteAllProfilePhotos(
-    userId
-) {
-
-    const files = [
-
-        `users/${userId}/profile.jpg`,
-        `users/${userId}/profile.png`,
-        `users/${userId}/profile.webp`,
-        `users/${userId}/profile.gif`
-
-    ];
-
-    try {
-
-        const {
-            error
-        } = await supabase
-            .storage
-            .from(
-                PROFILE_PHOTOS_BUCKET
-            )
-            .remove(
-                files
-            );
-
-        if (error) {
-
-            console.log(
-                "Profile photo delete warning:",
-                error
-            );
-        }
-
-    } catch (error) {
-
-        console.log(
-            "Profile photo delete warning:",
-            error
-        );
-    }
-}
-
-// ==================================================
-// RESEND
-// ==================================================
-
-const resend =
-    process.env.RESEND_API_KEY
-        ? new Resend(
-            process.env.RESEND_API_KEY
-        )
-        : null;
-
-// ==================================================
-// OTP
-// ==================================================
-
-function generateOTP() {
-
-    return Math.floor(
-        100000 +
-        Math.random() * 900000
-    ).toString();
-}
-
-const emailOtps = {};
-
-// ==================================================
-// ADMIN
-// ==================================================
-
-const ADMIN_USERNAME =
-    process.env.ADMIN_USERNAME ||
-    "admin";
-
-const ADMIN_PASSWORD =
-    process.env.ADMIN_PASSWORD ||
-    "admin123";
-
-let adminToken = null;
-
-function checkAdmin(
-    req,
-    res,
-    next
-) {
-
-    const authHeader =
-        req.headers.authorization ||
-        "";
-
-    const token =
-        authHeader.startsWith(
-            "Bearer "
-        )
-            ? authHeader.slice(7)
-            : "";
-
-    if (
-        !adminToken ||
-        token !== adminToken
-    ) {
-
-        return res.status(401).json({
-            success: false,
-            message:
-                "Admin login required."
-        });
-    }
-
-    next();
-}
-
-// ==================================================
-// DATE / TIME HELPERS
-// ==================================================
-
-function getTodayDate() {
-
-    return new Intl.DateTimeFormat(
-        "en-CA",
-        {
-            timeZone:
-                "Asia/Kolkata",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit"
-        }
-    ).format(
-        new Date()
-    );
-}
-
-function getCurrentTime() {
-
-    return new Date().toISOString();
-}
-
-// ==================================================
-// ADMIN LOGIN
-// ==================================================
-
-app.post(
-    "/admin-login",
-    (req, res) => {
-
-        try {
-
-            const {
-                username,
-                password
-            } = req.body;
-
-            if (
-                username !==
-                ADMIN_USERNAME ||
-                password !==
-                ADMIN_PASSWORD
-            ) {
-
-                return res.status(401).json({
-                    success: false,
-                    message:
-                        "Invalid admin username or password."
-                });
-            }
-
-            adminToken =
-                crypto
-                    .randomBytes(32)
-                    .toString("hex");
-
-            return res.json({
-                success: true,
-                message:
-                    "Admin login successful.",
-                token:
-                    adminToken
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Admin login error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// SEND EMAIL OTP
-// ==================================================
-
-app.post(
-    "/send-email-otp",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email
-            } = req.body;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            if (!resend) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Email service is not configured on server."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            console.log(
-                "SEND OTP REQUEST:",
-                cleanEmail
-            );
-
-            const {
-                data: existingUsers,
-                error: userCheckError
-            } = await supabase
-                .from("users")
-                .select("id")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (userCheckError) {
-
-                console.log(
-                    "Email check error:",
-                    userCheckError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check email."
-                });
-            }
-
-            if (
-                existingUsers &&
-                existingUsers.length > 0
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email already registered. Please login."
-                });
-            }
-
-            const otp =
-                generateOTP();
-
-            emailOtps[cleanEmail] = {
-                otp: otp,
-
-                expiresAt:
-                    Date.now() +
-                    5 * 60 * 1000,
-
-                verified:
-                    false
-            };
-
-            const {
-                data,
-                error
-            } =
-                await resend.emails.send({
-
-                    from:
-                        "Atal Library <onboarding@resend.dev>",
-
-                    to: [
-                        cleanEmail
-                    ],
-
-                    subject:
-                        "Atal Library - Email Verification OTP",
-
-                    text:
-                        `Your Atal Library verification OTP is ${otp}.
-
-This OTP is valid for 5 minutes.
-
-Please do not share this OTP with anyone.`
-                });
-
-            if (error) {
-
-                delete emailOtps[
-                    cleanEmail
-                ];
-
-                console.log(
-                    "RESEND ERROR:",
-                    JSON.stringify(
-                        error,
-                        null,
-                        2
-                    )
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to send OTP. Please try again."
-                });
-            }
-
-            console.log(
-                "OTP SENT:",
-                data
-                    ? data.id
-                    : ""
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "OTP sent to your email."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "OTP SEND ERROR:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Unable to send OTP. Please try again."
-            });
-        }
-    }
-);
-
-// ==================================================
-// VERIFY EMAIL OTP
-// ==================================================
-
-app.post(
-    "/verify-email-otp",
-    (req, res) => {
-
-        try {
-
-            const {
-                email,
-                otp
-            } = req.body;
-
-            if (
-                !email ||
-                !otp
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email and OTP are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanOTP =
-                otp
-                    .toString()
-                    .trim();
-
-            const savedOTP =
-                emailOtps[
-                    cleanEmail
-                ];
-
-            if (!savedOTP) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "OTP not found. Please request a new OTP."
-                });
-            }
-
-            if (
-                Date.now() >
-                savedOTP.expiresAt
-            ) {
-
-                delete emailOtps[
-                    cleanEmail
-                ];
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "OTP expired. Please request a new OTP."
-                });
-            }
-
-            if (
-                cleanOTP !==
-                savedOTP.otp
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid OTP."
-                });
-            }
-
-            savedOTP.verified =
-                true;
-
-            return res.json({
-                success: true,
-                message:
-                    "Email verified successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "OTP verification error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Unable to verify OTP."
-            });
-        }
-    }
-);
-
-// ==================================================
-// REGISTER
-// ==================================================
-
-app.post(
-    "/register",
-    uploadProfilePhoto,
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                phone,
-                password
-            } = req.body;
-
-            if (
-                !name ||
-                !email ||
-                !phone ||
-                !password
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Name, email, phone and password are required."
-                });
-            }
-
-            if (!req.file) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Please upload a profile photo."
-                });
-            }
-
-            const cleanName =
-                name
-                    .toString()
-                    .trim();
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanPhone =
-                phone
-                    .toString()
-                    .trim();
-
-            if (
-                !/^\d{10}$/.test(
-                    cleanPhone
-                )
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Please enter a valid 10-digit phone number."
-                });
-            }
-
-            const {
-                data: existingUsers,
-                error: userCheckError
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,email"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (userCheckError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check user."
-                });
-            }
-
-            if (
-                existingUsers &&
-                existingUsers.length > 0
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "You have already registered. Please login."
-                });
-            }
-
-            const verifiedOTP =
-                emailOtps[
-                    cleanEmail
-                ];
-
-            if (
-                !verifiedOTP ||
-                verifiedOTP.verified !== true
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Please verify your email before registering."
-                });
-            }
-
-            const {
-                data: newUser,
-                error: insertError
-            } = await supabase
-                .from("users")
-                .insert({
-                    name:
-                        cleanName,
-
-                    email:
-                        cleanEmail,
-
-                    phone:
-                        cleanPhone,
-
-                    password:
-                        password,
-
-                    profile_photo:
-                        null
-                })
-                .select(
-                    "id,name,email,phone,profile_photo"
-                )
-                .single();
-
-            if (insertError) {
-
-                console.log(
-                    "Register error:",
-                    insertError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to register user."
-                });
-            }
-
-            let profilePhotoUrl;
-
-            try {
-
-                profilePhotoUrl =
-                    await saveProfilePhoto(
-                        newUser.id,
-                        req.file
-                    );
-
-            } catch (photoError) {
-
-                console.log(
-                    "Profile photo error:",
-                    photoError
-                );
-
-                await supabase
-                    .from("users")
-                    .delete()
-                    .eq(
-                        "id",
-                        newUser.id
-                    );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Profile photo upload failed."
-                });
-            }
-
-            const {
-                error:
-                    photoUpdateError
-            } = await supabase
-                .from("users")
-                .update({
-                    profile_photo:
-                        profilePhotoUrl
-                })
-                .eq(
-                    "id",
-                    newUser.id
-                );
-
-            if (photoUpdateError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Photo uploaded but could not be saved."
-                });
-            }
-
-            delete emailOtps[
-                cleanEmail
-            ];
-
-            return res.status(201).json({
-                success: true,
-                message:
-                    "User registered successfully.",
-
-                user: {
-                    id:
-                        newUser.id,
-
-                    name:
-                        cleanName,
-
-                    email:
-                        cleanEmail,
-
-                    phone:
-                        cleanPhone,
-
-                    profile_photo:
-                        profilePhotoUrl
-                }
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Register server error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ATTENDANCE HELPER
-// ==================================================
-
-async function markLoginAttendance(
-    name,
-    email
-) {
-
-    try {
-
-        const cleanEmail =
-            email
-                .toString()
-                .trim()
-                .toLowerCase();
-
-        const today =
-            getTodayDate();
-
-        const {
-            data: existing,
-            error: checkError
-        } = await supabase
-            .from("attendance")
-            .select("*")
-            .eq(
-                "email",
-                cleanEmail
-            )
-            .eq(
-                "date",
-                today
-            )
-            .limit(1);
-
-        if (checkError) {
-
-            console.log(
-                "Attendance check warning:",
-                checkError
-            );
-
-            return;
-        }
-
-        if (
-            existing &&
-            existing.length > 0
-        ) {
-
-            console.log(
-                "Attendance already marked:",
-                cleanEmail,
-                today
-            );
-
-            return;
-        }
-
-        const {
-            error: insertError
-        } = await supabase
-            .from("attendance")
-            .insert({
-
-                name:
-                    name
-                        .toString()
-                        .trim(),
-
-                email:
-                    cleanEmail,
-
-                date:
-                    today,
-
-                status:
-                    "Present",
-
-                entry_time:
-                    getCurrentTime(),
-
-                exit_time:
-                    null
-            });
-
-        if (insertError) {
-
-            console.log(
-                "Attendance insert warning:",
-                insertError
-            );
-
-            return;
-        }
-
-        console.log(
-            "ATTENDANCE MARKED:",
-            cleanEmail,
-            today
-        );
-
-    } catch (error) {
-
-        console.log(
-            "Attendance helper warning:",
-            error
-        );
-    }
-}
-
-// ==================================================
-// LOGIN
-// ==================================================
-
-app.post(
-    "/login",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email,
-                password
-            } = req.body;
-
-            if (
-                !email ||
-                !password
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email and password are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select("*")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (error) {
-
-                console.log(
-                    "Login error:",
-                    error
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to login."
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "User not found. Please register."
-                });
-            }
-
-            const user =
-                users[0];
-
-            if (
-                user.password !==
-                password
-            ) {
-
-                return res.status(401).json({
-                    success: false,
-                    message:
-                        "Incorrect email or password."
-                });
-            }
-
-            await markLoginAttendance(
-                user.name || "",
-                user.email
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "Login successful.",
-
-                user: {
-
-                    id:
-                        user.id || "",
-
-                    name:
-                        user.name || "",
-
-                    email:
-                        user.email || "",
-
-                    phone:
-                        user.phone || "",
-
-                    profile_photo:
-                        user.profile_photo || ""
-                }
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Login server error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// PROFILE PHOTO UPDATE
-// ==================================================
-
-app.post(
-    "/profile-photo",
-    uploadProfilePhoto,
-    async (req, res) => {
-
-        try {
-
-            const {
-                email
-            } = req.body;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            if (!req.file) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Please select a profile photo."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,name,email,phone,profile_photo"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find user."
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "User not found."
-                });
-            }
-
-            const user =
-                users[0];
-
-            const extension =
-                getPhotoExtension(
-                    req.file.mimetype
-                );
-
-            const filePath =
-                `users/${user.id}/profile.${extension}`;
-
-            const {
-                error: uploadError
-            } = await supabase
-                .storage
-                .from(
-                    PROFILE_PHOTOS_BUCKET
-                )
-                .upload(
-                    filePath,
-                    req.file.buffer,
-                    {
-                        contentType:
-                            req.file.mimetype,
-
-                        upsert:
-                            true
-                    }
-                );
-
-            if (uploadError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to upload new profile photo."
-                });
-            }
-
-            const {
-                data
-            } =
-                supabase
-                    .storage
-                    .from(
-                        PROFILE_PHOTOS_BUCKET
-                    )
-                    .getPublicUrl(
-                        filePath
-                    );
-
-            const profilePhotoUrl =
-                data.publicUrl +
-                "?v=" +
-                Date.now();
-
-            const {
-                error: updateError
-            } = await supabase
-                .from("users")
-                .update({
-                    profile_photo:
-                        profilePhotoUrl
-                })
-                .eq(
-                    "id",
-                    user.id
-                );
-
-            if (updateError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Photo uploaded but database update failed."
-                });
-            }
-
-            await deleteOldProfilePhotos(
-                user.id,
-                filePath
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "Profile photo updated successfully.",
-
-                profile_photo:
-                    profilePhotoUrl,
-
-                user: {
-
-                    id:
-                        user.id,
-
-                    name:
-                        user.name || "",
-
-                    email:
-                        user.email || "",
-
-                    phone:
-                        user.phone || "",
-
-                    profile_photo:
-                        profilePhotoUrl
-                }
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Profile photo error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// GET PROFILE
-// ==================================================
-
-app.get(
-    "/profile",
-    async (req, res) => {
-
-        try {
-
-            const email =
-                req.query.email;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,name,email,phone,profile_photo"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get profile."
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "User not found."
-                });
-            }
-
-            const user =
-                users[0];
-
-            return res.json({
-                success: true,
-
-                user: {
-
-                    id:
-                        user.id || "",
-
-                    name:
-                        user.name || "",
-
-                    email:
-                        user.email || "",
-
-                    phone:
-                        user.phone || "",
-
-                    profile_photo:
-                        user.profile_photo || ""
-                }
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Profile error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// FORGOT PASSWORD
-// ==================================================
-
-app.post(
-    "/forgot-password",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email,
-                phone,
-                newPassword
-            } = req.body;
-
-            if (
-                !email ||
-                !phone ||
-                !newPassword
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email, phone number and new password are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanPhone =
-                phone
-                    .toString()
-                    .trim();
-
-            if (
-                !/^\d{10}$/.test(
-                    cleanPhone
-                )
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Please enter a valid 10-digit phone number."
-                });
-            }
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,email,phone"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "phone",
-                    cleanPhone
-                )
-                .limit(1);
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to change password."
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Email and phone number do not match."
-                });
-            }
-
-            const {
-                error:
-                    updateError
-            } = await supabase
-                .from("users")
-                .update({
-                    password:
-                        newPassword
-                })
-                .eq(
-                    "id",
-                    users[0].id
-                );
-
-            if (updateError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to change password."
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Password changed successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Forgot password error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// USERS
-// ==================================================
-
-app.get(
-    "/users",
-    async (req, res) => {
-
-        try {
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select(
-                    "name,email,phone,profile_photo"
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:
-                            false
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get users."
-                });
-            }
-
-            return res.json(
-                (users || []).map(
-                    user => ({
-
-                        Name:
-                            user.name || "",
-
-                        Email:
-                            user.email || "",
-
-                        Phone:
-                            user.phone || "",
-
-                        ProfilePhoto:
-                            user.profile_photo || ""
-                    })
-                )
-            );
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ATTENDANCE HELPER
-// ==================================================
-
-async function getAttendanceByEmail(
-    email
-) {
-
-    const cleanEmail =
-        email
-            .toString()
-            .trim()
-            .toLowerCase();
-
-    const {
-        data,
-        error
-    } = await supabase
-        .from("attendance")
-        .select("*")
-        .eq(
-            "email",
-            cleanEmail
-        )
-        .order(
-            "date",
-            {
-                ascending:
-                    false
-            }
-        );
+    const tomorrow =
+        `${tomorrowYear}-${tomorrowMonth}-${tomorrowDay}`;
 
     return {
-        data:
-            data || [],
-        error
+        today: indiaDate,
+        start: `${indiaDate}T00:00:00+05:30`,
+        end: `${tomorrow}T00:00:00+05:30`
     };
 }
 
@@ -1852,2715 +119,2227 @@ async function getAttendanceByEmail(
 // FORMAT ATTENDANCE
 // ==================================================
 
-function formatAttendance(
-    record
-) {
+function formatAttendance(record) {
+    if (!record) return null;
+
+    const dateSource =
+        record.entry_time ||
+        record.created_at ||
+        null;
+
+    let date = "";
+
+    if (dateSource) {
+        date = new Intl.DateTimeFormat("en-IN", {
+            timeZone: "Asia/Kolkata",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit"
+        }).format(new Date(dateSource));
+    }
 
     return {
-
-        ID:
-            record.id || "",
-
-        Name:
-            record.name || "",
-
-        Email:
-            record.email || "",
-
-        Date:
-            record.date || "",
-
-        EntryTime:
-            record.entry_time ||
-            record.entryTime ||
-            "",
-
-        ExitTime:
-            record.exit_time ||
-            record.exitTime ||
-            "",
-
-        Status:
-            record.status || ""
+        ID: record.id,
+        Name: record.name || "",
+        Email: record.email || "",
+        Date: date,
+        EntryTime: record.entry_time || null,
+        ExitTime: record.exit_time || null,
+        Status: record.status || ""
     };
 }
 
 // ==================================================
-// GET /attendance
+// FIND USER
 // ==================================================
 
-app.get(
-    "/attendance",
-    async (req, res) => {
+async function findUserByEmail(email) {
+    const cleanUserEmail = cleanEmail(email);
 
-        try {
+    if (!cleanUserEmail) {
+        return null;
+    }
 
-            const email =
-                req.query.email;
+    const { data, error } = await supabase
+        .from("users")
+        .select("id, name, email, phone")
+        .eq("email", cleanUserEmail)
+        .maybeSingle();
 
-            if (!email) {
+    if (error) {
+        throw error;
+    }
 
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
+    return data || null;
+}
 
-            const {
-                data,
-                error
-            } =
-                await getAttendanceByEmail(
-                    email
-                );
+// ==================================================
+// RESOLVE USER DETAILS
+// ==================================================
 
-            if (error) {
+async function resolveUserDetails(name, email) {
+    const cleanUserEmail = cleanEmail(email);
+    let cleanUserName = cleanName(name);
+    let userId = null;
 
-                console.log(
-                    "ATTENDANCE ERROR:",
-                    error
-                );
+    if (!cleanUserEmail) {
+        throw new Error("Email is required.");
+    }
 
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
+    const user = await findUserByEmail(cleanUserEmail);
 
-            return res.json({
-                success: true,
-                attendance:
-                    data,
-                data:
-                    data
-            });
+    if (user) {
+        userId = user.id;
 
-        } catch (error) {
-
-            console.log(
-                "Attendance error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while getting attendance."
-            });
+        if (!cleanUserName) {
+            cleanUserName = cleanName(user.name);
         }
     }
-);
 
-// ==================================================
-// GET /attendance/:email
-// ==================================================
-
-app.get(
-    "/attendance/:email",
-    async (req, res) => {
-
-        try {
-
-            const email =
-                decodeURIComponent(
-                    req.params.email
-                );
-
-            const {
-                data,
-                error
-            } =
-                await getAttendanceByEmail(
-                    email
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                attendance:
-                    data,
-                data:
-                    data
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
+    if (!cleanUserName) {
+        throw new Error("Name and email are required.");
     }
-);
-
-// ==================================================
-// USER ATTENDANCE ALIASES
-// ==================================================
-
-app.get(
-    "/user/attendance",
-    async (req, res) => {
-
-        try {
-
-            const email =
-                req.query.email ||
-                req.query.userEmail;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            const {
-                data,
-                error
-            } =
-                await getAttendanceByEmail(
-                    email
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                attendance:
-                    data,
-                data:
-                    data
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-app.get(
-    "/user-attendance",
-    async (req, res) => {
-
-        try {
-
-            const email =
-                req.query.email ||
-                req.query.userEmail;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            const {
-                data,
-                error
-            } =
-                await getAttendanceByEmail(
-                    email
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                attendance:
-                    data,
-                data:
-                    data
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-app.get(
-    "/my-attendance",
-    async (req, res) => {
-
-        try {
-
-            const email =
-                req.query.email ||
-                req.query.userEmail;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Email is required."
-                });
-            }
-
-            const {
-                data,
-                error
-            } =
-                await getAttendanceByEmail(
-                    email
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                attendance:
-                    data,
-                data:
-                    data
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// POST /attendance
-// ==================================================
-
-app.post(
-    "/attendance",
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                date,
-                status
-            } = req.body;
-
-            if (
-                !name ||
-                !email
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Name and email are required."
-                });
-            }
-
-            const cleanName =
-                name
-                    .toString()
-                    .trim();
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanDate =
-                date
-                    ? date
-                        .toString()
-                        .trim()
-                    : getTodayDate();
-
-            const cleanStatus =
-                status
-                    ? status
-                        .toString()
-                        .trim()
-                    : "Present";
-
-            const {
-                data: existing,
-                error: checkError
-            } = await supabase
-                .from("attendance")
-                .select("*")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "date",
-                    cleanDate
-                )
-                .limit(1);
-
-            if (checkError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check attendance.",
-                    error:
-                        checkError.message
-                });
-            }
-
-            if (
-                existing &&
-                existing.length > 0
-            ) {
-
-                return res.json({
-                    success: true,
-                    message:
-                        "Attendance already exists for this date.",
-                    attendance:
-                        existing[0]
-                });
-            }
-
-            const {
-                data: attendance,
-                error
-            } = await supabase
-                .from("attendance")
-                .insert({
-
-                    name:
-                        cleanName,
-
-                    email:
-                        cleanEmail,
-
-                    date:
-                        cleanDate,
-
-                    status:
-                        cleanStatus,
-
-                    entry_time:
-                        getCurrentTime(),
-
-                    exit_time:
-                        null
-                })
-                .select("*")
-                .single();
-
-            if (error) {
-
-                console.log(
-                    "ADD ATTENDANCE ERROR:",
-                    error
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to save attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.status(201).json({
-                success: true,
-                message:
-                    "Attendance saved successfully.",
-                attendance
-            });
-
-        } catch (error) {
-
-            console.log(
-                "POST attendance error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while saving attendance."
-            });
-        }
-    }
-);
-
-// ==================================================
-// POST /attendance/enter
-// ==================================================
-
-app.post(
-    "/attendance/enter",
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                date,
-                status
-            } = req.body;
-
-            if (
-                !name ||
-                !email
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Name and email are required."
-                });
-            }
-
-            const cleanName =
-                name
-                    .toString()
-                    .trim();
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanDate =
-                date
-                    ? date
-                        .toString()
-                        .trim()
-                    : getTodayDate();
-
-            const cleanStatus =
-                status
-                    ? status
-                        .toString()
-                        .trim()
-                    : "Present";
-
-            const {
-                data: existing,
-                error: checkError
-            } = await supabase
-                .from("attendance")
-                .select("*")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "date",
-                    cleanDate
-                )
-                .limit(1);
-
-            if (checkError) {
-
-                console.log(
-                    "Attendance enter check error:",
-                    checkError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check attendance.",
-                    error:
-                        checkError.message
-                });
-            }
-
-            if (
-                existing &&
-                existing.length > 0
-            ) {
-
-                return res.json({
-                    success: true,
-                    message:
-                        "Attendance already marked.",
-                    attendance:
-                        existing[0]
-                });
-            }
-
-            const {
-                data: attendance,
-                error: insertError
-            } = await supabase
-                .from("attendance")
-                .insert({
-
-                    name:
-                        cleanName,
-
-                    email:
-                        cleanEmail,
-
-                    date:
-                        cleanDate,
-
-                    status:
-                        cleanStatus,
-
-                    entry_time:
-                        getCurrentTime(),
-
-                    exit_time:
-                        null
-                })
-                .select("*")
-                .single();
-
-            if (insertError) {
-
-                console.log(
-                    "Attendance enter insert error:",
-                    insertError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to save attendance.",
-                    error:
-                        insertError.message
-                });
-            }
-
-            return res.status(201).json({
-                success: true,
-                message:
-                    "Attendance entered successfully.",
-                attendance
-            });
-
-        } catch (error) {
-
-            console.log(
-                "POST /attendance/enter error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while entering attendance."
-            });
-        }
-    }
-);
-
-// ==================================================
-// POST /attendance/exit
-// ==================================================
-
-app.post(
-    "/attendance/exit",
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                date
-            } = req.body;
-
-            if (
-                !name ||
-                !email
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Name and email are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const cleanDate =
-                date
-                    ? date
-                        .toString()
-                        .trim()
-                    : getTodayDate();
-
-            const {
-                data: records,
-                error: findError
-            } = await supabase
-                .from("attendance")
-                .select("*")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "date",
-                    cleanDate
-                )
-                .limit(1);
-
-            if (findError) {
-
-                console.log(
-                    "Attendance exit find error:",
-                    findError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find today's attendance.",
-                    error:
-                        findError.message
-                });
-            }
-
-            if (
-                !records ||
-                records.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Please enter the library first."
-                });
-            }
-
-            const attendance =
-                records[0];
-
-            if (
-                attendance.exit_time ||
-                attendance.exitTime
-            ) {
-
-                return res.json({
-                    success: true,
-                    message:
-                        "Library exit is already marked.",
-                    attendance
-                });
-            }
-
-            const {
-                data: updatedAttendance,
-                error: updateError
-            } = await supabase
-                .from("attendance")
-                .update({
-
-                    exit_time:
-                        getCurrentTime(),
-
-                    status:
-                        "Completed"
-                })
-                .eq(
-                    "id",
-                    attendance.id
-                )
-                .select("*")
-                .single();
-
-            if (updateError) {
-
-                console.log(
-                    "Attendance exit update error:",
-                    updateError
-                );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to save library exit.",
-                    error:
-                        updateError.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Library exit recorded successfully.",
-                attendance:
-                    updatedAttendance
-            });
-
-        } catch (error) {
-
-            console.log(
-                "POST /attendance/exit error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while recording exit."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN ATTENDANCE
-// ==================================================
-
-app.get(
-    "/admin/attendance",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabase
-                .from("attendance")
-                .select("*")
-                .order(
-                    "date",
-                    {
-                        ascending:
-                            false
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            // IMPORTANT:
-            // Admin dashboard expects an ARRAY directly.
-
-            return res.json(
-                (data || []).map(
-                    record =>
-                        formatAttendance(
-                            record
-                        )
-                )
-            );
-
-        } catch (error) {
-
-            console.log(
-                "Admin attendance error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN ATTENDANCE ALIAS
-// ==================================================
-
-app.get(
-    "/attendance/admin",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabase
-                .from("attendance")
-                .select("*")
-                .order(
-                    "date",
-                    {
-                        ascending:
-                            false
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json(
-                (data || []).map(
-                    record =>
-                        formatAttendance(
-                            record
-                        )
-                )
-            );
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN DELETE ATTENDANCE
-// ==================================================
-
-app.delete(
-    "/admin/attendance/:id",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const id =
-                Number(
-                    req.params.id
-                );
-
-            if (
-                !id ||
-                Number.isNaN(id)
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid attendance ID."
-                });
-            }
-
-            const {
-                error
-            } = await supabase
-                .from("attendance")
-                .delete()
-                .eq(
-                    "id",
-                    id
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete attendance.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Attendance deleted successfully."
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// RENT BOOK
-// ==================================================
-
-app.post(
-    "/rent",
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                book,
-                author,
-                bookId
-            } = req.body;
-
-            if (
-                !name ||
-                !email ||
-                !book ||
-                !author ||
-                !bookId
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Book and user information are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const id =
-                Number(bookId);
-
-            if (
-                !id ||
-                Number.isNaN(id)
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid book ID."
-                });
-            }
-
-            const {
-                data: books,
-                error: bookError
-            } = await supabase
-                .from("books")
-                .select("*")
-                .eq(
-                    "id",
-                    id
-                )
-                .limit(1);
-
-            if (bookError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find book.",
-                    error:
-                        bookError.message
-                });
-            }
-
-            if (
-                !books ||
-                books.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Book not found."
-                });
-            }
-
-            if (books[0].rented_by) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "This book is already rented."
-                });
-            }
-
-            const {
-                error:
-                    updateError
-            } = await supabase
-                .from("books")
-                .update({
-                    rented_by:
-                        name
-                            .toString()
-                            .trim()
-                })
-                .eq(
-                    "id",
-                    id
-                );
-
-            if (updateError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to rent book.",
-                    error:
-                        updateError.message
-                });
-            }
-
-            const {
-                error:
-                    transactionError
-            } = await supabase
-                .from("transactions")
-                .insert({
-
-                    name:
-                        name
-                            .toString()
-                            .trim(),
-
-                    email:
-                        cleanEmail,
-
-                    book_name:
-                        book,
-
-                    author:
-                        author,
-
-                    rent_date:
-                        getCurrentTime(),
-
-                    submit_date:
-                        null,
-
-                    status:
-                        "RENTED"
-                });
-
-            if (transactionError) {
-
-                await supabase
-                    .from("books")
-                    .update({
-                        rented_by:
-                            ""
-                    })
-                    .eq(
-                        "id",
-                        id
-                    );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Book rented but transaction could not be saved.",
-                    error:
-                        transactionError.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Book rented successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Rent error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// SUBMIT BOOK
-// ==================================================
-
-app.post(
-    "/submit",
-    async (req, res) => {
-
-        try {
-
-            const {
-                name,
-                email,
-                book,
-                author,
-                bookId
-            } = req.body;
-
-            if (
-                !name ||
-                !email ||
-                !book ||
-                !author ||
-                !bookId
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Book and user information are required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const id =
-                Number(bookId);
-
-            const {
-                data: books,
-                error: bookError
-            } = await supabase
-                .from("books")
-                .select("*")
-                .eq(
-                    "id",
-                    id
-                )
-                .limit(1);
-
-            if (bookError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find book.",
-                    error:
-                        bookError.message
-                });
-            }
-
-            if (
-                !books ||
-                books.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Book not found."
-                });
-            }
-
-            const currentBook =
-                books[0];
-
-            if (
-                !currentBook.rented_by
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "This book is already available."
-                });
-            }
-
-            if (
-                currentBook.rented_by !==
-                name
-            ) {
-
-                return res.status(403).json({
-                    success: false,
-                    message:
-                        "Only the person who rented this book can submit it."
-                });
-            }
-
-            const {
-                data: transactions,
-                error:
-                    transactionFindError
-            } = await supabase
-                .from("transactions")
-                .select("*")
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "book_name",
-                    book
-                )
-                .eq(
-                    "status",
-                    "RENTED"
-                )
-                .is(
-                    "submit_date",
-                    null
-                )
-                .order(
-                    "rent_date",
-                    {
-                        ascending:
-                            false
-                    }
-                )
-                .limit(1);
-
-            if (transactionFindError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find rental transaction.",
-                    error:
-                        transactionFindError.message
-                });
-            }
-
-            if (
-                !transactions ||
-                transactions.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Active rental transaction not found."
-                });
-            }
-
-            const transaction =
-                transactions[0];
-
-            const submitDate =
-                getCurrentTime();
-
-            const {
-                error:
-                    transactionUpdateError
-            } = await supabase
-                .from("transactions")
-                .update({
-
-                    submit_date:
-                        submitDate,
-
-                    status:
-                        "SUBMITTED"
-                })
-                .eq(
-                    "id",
-                    transaction.id
-                );
-
-            if (transactionUpdateError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to update transaction.",
-                    error:
-                        transactionUpdateError.message
-                });
-            }
-
-            const {
-                error:
-                    updateBookError
-            } = await supabase
-                .from("books")
-                .update({
-                    rented_by:
-                        ""
-                })
-                .eq(
-                    "id",
-                    id
-                );
-
-            if (updateBookError) {
-
-                await supabase
-                    .from("transactions")
-                    .update({
-
-                        submit_date:
-                            null,
-
-                        status:
-                            "RENTED"
-                    })
-                    .eq(
-                        "id",
-                        transaction.id
-                    );
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to make book available."
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Book submitted successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Submit error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// GET BOOKS
-// ==================================================
-
-function formatBook(
-    book
-) {
 
     return {
-
-        ID:
-            book.id,
-
-        Name:
-            book.name || "",
-
-        Author:
-            book.author || "",
-
-        Category:
-            book.category || "",
-
-        Year:
-            book.year || "",
-
-        Image:
-            book.image || "",
-
-        Description:
-            book.description || "",
-
-        Price:
-            Number(
-                book.price
-            ) || 0,
-
-        price:
-            Number(
-                book.price
-            ) || 0,
-
-        RentedBy:
-            book.rented_by || ""
+        cleanUserName,
+        cleanUserEmail,
+        userId
     };
 }
 
-app.get(
-    "/books",
-    async (req, res) => {
+// ==================================================
+// MARK LOGIN ATTENDANCE
+// ==================================================
 
-        try {
+async function markLoginAttendance(name, email, userId = null) {
+    const cleanUserEmail = cleanEmail(email);
+    let cleanUserName = cleanName(name);
+    let resolvedUserId = userId;
 
-            const {
-                data: books,
-                error
-            } = await supabase
-                .from("books")
-                .select("*")
-                .order(
-                    "id",
-                    {
-                        ascending:
-                            true
-                    }
-                );
+    if (!cleanUserEmail) {
+        throw new Error("Email is required.");
+    }
 
-            if (error) {
+    if (!cleanUserName || !resolvedUserId) {
+        const user = await findUserByEmail(cleanUserEmail);
 
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get books.",
-                    error:
-                        error.message
-                });
+        if (user) {
+            if (!cleanUserName) {
+                cleanUserName = cleanName(user.name);
             }
 
-            return res.json(
-                (books || []).map(
-                    formatBook
-                )
-            );
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
+            if (!resolvedUserId) {
+                resolvedUserId = user.id;
+            }
         }
     }
-);
 
-// ==================================================
-// ADMIN BOOKS
-// ==================================================
-
-app.get(
-    "/admin/books",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const {
-                data: books,
-                error
-            } = await supabase
-                .from("books")
-                .select("*")
-                .order(
-                    "id",
-                    {
-                        ascending:
-                            true
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get books.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json(
-                (books || []).map(
-                    formatBook
-                )
-            );
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
+    if (!cleanUserName) {
+        throw new Error("Name and email are required.");
     }
-);
 
-// ==================================================
-// ADMIN ADD BOOK
-// ==================================================
+    const { start, end } = getIndiaDateRange();
 
-app.post(
-    "/admin/books/add",
-    checkAdmin,
-    async (req, res) => {
+    // ----------------------------------------------
+    // CHECK TODAY'S ATTENDANCE
+    // ----------------------------------------------
 
-        try {
+    const { data: existing, error: existingError } =
+        await supabase
+            .from("attendance")
+            .select("*")
+            .eq("email", cleanUserEmail)
+            .gte("entry_time", start)
+            .lt("entry_time", end)
+            .order("entry_time", {
+                ascending: false
+            })
+            .limit(1);
 
-            const {
-                name,
-                author,
-                category,
-                year,
-                image,
-                description,
-                price
-            } = req.body;
-
-            if (
-                !name ||
-                !author ||
-                !category ||
-                !year
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Book name, author, category and year are required."
-                });
-            }
-
-            const {
-                data: book,
-                error
-            } = await supabase
-                .from("books")
-                .insert({
-
-                    name:
-                        name
-                            .toString()
-                            .trim(),
-
-                    author:
-                        author
-                            .toString()
-                            .trim(),
-
-                    category:
-                        category
-                            .toString()
-                            .trim(),
-
-                    year:
-                        Number(year),
-
-                    image:
-                        image || "",
-
-                    description:
-                        description || "",
-
-                    price:
-                        Number(price) || 0,
-
-                    rented_by:
-                        ""
-                })
-                .select("*")
-                .single();
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to add book.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Book added successfully.",
-                book:
-                    formatBook(book)
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Admin add book error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
+    if (existingError) {
+        throw existingError;
     }
-);
 
-// ==================================================
-// ADMIN UPDATE BOOK
-// ==================================================
-
-app.put(
-    "/admin/books/update/:id",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const id =
-                Number(
-                    req.params.id
-                );
-
-            if (
-                !id ||
-                Number.isNaN(id)
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid book ID."
-                });
-            }
-
-            const {
-                name,
-                author,
-                category,
-                year,
-                image,
-                description,
-                price
-            } = req.body;
-
-            const updateData = {};
-
-            if (
-                name !== undefined
-            ) {
-                updateData.name =
-                    name;
-            }
-
-            if (
-                author !== undefined
-            ) {
-                updateData.author =
-                    author;
-            }
-
-            if (
-                category !== undefined
-            ) {
-                updateData.category =
-                    category;
-            }
-
-            if (
-                year !== undefined
-            ) {
-                updateData.year =
-                    Number(year);
-            }
-
-            if (
-                image !== undefined
-            ) {
-                updateData.image =
-                    image;
-            }
-
-            if (
-                description !== undefined
-            ) {
-                updateData.description =
-                    description;
-            }
-
-            if (
-                price !== undefined
-            ) {
-                updateData.price =
-                    Number(price) || 0;
-            }
-
-            if (
-                Object.keys(
-                    updateData
-                ).length === 0
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "No book data provided."
-                });
-            }
-
-            const {
-                data: book,
-                error
-            } = await supabase
-                .from("books")
-                .update(
-                    updateData
-                )
-                .eq(
-                    "id",
-                    id
-                )
-                .select("*")
-                .single();
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to update book.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Book updated successfully.",
-                book:
-                    formatBook(book)
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN DELETE BOOK
-// ==================================================
-
-app.delete(
-    "/admin/books/delete/:id",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const id =
-                Number(
-                    req.params.id
-                );
-
-            if (
-                !id ||
-                Number.isNaN(id)
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "Invalid book ID."
-                });
-            }
-
-            const {
-                data: books,
-                error: findError
-            } = await supabase
-                .from("books")
-                .select(
-                    "id,rented_by"
-                )
-                .eq(
-                    "id",
-                    id
-                )
-                .limit(1);
-
-            if (findError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find book.",
-                    error:
-                        findError.message
-                });
-            }
-
-            if (
-                !books ||
-                books.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Book not found."
-                });
-            }
-
-            if (
-                books[0].rented_by
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "This book is currently issued. Submit the book before deleting it."
-                });
-            }
-
-            const {
-                error
-            } = await supabase
-                .from("books")
-                .delete()
-                .eq(
-                    "id",
-                    id
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete book.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Book deleted successfully."
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN USERS
-// ==================================================
-
-app.get(
-    "/admin/users",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const {
-                data: users,
-                error
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,name,email,phone,profile_photo"
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:
-                            false
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get users.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json(
-                (users || []).map(
-                    user => ({
-
-                        ID:
-                            user.id || "",
-
-                        Name:
-                            user.name || "",
-
-                        Email:
-                            user.email || "",
-
-                        Phone:
-                            user.phone || "",
-
-                        ProfilePhoto:
-                            user.profile_photo || "",
-
-                        profile_photo:
-                            user.profile_photo || ""
-                    })
-                )
-            );
-
-        } catch (error) {
-
-            console.log(
-                "Admin users error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN DELETE USER
-// ==================================================
-
-app.delete(
-    "/admin/users/:email",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const email =
-                decodeURIComponent(
-                    req.params.email
-                )
-                    .trim()
-                    .toLowerCase();
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "User email is required."
-                });
-            }
-
-            const {
-                data: users,
-                error: findError
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,name,email,profile_photo"
-                )
-                .eq(
-                    "email",
-                    email
-                )
-                .limit(1);
-
-            if (findError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find user.",
-                    error:
-                        findError.message
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "User not found."
-                });
-            }
-
-            const user =
-                users[0];
-
-            // Check active rentals first
-            const {
-                data: activeTransactions,
-                error:
-                    transactionCheckError
-            } = await supabase
-                .from("transactions")
-                .select(
-                    "id,book_name,status,submit_date"
-                )
-                .eq(
-                    "email",
-                    email
-                )
-                .eq(
-                    "status",
-                    "RENTED"
-                )
-                .is(
-                    "submit_date",
-                    null
-                );
-
-            if (transactionCheckError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check user's active rentals.",
-                    error:
-                        transactionCheckError.message
-                });
-            }
-
-            if (
-                activeTransactions &&
-                activeTransactions.length > 0
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "This user cannot be deleted because they currently have a rented book. Please submit the book first."
-                });
-            }
-
-            // Delete attendance
-            const {
-                error:
-                    attendanceDeleteError
-            } = await supabase
-                .from("attendance")
-                .delete()
-                .eq(
-                    "email",
-                    email
-                );
-
-            if (
-                attendanceDeleteError
-            ) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete user's attendance.",
-                    error:
-                        attendanceDeleteError.message
-                });
-            }
-
-            // Delete transaction history
-            const {
-                error:
-                    transactionDeleteError
-            } = await supabase
-                .from("transactions")
-                .delete()
-                .eq(
-                    "email",
-                    email
-                );
-
-            if (
-                transactionDeleteError
-            ) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete user's transaction history.",
-                    error:
-                        transactionDeleteError.message
-                });
-            }
-
-            // Delete user
-            const {
-                error:
-                    userDeleteError
-            } = await supabase
-                .from("users")
-                .delete()
-                .eq(
-                    "id",
-                    user.id
-                );
-
-            if (userDeleteError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete user.",
-                    error:
-                        userDeleteError.message
-                });
-            }
-
-            // Delete profile photo
-            await deleteAllProfilePhotos(
-                user.id
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "User deleted successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "Delete user error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while deleting user."
-            });
-        }
-    }
-);
-
-// ==================================================
-// DELETE USER ACCOUNT
-// ==================================================
-
-app.delete(
-    "/account",
-    async (req, res) => {
-
-        try {
-
-            const {
-                email
-            } = req.body;
-
-            if (!email) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "User email is required."
-                });
-            }
-
-            const cleanEmail =
-                email
-                    .toString()
-                    .trim()
-                    .toLowerCase();
-
-            const {
-                data: users,
-                error: findError
-            } = await supabase
-                .from("users")
-                .select(
-                    "id,name,email,profile_photo"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .limit(1);
-
-            if (findError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to find account.",
-                    error:
-                        findError.message
-                });
-            }
-
-            if (
-                !users ||
-                users.length === 0
-            ) {
-
-                return res.status(404).json({
-                    success: false,
-                    message:
-                        "Account not found."
-                });
-            }
-
-            const user =
-                users[0];
-
-            // Active rental check
-            const {
-                data: activeTransactions,
-                error:
-                    transactionCheckError
-            } = await supabase
-                .from("transactions")
-                .select(
-                    "id,book_name,status,submit_date"
-                )
-                .eq(
-                    "email",
-                    cleanEmail
-                )
-                .eq(
-                    "status",
-                    "RENTED"
-                )
-                .is(
-                    "submit_date",
-                    null
-                );
-
-            if (transactionCheckError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to check active rentals.",
-                    error:
-                        transactionCheckError.message
-                });
-            }
-
-            if (
-                activeTransactions &&
-                activeTransactions.length > 0
-            ) {
-
-                return res.status(400).json({
-                    success: false,
-                    message:
-                        "You cannot delete your account while you have a rented book. Please submit the book first."
-                });
-            }
-
-            // Delete attendance
-            const {
-                error:
-                    attendanceDeleteError
-            } = await supabase
-                .from("attendance")
-                .delete()
-                .eq(
-                    "email",
-                    cleanEmail
-                );
-
-            if (
-                attendanceDeleteError
-            ) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete attendance records.",
-                    error:
-                        attendanceDeleteError.message
-                });
-            }
-
-            // Delete transactions
-            const {
-                error:
-                    transactionDeleteError
-            } = await supabase
-                .from("transactions")
-                .delete()
-                .eq(
-                    "email",
-                    cleanEmail
-                );
-
-            if (
-                transactionDeleteError
-            ) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete transaction history.",
-                    error:
-                        transactionDeleteError.message
-                });
-            }
-
-            // Delete user
-            const {
-                error:
-                    userDeleteError
-            } = await supabase
-                .from("users")
-                .delete()
-                .eq(
-                    "id",
-                    user.id
-                );
-
-            if (userDeleteError) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to delete account.",
-                    error:
-                        userDeleteError.message
-                });
-            }
-
-            // Delete profile photo
-            await deleteAllProfilePhotos(
-                user.id
-            );
-
-            return res.json({
-                success: true,
-                message:
-                    "Account deleted successfully."
-            });
-
-        } catch (error) {
-
-            console.log(
-                "DELETE /account ERROR:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error while deleting account."
-            });
-        }
-    }
-);
-
-// ==================================================
-// ADMIN TRANSACTIONS
-// ==================================================
-
-app.get(
-    "/admin/transactions",
-    checkAdmin,
-    async (req, res) => {
-
-        try {
-
-            const {
-                data: transactions,
-                error
-            } = await supabase
-                .from("transactions")
-                .select(`
-                    id,
-                    name,
-                    email,
-                    book_name,
-                    author,
-                    rent_date,
-                    submit_date,
-                    status
-                `)
-                .order(
-                    "id",
-                    {
-                        ascending:
-                            false
-                    }
-                );
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    message:
-                        "Unable to get transactions.",
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json(
-                (transactions || []).map(
-                    transaction => ({
-
-                        ID:
-                            transaction.id,
-
-                        User:
-                            transaction.name || "",
-
-                        Email:
-                            transaction.email || "",
-
-                        Book:
-                            transaction.book_name || "",
-
-                        Author:
-                            transaction.author || "",
-
-                        Date:
-                            transaction.rent_date || "",
-
-                        RentDate:
-                            transaction.rent_date || "",
-
-                        SubmitDate:
-                            transaction.submit_date || "",
-
-                        Action:
-                            transaction.status || "",
-
-                        Status:
-                            transaction.status || ""
-                    })
-                )
-            );
-
-        } catch (error) {
-
-            console.log(
-                "Admin transactions error:",
-                error
-            );
-
-            return res.status(500).json({
-                success: false,
-                message:
-                    "Server error."
-            });
-        }
-    }
-);
-
-// ==================================================
-// SUPABASE TEST
-// ==================================================
-
-app.get(
-    "/test-supabase",
-    async (req, res) => {
-
-        try {
-
-            const {
-                data,
-                error
-            } = await supabase
-                .from("users")
-                .select("*")
-                .limit(1);
-
-            if (error) {
-
-                return res.status(500).json({
-                    success: false,
-                    error:
-                        error.message
-                });
-            }
-
-            return res.json({
-                success: true,
-                message:
-                    "Supabase connected successfully!",
-                data
-            });
-
-        } catch (error) {
-
-            return res.status(500).json({
-                success: false,
-                error:
-                    error.message
-            });
-        }
-    }
-);
-
-// ==================================================
-// HEALTH CHECK
-// ==================================================
-
-app.get(
-    "/health",
-    (req, res) => {
-
-        return res.json({
+    if (existing && existing.length > 0) {
+        return {
             success: true,
-            message:
-                "Atal Library backend is running successfully."
-        });
+            alreadyMarked: true,
+            attendance: formatAttendance(existing[0])
+        };
     }
-);
+
+    // ----------------------------------------------
+    // INSERT ATTENDANCE
+    // ----------------------------------------------
+
+    const { data, error } = await supabase
+        .from("attendance")
+        .insert([
+            {
+                user_id: resolvedUserId
+                    ? String(resolvedUserId)
+                    : cleanUserEmail,
+
+                name: cleanUserName,
+                email: cleanUserEmail,
+                entry_time: new Date().toISOString(),
+                exit_time: null,
+                status: "Present"
+            }
+        ])
+        .select()
+        .single();
+
+    if (error) {
+        throw error;
+    }
+
+    return {
+        success: true,
+        alreadyMarked: false,
+        attendance: formatAttendance(data)
+    };
+}
+
+// ==================================================
+// GET USER ATTENDANCE
+// ==================================================
+
+async function getAttendanceByEmail(email) {
+    const cleanUserEmail = cleanEmail(email);
+
+    if (!cleanUserEmail) {
+        throw new Error("Email is required.");
+    }
+
+    const { data, error } = await supabase
+        .from("attendance")
+        .select("*")
+        .eq("email", cleanUserEmail)
+        .order("entry_time", {
+            ascending: false
+        });
+
+    if (error) {
+        throw error;
+    }
+
+    return (data || []).map(formatAttendance);
+}
+
+// ==================================================
+// CHECK ACTIVE RENTALS
+// ==================================================
+
+async function getActiveRentalInfo(email, userName = "") {
+    const cleanUserEmail = cleanEmail(email);
+    const currentUserName = normalizeName(userName);
+
+    const { data: transactions, error } = await supabase
+        .from("transactions")
+        .select(
+            "id, name, book_name, rent_date, submit_date, status, email, author"
+        )
+        .eq("email", cleanUserEmail)
+        .eq("status", "RENTED")
+        .is("submit_date", null)
+        .order("rent_date", {
+            ascending: false
+        });
+
+    if (error) {
+        throw error;
+    }
+
+    const actualActive = [];
+    const staleTransactions = [];
+
+    for (const transaction of transactions || []) {
+
+        // ------------------------------------------
+        // IMPORTANT:
+        // books table uses "name", NOT "title"
+        // ------------------------------------------
+
+        const { data: book, error: bookError } =
+            await supabase
+                .from("books")
+                .select("id, name, author, rented_by")
+                .eq("name", transaction.book_name)
+                .maybeSingle();
+
+        if (bookError) {
+            throw bookError;
+        }
+
+        const renterName = cleanRentedBy(
+            book?.rented_by
+        );
+
+        const normalizedRenter =
+            normalizeName(renterName);
+
+        const transactionName =
+            normalizeName(transaction.name);
+
+        const belongsToUser =
+            normalizedRenter &&
+            (
+                normalizedRenter === currentUserName ||
+                normalizedRenter === transactionName
+            );
+
+        if (book && belongsToUser) {
+            actualActive.push({
+                transaction,
+                book
+            });
+        } else {
+            // Transaction says RENTED but the book is
+            // currently not actually marked as rented.
+            staleTransactions.push(transaction);
+        }
+    }
+
+    return {
+        actualActive,
+        staleTransactions
+    };
+}
+
+// ==================================================
+// HEALTH
+// ==================================================
+
+app.get("/health", (req, res) => {
+    res.json({
+        success: true,
+        message: "Atal Library backend is running successfully."
+    });
+});
 
 // ==================================================
 // ROOT
 // ==================================================
 
-app.get(
-    "/",
-    (req, res) => {
-
-        return res.status(200).send(
-            "Atal Library backend is running successfully."
-        );
-    }
-);
+app.get("/", (req, res) => {
+    res.json({
+        success: true,
+        message: "Atal Library API is running."
+    });
+});
 
 // ==================================================
-// UNKNOWN API ROUTE
+// REGISTER
 // ==================================================
 
-app.use(
-    (req, res) => {
+app.post("/register", async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            phone,
+            password
+        } = req.body;
 
-        console.log(
-            "UNKNOWN API ROUTE:",
-            req.method,
-            req.originalUrl
-        );
+        const cleanUserName = cleanName(name);
+        const cleanUserEmail = cleanEmail(email);
+        const cleanPhone = cleanValue(phone);
+        const cleanPassword = String(password || "");
 
-        return res.status(404).json({
+        if (
+            !cleanUserName ||
+            !cleanUserEmail ||
+            !cleanPassword
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, email and password are required."
+            });
+        }
+
+        // ------------------------------------------
+        // CHECK DUPLICATE EMAIL
+        // ------------------------------------------
+
+        const { data: existingUser, error: existingError } =
+            await supabase
+                .from("users")
+                .select("id")
+                .eq("email", cleanUserEmail)
+                .maybeSingle();
+
+        if (existingError) {
+            throw existingError;
+        }
+
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message: "You have already registered please login."
+            });
+        }
+
+        // ------------------------------------------
+        // INSERT USER
+        // ------------------------------------------
+
+        const { data, error } = await supabase
+            .from("users")
+            .insert([
+                {
+                    name: cleanUserName,
+                    email: cleanUserEmail,
+                    phone: cleanPhone,
+                    password: cleanPassword
+                }
+            ])
+            .select("id, name, email, phone")
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            message: "Registration successful.",
+            user: data
+        });
+
+    } catch (error) {
+        console.error("REGISTER ERROR:", error);
+
+        return res.status(500).json({
             success: false,
-            message:
-                `API route not found: ${req.method} ${req.originalUrl}`
+            message: "Unable to register.",
+            error: error.message
         });
     }
-);
+});
+
+// ==================================================
+// LOGIN
+// ==================================================
+
+app.post("/login", async (req, res) => {
+    try {
+        const {
+            email,
+            password
+        } = req.body;
+
+        const cleanUserEmail = cleanEmail(email);
+        const cleanPassword = String(password || "");
+
+        if (!cleanUserEmail || !cleanPassword) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required."
+            });
+        }
+
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("*")
+            .eq("email", cleanUserEmail)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        if (String(user.password) !== cleanPassword) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password."
+            });
+        }
+
+        // ------------------------------------------
+        // MARK ATTENDANCE
+        // ------------------------------------------
+
+        try {
+            await markLoginAttendance(
+                user.name,
+                user.email,
+                user.id
+            );
+        } catch (attendanceError) {
+            console.error(
+                "LOGIN ATTENDANCE ERROR:",
+                attendanceError
+            );
+        }
+
+        return res.json({
+            success: true,
+            message: "Login successful.",
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone
+            }
+        });
+
+    } catch (error) {
+        console.error("LOGIN ERROR:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to login.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ATTENDANCE - GENERIC
+// ==================================================
+
+app.post("/attendance", async (req, res) => {
+    try {
+        const {
+            name,
+            email
+        } = req.body;
+
+        const {
+            cleanUserName,
+            cleanUserEmail,
+            userId
+        } = await resolveUserDetails(
+            name,
+            email
+        );
+
+        const result = await markLoginAttendance(
+            cleanUserName,
+            cleanUserEmail,
+            userId
+        );
+
+        return res.json(result);
+
+    } catch (error) {
+        console.error(
+            "ATTENDANCE ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to mark attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ATTENDANCE ENTER
+// ==================================================
+
+app.post("/attendance/enter", async (req, res) => {
+    try {
+        const {
+            name,
+            email
+        } = req.body;
+
+        // ------------------------------------------
+        // EMAIL REQUIRED
+        // NAME CAN BE FOUND FROM USERS TABLE
+        // ------------------------------------------
+
+        const cleanUserEmail = cleanEmail(email);
+        let cleanUserName = cleanName(name);
+        let userId = null;
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        const user = await findUserByEmail(
+            cleanUserEmail
+        );
+
+        if (user) {
+            userId = user.id;
+
+            if (!cleanUserName) {
+                cleanUserName = cleanName(user.name);
+            }
+        }
+
+        if (!cleanUserName) {
+            return res.status(400).json({
+                success: false,
+                message: "Name and email are required."
+            });
+        }
+
+        const { start, end } =
+            getIndiaDateRange();
+
+        // ------------------------------------------
+        // CHECK TODAY
+        // ------------------------------------------
+
+        const { data: existing, error: existingError } =
+            await supabase
+                .from("attendance")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .gte("entry_time", start)
+                .lt("entry_time", end)
+                .order("entry_time", {
+                    ascending: false
+                })
+                .limit(1);
+
+        if (existingError) {
+            throw existingError;
+        }
+
+        if (existing && existing.length > 0) {
+            return res.json({
+                success: true,
+                alreadyMarked: true,
+                message: "Today's attendance is already marked.",
+                attendance: formatAttendance(
+                    existing[0]
+                )
+            });
+        }
+
+        // ------------------------------------------
+        // INSERT
+        // ------------------------------------------
+
+        const { data, error } = await supabase
+            .from("attendance")
+            .insert([
+                {
+                    user_id: userId
+                        ? String(userId)
+                        : cleanUserEmail,
+
+                    name: cleanUserName,
+                    email: cleanUserEmail,
+                    entry_time: new Date().toISOString(),
+                    exit_time: null,
+                    status: "Present"
+                }
+            ])
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            message: "Attendance marked successfully.",
+            attendance: formatAttendance(data)
+        });
+
+    } catch (error) {
+        console.error(
+            "ATTENDANCE ENTER ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to mark attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ATTENDANCE EXIT
+// ==================================================
+
+app.post("/attendance/exit", async (req, res) => {
+    try {
+        const {
+            email
+        } = req.body;
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        const { start, end } =
+            getIndiaDateRange();
+
+        // ------------------------------------------
+        // FIND TODAY'S ATTENDANCE
+        // ------------------------------------------
+
+        const { data: records, error } =
+            await supabase
+                .from("attendance")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .gte("entry_time", start)
+                .lt("entry_time", end)
+                .order("entry_time", {
+                    ascending: false
+                })
+                .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        if (!records || records.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Today's attendance not found."
+            });
+        }
+
+        const record = records[0];
+
+        if (record.exit_time) {
+            return res.json({
+                success: true,
+                message: "Exit attendance is already marked.",
+                attendance: formatAttendance(record)
+            });
+        }
+
+        // ------------------------------------------
+        // UPDATE EXIT
+        // ------------------------------------------
+
+        const { data: updated, error: updateError } =
+            await supabase
+                .from("attendance")
+                .update({
+                    exit_time: new Date().toISOString(),
+                    status: "Completed"
+                })
+                .eq("id", record.id)
+                .select()
+                .single();
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        return res.json({
+            success: true,
+            message: "Exit attendance marked successfully.",
+            attendance: formatAttendance(updated)
+        });
+
+    } catch (error) {
+        console.error(
+            "ATTENDANCE EXIT ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to mark exit attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ATTENDANCE STATUS
+// ==================================================
+// IMPORTANT:
+// This route DOES NOT use attendance.date.
+// It uses entry_time because the attendance table
+// does not have a "date" column.
+// ==================================================
+
+app.get("/attendance/status", async (req, res) => {
+    try {
+        const cleanUserEmail =
+            cleanEmail(req.query.email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        const { start, end } =
+            getIndiaDateRange();
+
+        const { data: records, error } =
+            await supabase
+                .from("attendance")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .gte("entry_time", start)
+                .lt("entry_time", end)
+                .order("entry_time", {
+                    ascending: false
+                })
+                .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        if (!records || records.length === 0) {
+            return res.json({
+                success: true,
+                marked: false,
+                attendance: null
+            });
+        }
+
+        return res.json({
+            success: true,
+            marked: true,
+            attendance: formatAttendance(
+                records[0]
+            )
+        });
+
+    } catch (error) {
+        console.error(
+            "ATTENDANCE STATUS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// GET ATTENDANCE BY EMAIL
+// ==================================================
+
+app.get("/attendance/:email", async (req, res) => {
+    try {
+        const cleanUserEmail =
+            cleanEmail(req.params.email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        const attendance =
+            await getAttendanceByEmail(
+                cleanUserEmail
+            );
+
+        return res.json({
+            success: true,
+            attendance
+        });
+
+    } catch (error) {
+        console.error(
+            "GET ATTENDANCE ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADMIN ATTENDANCE
+// ==================================================
+
+app.get("/admin/attendance", async (req, res) => {
+    try {
+        const { data, error } =
+            await supabase
+                .from("attendance")
+                .select("*")
+                .order("entry_time", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            attendance: (data || []).map(
+                formatAttendance
+            )
+        });
+
+    } catch (error) {
+        console.error(
+            "ADMIN ATTENDANCE ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADMIN ATTENDANCE ALIAS
+// ==================================================
+
+app.get("/attendance/admin", async (req, res) => {
+    try {
+        const { data, error } =
+            await supabase
+                .from("attendance")
+                .select("*")
+                .order("entry_time", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            attendance: (data || []).map(
+                formatAttendance
+            )
+        });
+
+    } catch (error) {
+        console.error(
+            "ATTENDANCE ADMIN ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get attendance.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// BOOKS - GET ALL
+// ==================================================
+
+app.get("/books", async (req, res) => {
+    try {
+        const { data, error } =
+            await supabase
+                .from("books")
+                .select("*")
+                .order("id", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            books: data || []
+        });
+
+    } catch (error) {
+        console.error(
+            "GET BOOKS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get books.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADD BOOK
+// ==================================================
+
+app.post("/books", async (req, res) => {
+    try {
+        const {
+            name,
+            author,
+            category,
+            year,
+            image,
+            description,
+            price,
+            created_by
+        } = req.body;
+
+        const cleanBookName =
+            cleanValue(name);
+
+        if (!cleanBookName) {
+            return res.status(400).json({
+                success: false,
+                message: "Book name is required."
+            });
+        }
+
+        const { data, error } =
+            await supabase
+                .from("books")
+                .insert([
+                    {
+                        name: cleanBookName,
+                        author: cleanValue(author),
+                        category: cleanValue(category),
+                        year: year
+                            ? Number(year)
+                            : null,
+                        image: cleanValue(image),
+                        description:
+                            cleanValue(description),
+                        rented_by: null,
+                        created_by:
+                            created_by
+                                ? created_by
+                                : new Date().toISOString(),
+                        price:
+                            price !== undefined &&
+                            price !== ""
+                                ? Number(price)
+                                : 0
+                    }
+                ])
+                .select()
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            message: "Book added successfully.",
+            book: data
+        });
+
+    } catch (error) {
+        console.error(
+            "ADD BOOK ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to add book.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// DELETE BOOK
+// ==================================================
+
+app.delete("/books/:id", async (req, res) => {
+    try {
+        const bookId = req.params.id;
+
+        const { data: book, error: bookError } =
+            await supabase
+                .from("books")
+                .select("*")
+                .eq("id", bookId)
+                .maybeSingle();
+
+        if (bookError) {
+            throw bookError;
+        }
+
+        if (!book) {
+            return res.status(404).json({
+                success: false,
+                message: "Book not found."
+            });
+        }
+
+        if (cleanRentedBy(book.rented_by)) {
+            return res.status(400).json({
+                success: false,
+                message: "You cannot delete a rented book."
+            });
+        }
+
+        const { error } =
+            await supabase
+                .from("books")
+                .delete()
+                .eq("id", bookId);
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            message: "Book deleted successfully."
+        });
+
+    } catch (error) {
+        console.error(
+            "DELETE BOOK ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to delete book.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// RENT BOOK
+// ==================================================
+
+app.post("/rent", async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            book_name,
+            author
+        } = req.body;
+
+        const cleanUserName =
+            cleanName(name);
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        const cleanBookName =
+            cleanValue(book_name);
+
+        const cleanAuthor =
+            cleanValue(author);
+
+        if (
+            !cleanUserName ||
+            !cleanUserEmail ||
+            !cleanBookName
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Name, email and book name are required."
+            });
+        }
+
+        // ------------------------------------------
+        // FIND BOOK
+        // IMPORTANT: books uses "name"
+        // ------------------------------------------
+
+        const { data: book, error: bookError } =
+            await supabase
+                .from("books")
+                .select("*")
+                .eq("name", cleanBookName)
+                .maybeSingle();
+
+        if (bookError) {
+            throw bookError;
+        }
+
+        if (!book) {
+            return res.status(404).json({
+                success: false,
+                message: "Book not found."
+            });
+        }
+
+        // ------------------------------------------
+        // ACTUAL BOOK AVAILABILITY
+        // ------------------------------------------
+
+        if (cleanRentedBy(book.rented_by)) {
+            return res.status(400).json({
+                success: false,
+                message: "This book is already rented."
+            });
+        }
+
+        // ------------------------------------------
+        // CHECK USER'S EXISTING ACTIVE TRANSACTION
+        // ------------------------------------------
+
+        const { data: existingRental, error: rentalError } =
+            await supabase
+                .from("transactions")
+                .select("id, book_name, status, submit_date")
+                .eq("email", cleanUserEmail)
+                .eq("book_name", cleanBookName)
+                .eq("status", "RENTED")
+                .is("submit_date", null)
+                .limit(1);
+
+        if (rentalError) {
+            throw rentalError;
+        }
+
+        if (
+            existingRental &&
+            existingRental.length > 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "You have already rented this book."
+            });
+        }
+
+        // ------------------------------------------
+        // INSERT TRANSACTION
+        // ------------------------------------------
+
+        const { data: transaction, error: transactionError } =
+            await supabase
+                .from("transactions")
+                .insert([
+                    {
+                        name: cleanUserName,
+                        book_name: cleanBookName,
+                        rent_date:
+                            new Date().toISOString(),
+                        submit_date: null,
+                        status: "RENTED",
+                        email: cleanUserEmail,
+                        author:
+                            cleanAuthor ||
+                            cleanValue(book.author)
+                    }
+                ])
+                .select()
+                .single();
+
+        if (transactionError) {
+            throw transactionError;
+        }
+
+        // ------------------------------------------
+        // UPDATE BOOK
+        // ------------------------------------------
+
+        const { error: updateBookError } =
+            await supabase
+                .from("books")
+                .update({
+                    rented_by: cleanUserName
+                })
+                .eq("id", book.id);
+
+        if (updateBookError) {
+            // Rollback transaction if book update fails
+            await supabase
+                .from("transactions")
+                .delete()
+                .eq("id", transaction.id);
+
+            throw updateBookError;
+        }
+
+        return res.json({
+            success: true,
+            message: "Book rented successfully.",
+            transaction
+        });
+
+    } catch (error) {
+        console.error(
+            "RENT ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to rent book.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// MY RENTALS
+// ==================================================
+
+app.get("/rentals", async (req, res) => {
+    try {
+        const cleanUserEmail =
+            cleanEmail(req.query.email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        // ------------------------------------------
+        // ONLY ACTIVE RENTALS
+        // ------------------------------------------
+
+        const { data, error } =
+            await supabase
+                .from("transactions")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .eq("status", "RENTED")
+                .is("submit_date", null)
+                .order("rent_date", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            rentals: data || []
+        });
+
+    } catch (error) {
+        console.error(
+            "MY RENTALS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get rentals.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// MY RENTALS ALIAS
+// ==================================================
+
+app.get("/my-rentals", async (req, res) => {
+    try {
+        const cleanUserEmail =
+            cleanEmail(req.query.email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        const { data, error } =
+            await supabase
+                .from("transactions")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .eq("status", "RENTED")
+                .is("submit_date", null)
+                .order("rent_date", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            rentals: data || []
+        });
+
+    } catch (error) {
+        console.error(
+            "MY RENTALS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get rentals.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// SUBMIT / RETURN BOOK
+// ==================================================
+
+app.post("/submit", async (req, res) => {
+    try {
+        const {
+            email,
+            book_name
+        } = req.body;
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        const cleanBookName =
+            cleanValue(book_name);
+
+        if (
+            !cleanUserEmail ||
+            !cleanBookName
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and book name are required."
+            });
+        }
+
+        // ------------------------------------------
+        // FIND ACTIVE TRANSACTION
+        // ------------------------------------------
+
+        const { data: transactions, error } =
+            await supabase
+                .from("transactions")
+                .select("*")
+                .eq("email", cleanUserEmail)
+                .eq("book_name", cleanBookName)
+                .eq("status", "RENTED")
+                .is("submit_date", null)
+                .order("rent_date", {
+                    ascending: false
+                })
+                .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        if (
+            !transactions ||
+            transactions.length === 0
+        ) {
+            return res.status(404).json({
+                success: false,
+                message: "No active rental found for this book."
+            });
+        }
+
+        const transaction = transactions[0];
+
+        // ------------------------------------------
+        // SUBMIT TRANSACTION
+        // ------------------------------------------
+
+        const submitDate =
+            new Date().toISOString();
+
+        const { data: updatedTransaction, error: updateError } =
+            await supabase
+                .from("transactions")
+                .update({
+                    status: "SUBMITTED",
+                    submit_date: submitDate
+                })
+                .eq("id", transaction.id)
+                .select()
+                .single();
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // ------------------------------------------
+        // FIND BOOK
+        // IMPORTANT: books uses "name"
+        // ------------------------------------------
+
+        const { data: book, error: bookError } =
+            await supabase
+                .from("books")
+                .select("id, name, rented_by")
+                .eq("name", cleanBookName)
+                .maybeSingle();
+
+        if (bookError) {
+            throw bookError;
+        }
+
+        if (book) {
+            const currentRenter =
+                normalizeName(
+                    cleanRentedBy(book.rented_by)
+                );
+
+            const transactionRenter =
+                normalizeName(
+                    transaction.name
+                );
+
+            // Only clear if this transaction's
+            // renter is actually the current renter.
+            if (
+                !currentRenter ||
+                currentRenter === transactionRenter
+            ) {
+                const { error: clearError } =
+                    await supabase
+                        .from("books")
+                        .update({
+                            rented_by: null
+                        })
+                        .eq("id", book.id);
+
+                if (clearError) {
+                    throw clearError;
+                }
+            }
+        }
+
+        return res.json({
+            success: true,
+            message: "Book submitted successfully.",
+            transaction: updatedTransaction
+        });
+
+    } catch (error) {
+        console.error(
+            "SUBMIT ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to submit book.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ALL TRANSACTIONS
+// ==================================================
+
+app.get("/transactions", async (req, res) => {
+    try {
+        const cleanUserEmail =
+            cleanEmail(req.query.email);
+
+        let query = supabase
+            .from("transactions")
+            .select("*")
+            .order("rent_date", {
+                ascending: false
+            });
+
+        if (cleanUserEmail) {
+            query = query.eq(
+                "email",
+                cleanUserEmail
+            );
+        }
+
+        const { data, error } =
+            await query;
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            transactions: data || []
+        });
+
+    } catch (error) {
+        console.error(
+            "TRANSACTIONS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get transactions.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ACCOUNT DELETE
+// ==================================================
+
+app.delete("/account", async (req, res) => {
+    try {
+        const {
+            email
+        } = req.body;
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        // ------------------------------------------
+        // GET USER
+        // ------------------------------------------
+
+        const user =
+            await findUserByEmail(
+                cleanUserEmail
+            );
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found."
+            });
+        }
+
+        // ------------------------------------------
+        // CHECK ACTUAL ACTIVE RENTALS
+        // ------------------------------------------
+
+        const rentalInfo =
+            await getActiveRentalInfo(
+                cleanUserEmail,
+                user.name
+            );
+
+        // ------------------------------------------
+        // ONLY ACTUAL BOOK RENTALS BLOCK DELETE
+        // ------------------------------------------
+
+        if (
+            rentalInfo.actualActive &&
+            rentalInfo.actualActive.length > 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "You cannot delete your account while you have a rented book. Please submit the book first.",
+                rentals:
+                    rentalInfo.actualActive.map(
+                        item => ({
+                            book_name:
+                                item.transaction.book_name,
+                            rent_date:
+                                item.transaction.rent_date
+                        })
+                    )
+            });
+        }
+
+        // ------------------------------------------
+        // DELETE STALE RENTAL RECORDS
+        // ------------------------------------------
+
+        for (
+            const transaction
+            of rentalInfo.staleTransactions || []
+        ) {
+            const { error: staleDeleteError } =
+                await supabase
+                    .from("transactions")
+                    .delete()
+                    .eq("id", transaction.id);
+
+            if (staleDeleteError) {
+                throw staleDeleteError;
+            }
+        }
+
+        // ------------------------------------------
+        // DELETE ATTENDANCE
+        // ------------------------------------------
+
+        const { error: attendanceError } =
+            await supabase
+                .from("attendance")
+                .delete()
+                .eq("email", cleanUserEmail);
+
+        if (attendanceError) {
+            throw attendanceError;
+        }
+
+        // ------------------------------------------
+        // DELETE TRANSACTIONS
+        // ------------------------------------------
+
+        const { error: transactionError } =
+            await supabase
+                .from("transactions")
+                .delete()
+                .eq("email", cleanUserEmail);
+
+        if (transactionError) {
+            throw transactionError;
+        }
+
+        // ------------------------------------------
+        // DELETE USER
+        // ------------------------------------------
+
+        const { error: userDeleteError } =
+            await supabase
+                .from("users")
+                .delete()
+                .eq("id", user.id);
+
+        if (userDeleteError) {
+            throw userDeleteError;
+        }
+
+        return res.json({
+            success: true,
+            message: "Account deleted successfully."
+        });
+
+    } catch (error) {
+        console.error(
+            "ACCOUNT DELETE ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to delete account.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADMIN LOGIN
+// ==================================================
+
+app.post("/admin/login", async (req, res) => {
+    try {
+        const {
+            username,
+            password
+        } = req.body;
+
+        const adminUsername =
+            String(
+                process.env.ADMIN_USERNAME || ""
+            ).trim();
+
+        const adminPassword =
+            String(
+                process.env.ADMIN_PASSWORD || ""
+            );
+
+        if (
+            String(username || "").trim() !==
+                adminUsername ||
+            String(password || "") !==
+                adminPassword
+        ) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid admin username or password."
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Admin login successful."
+        });
+
+    } catch (error) {
+        console.error(
+            "ADMIN LOGIN ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to login as admin.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADMIN USERS
+// ==================================================
+
+app.get("/admin/users", async (req, res) => {
+    try {
+        const { data, error } =
+            await supabase
+                .from("users")
+                .select(
+                    "id, name, email, phone"
+                )
+                .order("id", {
+                    ascending: false
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        return res.json({
+            success: true,
+            users: data || []
+        });
+
+    } catch (error) {
+        console.error(
+            "ADMIN USERS ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to get users.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// ADMIN DELETE USER
+// ==================================================
+
+app.delete("/admin/users/:id", async (req, res) => {
+    try {
+        const userId = req.params.id;
+
+        // ------------------------------------------
+        // GET USER
+        // ------------------------------------------
+
+        const { data: user, error: userError } =
+            await supabase
+                .from("users")
+                .select("*")
+                .eq("id", userId)
+                .maybeSingle();
+
+        if (userError) {
+            throw userError;
+        }
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
+
+        // ------------------------------------------
+        // CHECK ACTUAL ACTIVE RENTALS
+        // ------------------------------------------
+
+        const rentalInfo =
+            await getActiveRentalInfo(
+                user.email,
+                user.name
+            );
+
+        if (
+            rentalInfo.actualActive &&
+            rentalInfo.actualActive.length > 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "This user has a rented book. Please submit the book first."
+            });
+        }
+
+        // ------------------------------------------
+        // CLEAN STALE RENTALS
+        // ------------------------------------------
+
+        for (
+            const transaction
+            of rentalInfo.staleTransactions || []
+        ) {
+            const { error } =
+                await supabase
+                    .from("transactions")
+                    .delete()
+                    .eq("id", transaction.id);
+
+            if (error) {
+                throw error;
+            }
+        }
+
+        // ------------------------------------------
+        // DELETE ATTENDANCE
+        // ------------------------------------------
+
+        const { error: attendanceError } =
+            await supabase
+                .from("attendance")
+                .delete()
+                .eq("email", user.email);
+
+        if (attendanceError) {
+            throw attendanceError;
+        }
+
+        // ------------------------------------------
+        // DELETE TRANSACTIONS
+        // ------------------------------------------
+
+        const { error: transactionError } =
+            await supabase
+                .from("transactions")
+                .delete()
+                .eq("email", user.email);
+
+        if (transactionError) {
+            throw transactionError;
+        }
+
+        // ------------------------------------------
+        // DELETE USER
+        // ------------------------------------------
+
+        const { error: deleteError } =
+            await supabase
+                .from("users")
+                .delete()
+                .eq("id", userId);
+
+        if (deleteError) {
+            throw deleteError;
+        }
+
+        return res.json({
+            success: true,
+            message: "User deleted successfully."
+        });
+
+    } catch (error) {
+        console.error(
+            "ADMIN DELETE USER ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to delete user.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// OTP STORE
+// ==================================================
+
+const otpStore = new Map();
+
+// ==================================================
+// SEND EMAIL OTP
+// ==================================================
+
+app.post("/send-email-otp", async (req, res) => {
+    try {
+        const {
+            email
+        } = req.body;
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        if (!cleanUserEmail) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is required."
+            });
+        }
+
+        if (!resend) {
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Email service is not configured."
+            });
+        }
+
+        // ------------------------------------------
+        // CHECK EXISTING USER
+        // ------------------------------------------
+
+        const existingUser =
+            await findUserByEmail(
+                cleanUserEmail
+            );
+
+        if (existingUser) {
+            return res.status(409).json({
+                success: false,
+                message:
+                    "You have already registered please login."
+            });
+        }
+
+        // ------------------------------------------
+        // GENERATE OTP
+        // ------------------------------------------
+
+        const otp =
+            crypto
+                .randomInt(100000, 1000000)
+                .toString();
+
+        otpStore.set(
+            cleanUserEmail,
+            {
+                otp,
+                expiresAt:
+                    Date.now() +
+                    10 * 60 * 1000
+            }
+        );
+
+        // ------------------------------------------
+        // SEND EMAIL
+        // ------------------------------------------
+
+        const fromEmail =
+            process.env.RESEND_FROM_EMAIL ||
+            "onboarding@resend.dev";
+
+        const { error: resendError } =
+            await resend.emails.send({
+                from: fromEmail,
+                to: [cleanUserEmail],
+                subject:
+                    "Atal Library - Email Verification OTP",
+                html: `
+                    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;padding:20px;">
+                        <h2>Atal Library</h2>
+
+                        <p>Your email verification OTP is:</p>
+
+                        <div style="
+                            font-size:32px;
+                            font-weight:bold;
+                            letter-spacing:8px;
+                            padding:20px;
+                            background:#f5f5f5;
+                            text-align:center;
+                            border-radius:10px;
+                        ">
+                            ${otp}
+                        </div>
+
+                        <p>This OTP will expire in 10 minutes.</p>
+
+                        <p>If you did not request this OTP, you can ignore this email.</p>
+                    </div>
+                `
+            });
+
+        if (resendError) {
+            console.error(
+                "RESEND ERROR:",
+                resendError
+            );
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to send OTP.",
+                error:
+                    resendError.message ||
+                    String(resendError)
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "OTP sent successfully."
+        });
+
+    } catch (error) {
+        console.error(
+            "SEND OTP ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to send OTP.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// VERIFY EMAIL OTP
+// ==================================================
+
+app.post("/verify-email-otp", async (req, res) => {
+    try {
+        const {
+            email,
+            otp
+        } = req.body;
+
+        const cleanUserEmail =
+            cleanEmail(email);
+
+        const cleanOtp =
+            String(otp || "").trim();
+
+        if (
+            !cleanUserEmail ||
+            !cleanOtp
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and OTP are required."
+            });
+        }
+
+        const stored =
+            otpStore.get(
+                cleanUserEmail
+            );
+
+        if (!stored) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "OTP not found or expired."
+            });
+        }
+
+        if (
+            Date.now() >
+            stored.expiresAt
+        ) {
+            otpStore.delete(
+                cleanUserEmail
+            );
+
+            return res.status(400).json({
+                success: false,
+                message: "OTP has expired."
+            });
+        }
+
+        if (
+            stored.otp !== cleanOtp
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid OTP."
+            });
+        }
+
+        otpStore.delete(
+            cleanUserEmail
+        );
+
+        return res.json({
+            success: true,
+            message:
+                "Email verified successfully."
+        });
+
+    } catch (error) {
+        console.error(
+            "VERIFY OTP ERROR:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to verify OTP.",
+            error: error.message
+        });
+    }
+});
+
+// ==================================================
+// 404 ROUTE
+// ==================================================
+
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message:
+            `API route not found: ${req.method} ${req.originalUrl}`
+    });
+});
 
 // ==================================================
 // GLOBAL ERROR HANDLER
 // ==================================================
 
-app.use(
-    (
-        error,
-        req,
-        res,
-        next
-    ) => {
+app.use((err, req, res, next) => {
+    console.error(
+        "GLOBAL SERVER ERROR:",
+        err
+    );
 
-        console.log(
-            "GLOBAL SERVER ERROR:",
-            error
-        );
-
-        if (
-            res.headersSent
-        ) {
-            return next(error);
-        }
-
-        return res.status(500).json({
-            success: false,
-            message:
-                "Internal server error."
-        });
+    if (res.headersSent) {
+        return next(err);
     }
-);
+
+    res.status(500).json({
+        success: false,
+        message: "Internal server error.",
+        error: err.message
+    });
+});
 
 // ==================================================
 // START SERVER
@@ -4570,21 +2349,8 @@ app.listen(
     PORT,
     "0.0.0.0",
     () => {
-
         console.log(
             `Atal Library server running on port ${PORT}`
-        );
-
-        console.log(
-            "Backend is ready."
-        );
-
-        console.log(
-            "Attendance routes are enabled."
-        );
-
-        console.log(
-            "Account delete route is enabled."
         );
     }
 );
