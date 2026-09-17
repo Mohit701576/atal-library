@@ -273,7 +273,11 @@ app.use(
 // ==================================================
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+
+    family: 4,
 
     auth: {
         user: process.env.GMAIL_USER,
@@ -282,13 +286,18 @@ const transporter = nodemailer.createTransport({
 
     connectionTimeout: 15000,
     greetingTimeout: 15000,
-    socketTimeout: 20000
+    socketTimeout: 20000,
+
+    tls: {
+        rejectUnauthorized: true
+    }
 });
 
 transporter.verify()
     .then(() => {
         console.log("====================================");
         console.log("GMAIL SMTP READY");
+        console.log("IPv4 SMTP connection successful");
         console.log("GMAIL USER:", process.env.GMAIL_USER);
         console.log("====================================");
     })
@@ -296,11 +305,10 @@ transporter.verify()
         console.log("====================================");
         console.log("GMAIL SMTP CONNECTION ERROR");
         console.log("====================================");
-        console.log(error.message);
         console.log(error);
     });
     
-// ==================================================
+    // ==================================================
 // VERIFY GMAIL SMTP CONNECTION
 // ==================================================
 
