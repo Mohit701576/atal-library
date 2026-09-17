@@ -1,6 +1,7 @@
 /* =====================================================
    ATAL LIBRARY - JAVASCRIPT
    Supabase Backend Version
+   Pagination + Search + Filter + Sort
 ===================================================== */
 
 const API_URL = "https://atal-library-backend.onrender.com";
@@ -138,7 +139,6 @@ function renderUserGreeting(element, name, photoUrl) {
         img.src = photoUrl;
 
         img.alt = "Profile Photo";
-
 
         img.width = 35;
         img.height = 35;
@@ -708,6 +708,7 @@ document.addEventListener(
                loggedUser is kept only for old book features.
             */
 
+
             const isLoggedIn =
                 !!(user && user.email);
 
@@ -1263,7 +1264,6 @@ document.addEventListener(
 
 
                 updateUserUI();
-
 
             }
 
@@ -2025,6 +2025,7 @@ document.addEventListener(
                            Sirf libraryUser saved rahega.
                         */
 
+
                         localStorage.removeItem(
                             "loggedUser"
                         );
@@ -2267,6 +2268,7 @@ document.addEventListener(
                            Save both for compatibility
                            with existing book functions.
                         */
+
 
                         localStorage.setItem(
                             "loggedUser",
@@ -2552,10 +2554,474 @@ document.addEventListener(
         let selectedBookId = null;
 
 
+        /* =================================================
+           PAGINATION SETTINGS
+        ================================================= */
+
+        /*
+           Ek page par kitni books dikhani hain.
+           Agar 12 ki jagah 16 chahiye to
+           12 ko 16 kar sakte ho.
+        */
+
+        const BOOKS_PER_PAGE = 12;
+
+
+        let currentPage = 1;
+
+
+        let currentFilteredBooks = [];
+
+
         const bookContainer =
             document.getElementById(
                 "bookContainer"
             );
+
+        /* =====================================================
+   BOOK SLIDER CONTROLS
+===================================================== */
+
+const booksSliderWrapper =
+    document.getElementById(
+        "booksSliderWrapper"
+    );
+
+const prevBookBtn =
+    document.getElementById(
+        "prevBookBtn"
+    );
+
+const nextBookBtn =
+    document.getElementById(
+        "nextBookBtn"
+    );
+
+let bookAutoScrollTimer = null;
+
+
+/* =====================================================
+   STOP AUTO SCROLL
+===================================================== */
+
+function stopBookAutoScroll() {
+
+    if (bookAutoScrollTimer) {
+
+        clearInterval(
+            bookAutoScrollTimer
+        );
+
+        bookAutoScrollTimer = null;
+
+    }
+
+}
+
+
+/* =====================================================
+   START / UPDATE BOOK SLIDER
+
+   4 OR LESS BOOKS
+   = NORMAL GRID
+
+   MORE THAN 4 BOOKS
+   = HORIZONTAL SLIDER
+===================================================== */
+
+function updateBookSlider(bookList) {
+
+    if (!bookContainer) {
+        return;
+    }
+
+
+    const sliderMode =
+        Array.isArray(bookList) &&
+        bookList.length > 4;
+
+
+    /* ==============================================
+       4 OR LESS
+       NORMAL GRID
+    ============================================== */
+
+    if (!sliderMode) {
+
+        bookContainer.classList.remove(
+            "slider-mode"
+        );
+
+
+        if (prevBookBtn) {
+
+            prevBookBtn.classList.remove(
+                "show"
+            );
+
+        }
+
+
+        if (nextBookBtn) {
+
+            nextBookBtn.classList.remove(
+                "show"
+            );
+
+        }
+
+
+        stopBookAutoScroll();
+
+        return;
+
+    }
+
+
+    /* ==============================================
+       MORE THAN 4
+       SLIDER MODE
+    ============================================== */
+
+    bookContainer.classList.add(
+        "slider-mode"
+    );
+
+
+    if (prevBookBtn) {
+
+        prevBookBtn.classList.add(
+            "show"
+        );
+
+    }
+
+
+    if (nextBookBtn) {
+
+        nextBookBtn.classList.add(
+            "show"
+        );
+
+    }
+
+
+    stopBookAutoScroll();
+
+
+    /* ==============================================
+       AUTOMATIC SCROLL
+    ============================================== */
+
+    bookAutoScrollTimer =
+        setInterval(
+            function () {
+
+                if (
+                    !bookContainer ||
+                    !bookContainer.classList.contains(
+                        "slider-mode"
+                    )
+                ) {
+
+                    stopBookAutoScroll();
+
+                    return;
+
+                }
+
+
+                const maxScroll =
+                    bookContainer.scrollWidth -
+                    bookContainer.clientWidth;
+
+
+                if (maxScroll <= 0) {
+                    return;
+                }
+
+
+                /* Reach end → go back to beginning */
+
+                if (
+                    bookContainer.scrollLeft >=
+                    maxScroll - 5
+                ) {
+
+                    bookContainer.scrollTo({
+
+                        left: 0,
+
+                        behavior: "smooth"
+
+                    });
+
+                }
+
+                else {
+
+                    const firstCard =
+                        bookContainer.querySelector(
+                            ".book-card"
+                        );
+
+
+                    if (!firstCard) {
+                        return;
+                    }
+
+
+                    const cardWidth =
+                        firstCard.getBoundingClientRect()
+                            .width;
+
+
+                    const gap =
+                        parseFloat(
+                            getComputedStyle(
+                                bookContainer
+                            ).gap
+                        ) || 25;
+
+
+                    bookContainer.scrollBy({
+
+                        left:
+                            cardWidth + gap,
+
+                        behavior: "smooth"
+
+                    });
+
+                }
+
+            },
+            3500
+        );
+
+}
+
+
+/* =====================================================
+   PREVIOUS BOOK
+===================================================== */
+
+if (prevBookBtn) {
+
+    prevBookBtn.onclick =
+        function () {
+
+            if (
+                !bookContainer ||
+                !bookContainer.classList.contains(
+                    "slider-mode"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const firstCard =
+                bookContainer.querySelector(
+                    ".book-card"
+                );
+
+
+            if (!firstCard) {
+                return;
+            }
+
+
+            const cardWidth =
+                firstCard.getBoundingClientRect()
+                    .width;
+
+
+            const gap =
+                parseFloat(
+                    getComputedStyle(
+                        bookContainer
+                    ).gap
+                ) || 25;
+
+
+            bookContainer.scrollBy({
+
+                left:
+                    -(cardWidth + gap),
+
+                behavior: "smooth"
+
+            });
+
+        };
+
+}
+
+
+/* =====================================================
+   NEXT BOOK
+===================================================== */
+
+if (nextBookBtn) {
+
+    nextBookBtn.onclick =
+        function () {
+
+            if (
+                !bookContainer ||
+                !bookContainer.classList.contains(
+                    "slider-mode"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            const firstCard =
+                bookContainer.querySelector(
+                    ".book-card"
+                );
+
+
+            if (!firstCard) {
+                return;
+            }
+
+
+            const cardWidth =
+                firstCard.getBoundingClientRect()
+                    .width;
+
+
+            const gap =
+                parseFloat(
+                    getComputedStyle(
+                        bookContainer
+                    ).gap
+                ) || 25;
+
+
+            bookContainer.scrollBy({
+
+                left:
+                    cardWidth + gap,
+
+                behavior: "smooth"
+
+            });
+
+        };
+
+}
+
+
+/* =====================================================
+   PAUSE AUTO SCROLL ON MOUSE
+===================================================== */
+
+if (booksSliderWrapper) {
+
+    booksSliderWrapper.addEventListener(
+        "mouseenter",
+        function () {
+
+            stopBookAutoScroll();
+
+        }
+    );
+
+
+    booksSliderWrapper.addEventListener(
+        "mouseleave",
+        function () {
+
+            /*
+               Slider state will be started again
+               when books are rendered.
+            */
+
+        }
+    );
+
+}
+
+
+        /* =================================================
+           CREATE PAGINATION CONTAINER
+        ================================================= */
+
+        /*
+           HTML mein pagination div add karne ki
+           zarurat nahi hai.
+
+           JavaScript automatically ye container
+           bookContainer ke neeche create karega.
+        */
+
+        let paginationContainer =
+            document.getElementById(
+                "pagination"
+            );
+
+
+        if (
+            !paginationContainer &&
+            bookContainer
+        ) {
+
+            paginationContainer =
+                document.createElement(
+                    "div"
+                );
+
+
+            paginationContainer.id =
+                "pagination";
+
+
+            paginationContainer.style.width =
+                "100%";
+
+
+            paginationContainer.style.display =
+                "flex";
+
+
+            paginationContainer.style.justifyContent =
+                "center";
+
+
+            paginationContainer.style.alignItems =
+                "center";
+
+
+            paginationContainer.style.flexWrap =
+                "wrap";
+
+
+            paginationContainer.style.gap =
+                "8px";
+
+
+            paginationContainer.style.margin =
+                "30px 0";
+
+
+            paginationContainer.style.padding =
+                "10px";
+
+
+            bookContainer.insertAdjacentElement(
+                "afterend",
+                paginationContainer
+            );
+
+        }
 
 
         /* =================================================
@@ -2570,7 +3036,7 @@ document.addEventListener(
 
             }
 
-
+            updateBookSlider(bookList);
             bookContainer.innerHTML = "";
 
 
@@ -2593,6 +3059,7 @@ document.addEventListener(
                     </p>
 
                 `;
+
 
                 return;
 
@@ -2690,6 +3157,463 @@ document.addEventListener(
 
 
         /* =================================================
+           DISPLAY PAGINATION
+        ================================================= */
+
+        function displayPagination(totalBooks) {
+
+            if (!paginationContainer) {
+
+                return;
+
+            }
+
+
+            paginationContainer.innerHTML =
+                "";
+
+
+            const totalPages =
+                Math.ceil(
+                    totalBooks /
+                    BOOKS_PER_PAGE
+                );
+
+
+            /*
+               Agar sirf 1 page hai to
+               pagination hide kar do.
+            */
+
+            if (totalPages <= 1) {
+
+                paginationContainer.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            paginationContainer.style.display =
+                "flex";
+
+
+            /* =============================================
+               PREVIOUS BUTTON
+            ============================================= */
+
+            const previousButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            previousButton.innerText =
+                "← Previous";
+
+
+            previousButton.type =
+                "button";
+
+
+            stylePaginationButton(
+                previousButton,
+                false
+            );
+
+
+            previousButton.disabled =
+                currentPage === 1;
+
+
+            if (previousButton.disabled) {
+
+                previousButton.style.opacity =
+                    "0.5";
+
+                previousButton.style.cursor =
+                    "not-allowed";
+
+            }
+
+
+            previousButton.onclick =
+                function () {
+
+                    if (
+                        currentPage >
+                        1
+                    ) {
+
+                        currentPage--;
+
+                        renderCurrentPage();
+
+                        scrollToBooks();
+
+                    }
+
+                };
+
+
+            paginationContainer.appendChild(
+                previousButton
+            );
+
+
+            /* =============================================
+               PAGE NUMBERS
+            ============================================= */
+
+            for (
+                let page = 1;
+                page <= totalPages;
+                page++
+            ) {
+
+                const pageButton =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                pageButton.innerText =
+                    page;
+
+
+                pageButton.type =
+                    "button";
+
+
+                const isCurrentPage =
+                    page === currentPage;
+
+
+                stylePaginationButton(
+                    pageButton,
+                    isCurrentPage
+                );
+
+
+                pageButton.onclick =
+                    function () {
+
+                        currentPage =
+                            page;
+
+
+                        renderCurrentPage();
+
+
+                        scrollToBooks();
+
+                    };
+
+
+                paginationContainer.appendChild(
+                    pageButton
+                );
+
+            }
+
+
+            /* =============================================
+               NEXT BUTTON
+            ============================================= */
+
+            const nextButton =
+                document.createElement(
+                    "button"
+                );
+
+
+            nextButton.innerText =
+                "Next →";
+
+
+            nextButton.type =
+                "button";
+
+
+            stylePaginationButton(
+                nextButton,
+                false
+            );
+
+
+            nextButton.disabled =
+                currentPage === totalPages;
+
+
+            if (nextButton.disabled) {
+
+                nextButton.style.opacity =
+                    "0.5";
+
+                nextButton.style.cursor =
+                    "not-allowed";
+
+            }
+
+
+            nextButton.onclick =
+                function () {
+
+                    if (
+                        currentPage <
+                        totalPages
+                    ) {
+
+                        currentPage++;
+
+                        renderCurrentPage();
+
+                        scrollToBooks();
+
+                    }
+
+                };
+
+
+            paginationContainer.appendChild(
+                nextButton
+            );
+
+
+            /* =============================================
+               PAGE INFO
+            ============================================= */
+
+            const pageInfo =
+                document.createElement(
+                    "span"
+                );
+
+
+            pageInfo.innerText =
+                " Page " +
+                currentPage +
+                " of " +
+                totalPages;
+
+
+            pageInfo.style.marginLeft =
+                "8px";
+
+
+            pageInfo.style.color =
+                "#64748b";
+
+
+            pageInfo.style.fontSize =
+                "14px";
+
+
+            pageInfo.style.fontWeight =
+                "600";
+
+
+            paginationContainer.appendChild(
+                pageInfo
+            );
+
+        }
+
+
+        /* =================================================
+           PAGINATION BUTTON STYLE
+        ================================================= */
+
+        function stylePaginationButton(
+            button,
+            active
+        ) {
+
+            button.style.padding =
+                "9px 14px";
+
+
+            button.style.borderRadius =
+                "8px";
+
+
+            button.style.border =
+                "1px solid #cbd5e1";
+
+
+            button.style.fontSize =
+                "14px";
+
+
+            button.style.fontWeight =
+                "600";
+
+
+            button.style.cursor =
+                "pointer";
+
+
+            button.style.background =
+                active
+                    ? "#2563eb"
+                    : "#ffffff";
+
+
+            button.style.color =
+                active
+                    ? "#ffffff"
+                    : "#334155";
+
+
+            button.style.transition =
+                "0.2s";
+
+
+            button.onmouseenter =
+                function () {
+
+                    if (
+                        !active &&
+                        !button.disabled
+                    ) {
+
+                        button.style.background =
+                            "#eff6ff";
+
+                    }
+
+                };
+
+
+            button.onmouseleave =
+                function () {
+
+                    if (
+                        !active &&
+                        !button.disabled
+                    ) {
+
+                        button.style.background =
+                            "#ffffff";
+
+                    }
+
+                };
+
+        }
+
+
+        /* =================================================
+           SCROLL TO BOOKS
+        ================================================= */
+
+        function scrollToBooks() {
+
+            const booksSection =
+                document.getElementById(
+                    "books"
+                );
+
+
+            if (!booksSection) {
+
+                return;
+
+            }
+
+
+            const top =
+                booksSection.getBoundingClientRect().top +
+                window.scrollY -
+                100;
+
+
+            window.scrollTo({
+
+                top: top,
+
+                behavior: "smooth"
+
+            });
+
+        }
+
+
+        /* =================================================
+           RENDER CURRENT PAGE
+        ================================================= */
+
+        function renderCurrentPage() {
+
+            const totalBooks =
+                currentFilteredBooks.length;
+
+
+            const totalPages =
+                Math.ceil(
+                    totalBooks /
+                    BOOKS_PER_PAGE
+                );
+
+
+            /*
+               Safety:
+               Agar filtering ke baad current page
+               exist nahi karta to page 1 par le jao.
+            */
+
+            if (
+                totalPages > 0 &&
+                currentPage > totalPages
+            ) {
+
+                currentPage =
+                    totalPages;
+
+            }
+
+
+            if (currentPage < 1) {
+
+                currentPage = 1;
+
+            }
+
+
+            const startIndex =
+                (
+                    currentPage -
+                    1
+                ) *
+                BOOKS_PER_PAGE;
+
+
+            const endIndex =
+                startIndex +
+                BOOKS_PER_PAGE;
+
+
+            const booksForCurrentPage =
+                currentFilteredBooks.slice(
+                    startIndex,
+                    endIndex
+                );
+
+
+            displayBooks(
+                booksForCurrentPage
+            );
+
+
+            displayPagination(
+                totalBooks
+            );
+
+        }
+
+
+        /* =================================================
            LOAD BOOKS
         ================================================= */
 
@@ -2777,7 +3701,11 @@ document.addEventListener(
                     );
 
 
+                currentPage = 1;
+
+
                 filterBooks();
+
 
                 updateBookStats();
 
@@ -2809,6 +3737,17 @@ document.addEventListener(
                         </p>
 
                     `;
+
+                }
+
+
+                if (paginationContainer) {
+
+                    paginationContainer.innerHTML =
+                        "";
+
+                    paginationContainer.style.display =
+                        "none";
 
                 }
 
@@ -2851,6 +3790,10 @@ document.addEventListener(
             );
 
 
+        /* =================================================
+           FILTER BOOKS
+        ================================================= */
+
         function filterBooks() {
 
             if (
@@ -2858,7 +3801,16 @@ document.addEventListener(
                 books.length === 0
             ) {
 
+                currentFilteredBooks = [];
+
+
+                currentPage = 1;
+
+
                 displayBooks([]);
+
+
+                displayPagination(0);
 
 
                 if (result) {
@@ -2940,6 +3892,10 @@ document.addEventListener(
                     }
                 );
 
+
+            /* =============================================
+               SORT
+            ============================================= */
 
             if (sortBooks) {
 
@@ -3035,9 +3991,23 @@ document.addEventListener(
             }
 
 
-            displayBooks(
-                filteredBooks
-            );
+            /*
+               Save filtered books globally.
+            */
+
+            currentFilteredBooks =
+                filteredBooks;
+
+
+            /*
+               Search/filter/sort change hone par
+               hamesha first page par jao.
+            */
+
+            currentPage = 1;
+
+
+            renderCurrentPage();
 
 
             if (result) {
@@ -3060,26 +4030,56 @@ document.addEventListener(
         }
 
 
+        /* =================================================
+           SEARCH INPUT
+        ================================================= */
+
         if (searchInput) {
 
             searchInput.oninput =
-                filterBooks;
+                function () {
+
+                    currentPage = 1;
+
+                    filterBooks();
+
+                };
 
         }
 
+
+        /* =================================================
+           CATEGORY FILTER
+        ================================================= */
 
         if (categoryFilter) {
 
             categoryFilter.onchange =
-                filterBooks;
+                function () {
+
+                    currentPage = 1;
+
+                    filterBooks();
+
+                };
 
         }
 
 
+        /* =================================================
+           SORT
+        ================================================= */
+
         if (sortBooks) {
 
             sortBooks.onchange =
-                filterBooks;
+                function () {
+
+                    currentPage = 1;
+
+                    filterBooks();
+
+                };
 
         }
 
@@ -3121,6 +4121,9 @@ document.addEventListener(
                             "default";
 
                     }
+
+
+                    currentPage = 1;
 
 
                     filterBooks();
@@ -4507,13 +5510,20 @@ async function loadAttendanceStatus() {
 
     const user = getAttendanceUser();
 
+
     // User login nahi hai
+
     if (!user || !user.email) {
 
-        updateAttendanceUI(false, null);
+        updateAttendanceUI(
+            false,
+            null
+        );
 
         return;
+
     }
+
 
     try {
 
@@ -4521,9 +5531,16 @@ async function loadAttendanceStatus() {
             `${API_URL}/attendance/status?email=${encodeURIComponent(user.email)}`
         );
 
-        const data = await response.json();
 
-        console.log("Attendance Status Response:", data);
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Attendance Status Response:",
+            data
+        );
+
 
         if (!response.ok) {
 
@@ -4532,10 +5549,17 @@ async function loadAttendanceStatus() {
                 data
             );
 
-            updateAttendanceUI(false, null);
+
+            updateAttendanceUI(
+                false,
+                null
+            );
+
 
             return;
+
         }
+
 
         updateAttendanceUI(
             data.inside === true,
@@ -4544,6 +5568,7 @@ async function loadAttendanceStatus() {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -4551,9 +5576,16 @@ async function loadAttendanceStatus() {
             error
         );
 
-        updateAttendanceUI(false, null);
+
+        updateAttendanceUI(
+            false,
+            null
+        );
+
     }
+
 }
+
 
 /* =====================================================
    ENTER LIBRARY

@@ -17,6 +17,229 @@
         href="style.css"
     >
 
+    <style>
+
+        /* =====================================================
+           MY RENTALS SECTION
+        ===================================================== */
+
+        #myRentalsSection {
+            display: none;
+            min-height: 70vh;
+            padding: 70px 20px;
+            background: #f8fafc;
+        }
+
+        .my-rentals-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .my-rentals-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .my-rentals-header span {
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .my-rentals-header h2 {
+            margin: 8px 0;
+            font-size: 34px;
+        }
+
+        .my-rentals-header p {
+            color: #64748b;
+            margin: 0;
+        }
+
+        .my-rentals-back {
+            display: block;
+            margin: 0 auto 30px auto;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 10px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .my-rentals-back:hover {
+            opacity: 0.9;
+        }
+
+        .my-rentals-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+
+        .my-rental-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: 0.3s;
+        }
+
+        .my-rental-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .my-rental-card img {
+            width: 100%;
+            height: 230px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .my-rental-content {
+            padding: 18px;
+        }
+
+        .my-rental-category {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            background: #eff6ff;
+            color: #2563eb;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .my-rental-content h3 {
+            margin: 5px 0 8px;
+            font-size: 19px;
+        }
+
+        .my-rental-author {
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .my-rental-status {
+            color: #dc2626;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .my-rental-submit {
+            width: 100%;
+            border: none;
+            padding: 11px 15px;
+            border-radius: 9px;
+            background: #16a34a;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .my-rental-submit:hover {
+            opacity: 0.9;
+        }
+
+        .my-rentals-empty {
+            text-align: center;
+            background: white;
+            padding: 50px 25px;
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .my-rentals-empty-icon {
+            font-size: 55px;
+            margin-bottom: 10px;
+        }
+
+        .my-rentals-empty h3 {
+            margin: 10px 0;
+            font-size: 24px;
+        }
+
+        .my-rentals-empty p {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .browse-books-btn {
+            border: none;
+            padding: 12px 22px;
+            border-radius: 9px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .my-rentals-loading {
+            text-align: center;
+            padding: 50px;
+            color: #64748b;
+            font-size: 17px;
+        }
+
+        /* =====================================================
+           MY RENTALS NAV LINK
+        ===================================================== */
+
+        #myRentalsNavLink {
+            display: none;
+        }
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 1100px) {
+
+            .my-rentals-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+        }
+
+        @media (max-width: 800px) {
+
+            .my-rentals-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .my-rentals-header h2 {
+                font-size: 28px;
+            }
+
+        }
+
+        @media (max-width: 550px) {
+
+            #myRentalsSection {
+                padding: 45px 15px;
+            }
+
+            .my-rentals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .my-rental-card img {
+                height: 250px;
+            }
+
+            .my-rentals-header h2 {
+                font-size: 25px;
+            }
+
+        }
+
+    </style>
+
 </head>
 
 
@@ -56,9 +279,22 @@
                     Home
                 </a>
 
+
                 <a href="#books">
                     Books
                 </a>
+
+
+                <!-- ================= MY RENTALS ================= -->
+
+                <a
+                    href="#my-rentals"
+                    id="myRentalsNavLink"
+                    style="display: none;"
+                >
+                    My Rentals
+                </a>
+
 
                 <!-- Attendance -->
 
@@ -70,9 +306,11 @@
                     Attendance
                 </a>
 
+
                 <a href="#about">
                     About
                 </a>
+
 
                 <a href="#contact">
                     Contact
@@ -87,12 +325,14 @@
 
                 <span id="userGreeting"></span>
 
+
                 <button
                     id="loginBtn"
                     type="button"
                 >
                     Login
                 </button>
+
 
                 <button
                     id="registerBtn"
@@ -101,6 +341,7 @@
                     Register
                 </button>
 
+
                 <button
                     id="adminLoginBtn"
                     type="button"
@@ -108,12 +349,14 @@
                     Admin Login
                 </button>
 
+
                 <button
                     id="logoutBtn"
                     type="button"
                 >
                     Logout
                 </button>
+
 
                 <button
                     id="themeBtn"
@@ -134,12 +377,14 @@
 
                 <span id="mobileUserGreeting"></span>
 
+
                 <button
                     id="mobileLoginBtn"
                     type="button"
                 >
                     Login
                 </button>
+
 
                 <button
                     id="mobileRegisterBtn"
@@ -148,6 +393,7 @@
                     Register
                 </button>
 
+
                 <button
                     id="mobileAdminLoginBtn"
                     type="button"
@@ -155,12 +401,14 @@
                     Admin Login
                 </button>
 
+
                 <button
                     id="mobileLogoutBtn"
                     type="button"
                 >
                     Logout
                 </button>
+
 
                 <button
                     id="mobileThemeBtn"
@@ -510,7 +758,7 @@
         </div>
 
 
-        <!-- SEARCH -->
+        <!-- ================= SEARCH ================= -->
 
         <div class="search-area">
 
@@ -543,20 +791,44 @@
                     All Categories
                 </option>
 
-                <option value="Programming">
-                    Programming
+                <option value="Academic & Education">
+                    Academic & Education
                 </option>
 
-                <option value="Web Development">
-                    Web Development
+                <option value="Computer & Technology">
+                    Computer & Technology
                 </option>
 
-                <option value="Computer Science">
-                    Computer Science
+                <option value="Science & Mathematics">
+                    Science & Mathematics
                 </option>
 
-                <option value="Database">
-                    Database
+                <option value="Engineering & Medical">
+                    Engineering & Medical
+                </option>
+
+                <option value="Competitive & Government Exams">
+                    Competitive & Government Exams
+                </option>
+
+                <option value="Business & Management">
+                    Business & Management
+                </option>
+
+                <option value="History, Geography & Social Science">
+                    History, Geography & Social Science
+                </option>
+
+                <option value="Literature & Fiction">
+                    Literature & Fiction
+                </option>
+
+                <option value="Self-Help & Biography">
+                    Self-Help & Biography
+                </option>
+
+                <option value="General & Reference">
+                    General & Reference
                 </option>
 
             </select>
@@ -589,6 +861,8 @@
         </div>
 
 
+        <!-- ================= BOOK INFO ================= -->
+
         <div class="book-info">
 
             <p id="result"></p>
@@ -598,10 +872,108 @@
         </div>
 
 
+        <!-- =====================================================
+             BOOK SLIDER WRAPPER
+        ====================================================== -->
+
         <div
-            class="book-container"
-            id="bookContainer"
+            class="books-slider-wrapper"
+            id="booksSliderWrapper"
         >
+
+
+            <!-- PREVIOUS BUTTON -->
+
+            <button
+                id="prevBookBtn"
+                class="book-slider-btn book-prev-btn"
+                type="button"
+                aria-label="Previous books"
+                style="display: none;"
+            >
+                ←
+            </button>
+
+
+            <!-- BOOK CONTAINER -->
+
+            <div
+                class="book-container"
+                id="bookContainer"
+            >
+            </div>
+
+
+            <!-- NEXT BUTTON -->
+
+            <button
+                id="nextBookBtn"
+                class="book-slider-btn book-next-btn"
+                type="button"
+                aria-label="Next books"
+                style="display: none;"
+            >
+                →
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================================================
+         MY RENTALS
+    ========================================================== -->
+
+    <section
+        id="myRentalsSection"
+    >
+
+        <div class="my-rentals-container">
+
+
+            <div class="my-rentals-header">
+
+                <span>
+                    MY LIBRARY
+                </span>
+
+                <h2>
+                    📚 My Rentals
+                </h2>
+
+                <p>
+                    Books currently rented by you
+                </p>
+
+            </div>
+
+
+            <!-- BACK BUTTON -->
+
+            <button
+                id="backToLibraryBtn"
+                class="my-rentals-back"
+                type="button"
+            >
+                ← Back to Library
+            </button>
+
+
+            <!-- RENTAL BOOKS -->
+
+            <div
+                id="myRentalsContent"
+                class="my-rentals-grid"
+            >
+
+                <div class="my-rentals-loading">
+                    Loading your rented books...
+                </div>
+
+            </div>
+
         </div>
 
     </section>
@@ -1031,6 +1403,7 @@
                     Full Name
                 </label>
 
+
                 <input
                     type="text"
                     id="registerName"
@@ -1045,6 +1418,7 @@
                     Email
                 </label>
 
+
                 <div class="otp-email-row">
 
                     <input
@@ -1053,6 +1427,7 @@
                         placeholder="Enter your email"
                         required
                     >
+
 
                     <button
                         type="button"
@@ -1070,6 +1445,7 @@
                     Email OTP
                 </label>
 
+
                 <div class="otp-email-row">
 
                     <input
@@ -1079,6 +1455,7 @@
                         maxlength="6"
                         inputmode="numeric"
                     >
+
 
                     <button
                         type="button"
@@ -1107,6 +1484,7 @@
                     Phone Number
                 </label>
 
+
                 <input
                     type="tel"
                     id="registerPhone"
@@ -1123,6 +1501,7 @@
                     Password
                 </label>
 
+
                 <input
                     type="password"
                     id="registerPassword"
@@ -1137,12 +1516,14 @@
                     Profile Photo
                 </label>
 
+
                 <input
                     type="file"
                     id="registerPhoto"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     required
                 >
+
 
                 <small
                     style="
@@ -1389,9 +1770,1029 @@
 
 
 
-    <!-- ================= JAVASCRIPT ================= -->
+    <!-- ================= MAIN JAVASCRIPT ================= -->
 
     <script src="script.js"></script>
+
+
+
+    <!-- =========================================================
+         MY RENTALS SYSTEM
+    ========================================================== -->
+
+    <script>
+
+        const MY_RENTALS_API =
+            "https://atal-library-backend.onrender.com";
+
+
+        /* =====================================================
+           GET CURRENT USER
+        ===================================================== */
+
+        function getMyRentalsUser() {
+
+            const savedUser =
+                localStorage.getItem("libraryUser");
+
+            if (savedUser) {
+
+                try {
+
+                    const user =
+                        JSON.parse(savedUser);
+
+                    if (
+                        user &&
+                        user.email
+                    ) {
+
+                        return user;
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "User JSON error:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            return null;
+
+        }
+
+
+
+        /* =====================================================
+           ELEMENTS
+        ===================================================== */
+
+        const myRentalsNavLink =
+            document.getElementById(
+                "myRentalsNavLink"
+            );
+
+
+        const myRentalsSection =
+            document.getElementById(
+                "myRentalsSection"
+            );
+
+
+        const myRentalsContent =
+            document.getElementById(
+                "myRentalsContent"
+            );
+
+
+        const backToLibraryBtn =
+            document.getElementById(
+                "backToLibraryBtn"
+            );
+
+
+
+        /* =====================================================
+           UPDATE MY RENTALS NAVIGATION
+        ===================================================== */
+
+        function updateMyRentalsVisibility() {
+
+            const user =
+                getMyRentalsUser();
+
+
+            if (
+                myRentalsNavLink &&
+                user &&
+                user.email
+            ) {
+
+                myRentalsNavLink.style.display =
+                    "inline-block";
+
+            }
+            else {
+
+                if (myRentalsNavLink) {
+
+                    myRentalsNavLink.style.display =
+                        "none";
+
+                }
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           HIDE NORMAL WEBSITE
+        ===================================================== */
+
+        function hideNormalWebsite() {
+
+            const sections =
+                document.querySelectorAll(
+                    "body > section:not(#myRentalsSection)"
+                );
+
+
+            sections.forEach(
+                function (section) {
+
+                    section.style.display =
+                        "none";
+
+                }
+            );
+
+
+            const footer =
+                document.querySelector("footer");
+
+            if (footer) {
+
+                footer.style.display =
+                    "none";
+
+            }
+
+
+            const topBtn =
+                document.getElementById(
+                    "topBtn"
+                );
+
+            if (topBtn) {
+
+                topBtn.style.display =
+                    "none";
+
+            }
+
+
+            myRentalsSection.style.display =
+                "block";
+
+        }
+
+
+
+        /* =====================================================
+           SHOW NORMAL WEBSITE
+        ===================================================== */
+
+        function showNormalWebsite() {
+
+            const sections =
+                document.querySelectorAll(
+                    "body > section:not(#myRentalsSection)"
+                );
+
+
+            sections.forEach(
+                function (section) {
+
+                    if (
+                        section.id ===
+                        "attendance"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    section.style.display =
+                        "";
+
+                }
+            );
+
+
+            /*
+            -----------------------------------------------------
+            ATTENDANCE HAS ITS OWN LOGIN VISIBILITY SYSTEM
+            -----------------------------------------------------
+            */
+
+            const attendanceSection =
+                document.getElementById(
+                    "attendance"
+                );
+
+
+            if (attendanceSection) {
+
+                const user =
+                    getMyRentalsUser();
+
+                if (
+                    user &&
+                    user.email
+                ) {
+
+                    attendanceSection.style.display =
+                        "block";
+
+                }
+                else {
+
+                    attendanceSection.style.display =
+                        "none";
+
+                }
+
+            }
+
+
+            const footer =
+                document.querySelector("footer");
+
+            if (footer) {
+
+                footer.style.display =
+                    "";
+
+            }
+
+
+            myRentalsSection.style.display =
+                "none";
+
+        }
+
+
+
+        /* =====================================================
+           LOAD MY RENTALS
+        ===================================================== */
+
+        async function loadMyRentals() {
+
+            const user =
+                getMyRentalsUser();
+
+
+            if (
+                !user ||
+                !user.email
+            ) {
+
+                myRentalsContent.innerHTML = `
+
+                    <div
+                        class="my-rentals-empty"
+                        style="grid-column:1/-1;"
+                    >
+
+                        <div class="my-rentals-empty-icon">
+                            🔐
+                        </div>
+
+                        <h3>
+                            Please Login First
+                        </h3>
+
+                        <p>
+                            Login to see your rented books.
+                        </p>
+
+                    </div>
+
+                `;
+
+                return;
+
+            }
+
+
+            myRentalsContent.innerHTML = `
+
+                <div
+                    class="my-rentals-loading"
+                    style="grid-column:1/-1;"
+                >
+                    Loading your rented books...
+                </div>
+
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${MY_RENTALS_API}/books`
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Books load failed"
+                    );
+
+                }
+
+
+                const allBooks =
+                    await response.json();
+
+
+                /*
+                -------------------------------------------------
+                FILTER ONLY CURRENT USER'S BOOKS
+                -------------------------------------------------
+                */
+
+                const myBooks =
+                    allBooks.filter(
+                        function (book) {
+
+                            const rentedBy =
+                                book.rented_by ??
+                                book.rentedBy ??
+                                book.RentedBy ??
+                                "";
+
+                            return (
+                                String(rentedBy)
+                                    .toLowerCase()
+                                    .trim()
+                                ===
+                                String(user.name)
+                                    .toLowerCase()
+                                    .trim()
+                            );
+
+                        }
+                    );
+
+
+                displayMyRentals(myBooks);
+
+            }
+            catch (error) {
+
+                console.error(
+                    "My Rentals Error:",
+                    error
+                );
+
+
+                myRentalsContent.innerHTML = `
+
+                    <div
+                        class="my-rentals-empty"
+                        style="grid-column:1/-1;"
+                    >
+
+                        <div class="my-rentals-empty-icon">
+                            ⚠️
+                        </div>
+
+                        <h3>
+                            Unable to Load Rentals
+                        </h3>
+
+                        <p>
+                            Please try again.
+                        </p>
+
+                        <button
+                            class="browse-books-btn"
+                            type="button"
+                            onclick="loadMyRentals()"
+                        >
+                            🔄 Try Again
+                        </button>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           DISPLAY MY RENTALS
+        ===================================================== */
+
+        function displayMyRentals(bookList) {
+
+            if (
+                !bookList ||
+                bookList.length === 0
+            ) {
+
+                myRentalsContent.innerHTML = `
+
+                    <div
+                        class="my-rentals-empty"
+                        style="grid-column:1/-1;"
+                    >
+
+                        <div class="my-rentals-empty-icon">
+                            📚
+                        </div>
+
+                        <h3>
+                            No Books Rented
+                        </h3>
+
+                        <p>
+                            You have not rented any book yet.
+                        </p>
+
+                        <button
+                            class="browse-books-btn"
+                            type="button"
+                            id="browseBooksFromRentals"
+                        >
+                            📖 Browse Books
+                        </button>
+
+                    </div>
+
+                `;
+
+
+                const browseBtn =
+                    document.getElementById(
+                        "browseBooksFromRentals"
+                    );
+
+
+                if (browseBtn) {
+
+                    browseBtn.onclick =
+                        function () {
+
+                            showNormalWebsite();
+
+
+                            const booksSection =
+                                document.getElementById(
+                                    "books"
+                                );
+
+
+                            if (booksSection) {
+
+                                booksSection.scrollIntoView({
+                                    behavior: "smooth"
+                                });
+
+                            }
+
+                        };
+
+                }
+
+
+                return;
+
+            }
+
+
+            myRentalsContent.innerHTML = "";
+
+
+            bookList.forEach(
+                function (book) {
+
+                    const bookId =
+                        book.id ??
+                        book.ID;
+
+
+                    const bookName =
+                        book.name ??
+                        book.Name ??
+                        "Unknown Book";
+
+
+                    const author =
+                        book.author ??
+                        book.Author ??
+                        "Unknown Author";
+
+
+                    const category =
+                        book.category ??
+                        book.Category ??
+                        "Book";
+
+
+                    const image =
+                        book.image ??
+                        book.Image ??
+                        "";
+
+
+                    const card =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    card.className =
+                        "my-rental-card";
+
+
+                    card.innerHTML = `
+
+                        <img
+                            src="${image}"
+                            alt="${bookName}"
+                        >
+
+                        <div class="my-rental-content">
+
+                            <span class="my-rental-category">
+                                ${category}
+                            </span>
+
+                            <h3>
+                                ${bookName}
+                            </h3>
+
+                            <div class="my-rental-author">
+                                By ${author}
+                            </div>
+
+                            <div class="my-rental-status">
+                                🔴 Currently Rented
+                            </div>
+
+                            <button
+                                class="my-rental-submit"
+                                type="button"
+                            >
+                                📚 Submit Book
+                            </button>
+
+                        </div>
+
+                    `;
+
+
+                    const submitBtn =
+                        card.querySelector(
+                            ".my-rental-submit"
+                        );
+
+
+                    submitBtn.onclick =
+                        function () {
+
+                            submitMyRentalBook(
+                                bookId,
+                                bookName,
+                                author
+                            );
+
+                        };
+
+
+                    myRentalsContent.appendChild(
+                        card
+                    );
+
+                }
+            );
+
+        }
+
+
+
+        /* =====================================================
+           SUBMIT MY RENTAL BOOK
+        ===================================================== */
+
+        async function submitMyRentalBook(
+            bookId,
+            bookName,
+            author
+        ) {
+
+            const user =
+                getMyRentalsUser();
+
+
+            if (
+                !user ||
+                !user.email
+            ) {
+
+                alert(
+                    "Please login first."
+                );
+
+                return;
+
+            }
+
+
+            const confirmSubmit =
+                confirm(
+                    `Do you want to submit "${bookName}"?`
+                );
+
+
+            if (!confirmSubmit) {
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `${MY_RENTALS_API}/submit`,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                name:
+                                    user.name,
+
+                                email:
+                                    user.email,
+
+                                book:
+                                    bookName,
+
+                                author:
+                                    author,
+
+                                bookId:
+                                    bookId
+
+                            })
+
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    alert(
+                        data.message ||
+                        "Submit failed."
+                    );
+
+                    return;
+
+                }
+
+
+                alert(
+                    "Book submitted successfully! 📚"
+                );
+
+
+                /*
+                -------------------------------------------------
+                REFRESH RENTALS
+                -------------------------------------------------
+                */
+
+                await loadMyRentals();
+
+
+                /*
+                -------------------------------------------------
+                ALSO REFRESH MAIN BOOK LIST
+                -------------------------------------------------
+                */
+
+                window.dispatchEvent(
+                    new Event(
+                        "myRentalBookSubmitted"
+                    )
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Submit Error:",
+                    error
+                );
+
+
+                alert(
+                    "Unable to connect to backend server."
+                );
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           OPEN MY RENTALS
+        ===================================================== */
+
+        async function openMyRentals() {
+
+            const user =
+                getMyRentalsUser();
+
+
+            if (
+                !user ||
+                !user.email
+            ) {
+
+                alert(
+                    "Please login first."
+                );
+
+                return;
+
+            }
+
+
+            hideNormalWebsite();
+
+
+            await loadMyRentals();
+
+
+            /*
+            -------------------------------------------------
+            CLOSE MOBILE MENU
+            -------------------------------------------------
+            */
+
+            const mainMenu =
+                document.getElementById(
+                    "mainMenu"
+                );
+
+
+            if (mainMenu) {
+
+                mainMenu.classList.remove(
+                    "active"
+                );
+
+            }
+
+
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+
+        }
+
+
+
+        /* =====================================================
+           MY RENTALS NAV CLICK
+        ===================================================== */
+
+        if (myRentalsNavLink) {
+
+            myRentalsNavLink.addEventListener(
+                "click",
+                function (event) {
+
+                    event.preventDefault();
+
+                    openMyRentals();
+
+                }
+            );
+
+        }
+
+
+
+        /* =====================================================
+           BACK TO LIBRARY
+        ===================================================== */
+
+        if (backToLibraryBtn) {
+
+            backToLibraryBtn.addEventListener(
+                "click",
+                function () {
+
+                    showNormalWebsite();
+
+                    window.location.hash =
+                        "home";
+
+                    window.scrollTo({
+                        top: 0,
+                        behavior: "smooth"
+                    });
+
+                }
+            );
+
+        }
+
+
+
+        /* =====================================================
+           LOGIN / LOGOUT CHECK
+        ===================================================== */
+
+        function refreshMyRentalsSystem() {
+
+            updateMyRentalsVisibility();
+
+            const user =
+                getMyRentalsUser();
+
+
+            /*
+            -------------------------------------------------
+            IF USER LOGGED OUT WHILE MY RENTALS IS OPEN
+            -------------------------------------------------
+            */
+
+            if (
+                !user ||
+                !user.email
+            ) {
+
+                if (
+                    myRentalsSection &&
+                    myRentalsSection.style.display ===
+                    "block"
+                ) {
+
+                    showNormalWebsite();
+
+                }
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           LOGOUT BUTTON CHECK
+        ===================================================== */
+
+        function setupMyRentalsLogoutCheck() {
+
+            const logoutBtn =
+                document.getElementById(
+                    "logoutBtn"
+                );
+
+
+            const mobileLogoutBtn =
+                document.getElementById(
+                    "mobileLogoutBtn"
+                );
+
+
+            function checkAfterLogout() {
+
+                setTimeout(
+                    function () {
+
+                        refreshMyRentalsSystem();
+
+                    },
+                    100
+                );
+
+            }
+
+
+            if (logoutBtn) {
+
+                logoutBtn.addEventListener(
+                    "click",
+                    checkAfterLogout
+                );
+
+            }
+
+
+            if (mobileLogoutBtn) {
+
+                mobileLogoutBtn.addEventListener(
+                    "click",
+                    checkAfterLogout
+                );
+
+            }
+
+        }
+
+
+
+        /* =====================================================
+           PAGE LOAD
+        ===================================================== */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                refreshMyRentalsSystem();
+
+                setupMyRentalsLogoutCheck();
+
+            }
+        );
+
+
+
+        /* =====================================================
+           LOCAL STORAGE CHANGE
+        ===================================================== */
+
+        window.addEventListener(
+            "storage",
+            function () {
+
+                refreshMyRentalsSystem();
+
+            }
+        );
+
+
+
+        /* =====================================================
+           LOGIN / LOGOUT CUSTOM EVENT
+        ===================================================== */
+
+        window.addEventListener(
+            "attendanceLoginChanged",
+            function () {
+
+                setTimeout(
+                    function () {
+
+                        refreshMyRentalsSystem();
+
+                    },
+                    100
+                );
+
+            }
+        );
+
+
+
+        /* =====================================================
+           BOOK SUBMITTED EVENT
+        ===================================================== */
+
+        window.addEventListener(
+            "myRentalBookSubmitted",
+            function () {
+
+                /*
+                Main script.js already reloads books
+                after successful submission.
+                */
+
+                updateMyRentalsVisibility();
+
+            }
+        );
+
+    </script>
+
 
 
     <!-- =========================================================
@@ -1411,12 +2812,14 @@
             const libraryUser =
                 localStorage.getItem("libraryUser");
 
+
             if (libraryUser) {
 
                 try {
 
                     const user =
                         JSON.parse(libraryUser);
+
 
                     if (
                         user &&
@@ -1449,14 +2852,8 @@
             const loggedUser =
                 localStorage.getItem("loggedUser");
 
+
             if (loggedUser) {
-
-                /*
-                    loggedUser in your current script.js
-                    is normally just the user's name.
-
-                    So we DON'T try JSON.parse() here.
-                */
 
                 const user = {
 
@@ -1486,6 +2883,7 @@
             const attendanceSection =
                 document.getElementById("attendance");
 
+
             const attendanceNavLink =
                 document.getElementById(
                     "attendanceNavLink"
@@ -1493,7 +2891,9 @@
 
 
             if (!attendanceSection) {
+
                 return;
+
             }
 
 
@@ -1515,12 +2915,14 @@
                 attendanceSection.style.display =
                     "block";
 
+
                 if (attendanceNavLink) {
 
                     attendanceNavLink.style.display =
                         "inline-block";
 
                 }
+
 
                 console.log(
                     "Attendance visible for:",
@@ -1541,12 +2943,14 @@
                 attendanceSection.style.display =
                     "none";
 
+
                 if (attendanceNavLink) {
 
                     attendanceNavLink.style.display =
                         "none";
 
                 }
+
 
                 console.log(
                     "Attendance hidden - user not logged in"
@@ -1579,9 +2983,6 @@
         =========================================================
         STORAGE CHANGE
         =========================================================
-
-        This works when localStorage is changed from
-        another browser tab/window.
         */
 
         window.addEventListener(
@@ -1599,15 +3000,6 @@
         =========================================================
         CUSTOM EVENT
         =========================================================
-
-        script.js can call:
-
-        window.dispatchEvent(
-            new Event("attendanceLoginChanged")
-        );
-
-        This allows attendance visibility to update
-        immediately after login/logout.
         */
 
         window.addEventListener(
