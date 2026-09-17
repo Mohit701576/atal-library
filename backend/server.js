@@ -49,21 +49,15 @@ const upload = multer({
         ];
 
         if (allowedTypes.includes(file.mimetype)) {
-
             cb(null, true);
-
         } else {
-
             cb(
                 new Error(
                     "Only JPG, PNG, WEBP and GIF images are allowed."
                 )
             );
-
         }
-
     }
-
 });
 
 // ==================================================
@@ -82,34 +76,24 @@ function uploadProfilePhoto(req, res, next) {
                 if (err.code === "LIMIT_FILE_SIZE") {
 
                     return res.status(400).json({
-
                         success: false,
-
                         message:
                             "Profile photo must be 5 MB or smaller."
-
                     });
 
                 }
 
                 return res.status(400).json({
-
                     success: false,
-
                     message: err.message
-
                 });
-
             }
 
             if (err) {
 
                 return res.status(400).json({
-
                     success: false,
-
                     message: err.message
-
                 });
 
             }
@@ -140,17 +124,13 @@ function getPhotoExtension(mimetype) {
     }
 
     return "jpg";
-
 }
 
 // ==================================================
 // UPLOAD PHOTO TO SUPABASE
 // ==================================================
 
-async function saveProfilePhoto(
-    userId,
-    file
-) {
+async function saveProfilePhoto(userId, file) {
 
     const extension =
         getPhotoExtension(file.mimetype);
@@ -173,9 +153,7 @@ async function saveProfilePhoto(
         );
 
     if (uploadError) {
-
         throw uploadError;
-
     }
 
     const {
@@ -189,11 +167,9 @@ async function saveProfilePhoto(
         !publicUrlData ||
         !publicUrlData.publicUrl
     ) {
-
         throw new Error(
             "Unable to create profile photo URL."
         );
-
     }
 
     return (
@@ -201,7 +177,6 @@ async function saveProfilePhoto(
         "?v=" +
         Date.now()
     );
-
 }
 
 // ==================================================
@@ -216,11 +191,8 @@ async function deleteOldProfilePhotos(
     const possibleFiles = [
 
         `users/${userId}/profile.jpg`,
-
         `users/${userId}/profile.png`,
-
         `users/${userId}/profile.webp`,
-
         `users/${userId}/profile.gif`
 
     ];
@@ -247,6 +219,52 @@ async function deleteOldProfilePhotos(
 
         console.log(
             "Old profile photo delete warning:",
+            error
+        );
+
+    }
+
+}
+
+// ==================================================
+// DELETE ALL PROFILE PHOTOS
+// ==================================================
+
+async function deleteAllProfilePhotos(userId) {
+
+    const possibleFiles = [
+
+        `users/${userId}/profile.jpg`,
+        `users/${userId}/profile.png`,
+        `users/${userId}/profile.webp`,
+        `users/${userId}/profile.gif`
+
+    ];
+
+    try {
+
+        const {
+            error
+        } = await supabase
+            .storage
+            .from(PROFILE_PHOTOS_BUCKET)
+            .remove(possibleFiles);
+
+        if (error) {
+
+            console.log(
+                "Profile photo delete warning:",
+                error
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.log(
+            "Profile photo delete warning:",
             error
         );
 
@@ -533,52 +551,52 @@ app.post(
             };
 
             const {
-    data,
-    error
-} = await resend.emails.send({
+                data,
+                error
+            } = await resend.emails.send({
 
-    from:
-        "Atal Library <onboarding@resend.dev>",
+                from:
+                    "Atal Library <onboarding@resend.dev>",
 
-    to:
-        [cleanEmail],
+                to:
+                    [cleanEmail],
 
-    subject:
-        "Atal Library - Email Verification OTP",
+                subject:
+                    "Atal Library - Email Verification OTP",
 
-    text:
-        `Your Atal Library verification OTP is ${otp}.
+                text:
+                    `Your Atal Library verification OTP is ${otp}.
 
 This OTP is valid for 5 minutes.
 
 Please do not share this OTP with anyone.`
 
-});
+            });
 
-if (error) {
+            if (error) {
 
-    console.log(
-        "================ RESEND ERROR ================"
-    );
+                console.log(
+                    "================ RESEND ERROR ================"
+                );
 
-    console.log(
-        JSON.stringify(error, null, 2)
-    );
+                console.log(
+                    JSON.stringify(error, null, 2)
+                );
 
-    console.log(
-        "================================================"
-    );
+                console.log(
+                    "================================================"
+                );
 
-    return res.status(500).json({
+                return res.status(500).json({
 
-        success: false,
+                    success: false,
 
-        message:
-            "Unable to send OTP. Please try again."
+                    message:
+                        "Unable to send OTP. Please try again."
 
-    });
+                });
 
-}
+            }
 
             console.log(
                 "OTP email sent successfully."
@@ -775,10 +793,6 @@ app.post(
                 password
             } = req.body;
 
-            // ------------------------------------------
-            // REQUIRED FIELDS
-            // ------------------------------------------
-
             if (
                 !name ||
                 !email ||
@@ -797,10 +811,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // PHOTO REQUIRED
-            // ------------------------------------------
-
             if (!req.file) {
 
                 return res.status(400).json({
@@ -813,10 +823,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // CLEAN DATA
-            // ------------------------------------------
 
             const cleanName =
                 name
@@ -834,10 +840,6 @@ app.post(
                     .toString()
                     .trim();
 
-            // ------------------------------------------
-            // PHONE CHECK
-            // ------------------------------------------
-
             if (
                 !/^\d{10}$/.test(
                     cleanPhone
@@ -854,10 +856,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // DUPLICATE EMAIL
-            // ------------------------------------------
 
             const {
                 data: existingUsers,
@@ -905,10 +903,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // CHECK OTP
-            // ------------------------------------------
-
             const verifiedOTP =
                 emailOtps[cleanEmail];
 
@@ -927,10 +921,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // INSERT USER
-            // ------------------------------------------
 
             const {
                 data: newUser,
@@ -978,10 +968,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // SAVE PHOTO
-            // ------------------------------------------
-
             let profilePhotoUrl;
 
             try {
@@ -1001,7 +987,6 @@ app.post(
                     photoError
                 );
 
-                // Delete user if photo upload fails
                 await supabase
                     .from("users")
                     .delete()
@@ -1020,10 +1005,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // SAVE PHOTO URL
-            // ------------------------------------------
 
             const {
                 error: photoUpdateError
@@ -1058,15 +1039,7 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // DELETE OTP
-            // ------------------------------------------
-
             delete emailOtps[cleanEmail];
-
-            // ------------------------------------------
-            // SUCCESS
-            // ------------------------------------------
 
             return res.status(201).json({
 
@@ -1319,10 +1292,6 @@ app.post(
                     .trim()
                     .toLowerCase();
 
-            // ------------------------------------------
-            // FIND USER
-            // ------------------------------------------
-
             const {
                 data: users,
                 error: userError
@@ -1374,10 +1343,6 @@ app.post(
             const user =
                 users[0];
 
-            // ------------------------------------------
-            // UPLOAD NEW PHOTO
-            // ------------------------------------------
-
             const extension =
                 getPhotoExtension(
                     req.file.mimetype
@@ -1421,10 +1386,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // GET NEW PHOTO URL
-            // ------------------------------------------
-
             const {
                 data: publicUrlData
             } = supabase
@@ -1436,10 +1397,6 @@ app.post(
                 publicUrlData.publicUrl +
                 "?v=" +
                 Date.now();
-
-            // ------------------------------------------
-            // UPDATE USER
-            // ------------------------------------------
 
             const {
                 error: updateError
@@ -1474,18 +1431,10 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // DELETE OLD FORMAT FILES
-            // ------------------------------------------
-
             await deleteOldProfilePhotos(
                 user.id,
                 filePath
             );
-
-            // ------------------------------------------
-            // SUCCESS
-            // ------------------------------------------
 
             return res.json({
 
@@ -3106,7 +3055,7 @@ app.get(
             } = await supabase
                 .from("users")
                 .select(
-                    "name,email,phone,profile_photo"
+                    "id,name,email,phone,profile_photo"
                 )
                 .order(
                     "created_at",
@@ -3136,6 +3085,9 @@ app.get(
                     function (user) {
 
                         return {
+
+                            ID:
+                                user.id || "",
 
                             Name:
                                 user.name || "",
@@ -3168,6 +3120,307 @@ app.get(
 
                 message:
                     "Server error."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// ADMIN - DELETE USER
+// ==================================================
+
+app.delete(
+    "/admin/users/:email",
+    checkAdmin,
+    async (req, res) => {
+
+        try {
+
+            const email =
+                decodeURIComponent(
+                    req.params.email
+                )
+                .trim()
+                .toLowerCase();
+
+            console.log(
+                "ADMIN DELETE USER REQUEST:",
+                email
+            );
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "User email is required."
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // FIND USER
+            // ------------------------------------------
+
+            const {
+                data: users,
+                error: userFindError
+            } = await supabase
+                .from("users")
+                .select(
+                    "id,name,email,profile_photo"
+                )
+                .eq(
+                    "email",
+                    email
+                )
+                .limit(1);
+
+            if (userFindError) {
+
+                console.log(
+                    "ADMIN DELETE USER FIND ERROR:",
+                    userFindError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to find user.",
+
+                    error:
+                        userFindError.message
+
+                });
+
+            }
+
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "User not found."
+
+                });
+
+            }
+
+            const user =
+                users[0];
+
+            const userId =
+                user.id;
+
+            // ------------------------------------------
+            // CHECK ACTIVE RENTALS
+            // ------------------------------------------
+
+            const {
+                data: activeTransactions,
+                error: transactionCheckError
+            } = await supabase
+                .from("transactions")
+                .select(
+                    "id,book_name,status,submit_date"
+                )
+                .eq(
+                    "email",
+                    email
+                )
+                .eq(
+                    "status",
+                    "RENTED"
+                )
+                .is(
+                    "submit_date",
+                    null
+                );
+
+            if (transactionCheckError) {
+
+                console.log(
+                    "ACTIVE RENTAL CHECK ERROR:",
+                    transactionCheckError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to check user's active rentals."
+
+                });
+
+            }
+
+            if (
+                activeTransactions &&
+                activeTransactions.length > 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "This user cannot be deleted because they currently have a rented book. Please submit the book first."
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // DELETE ATTENDANCE RECORDS
+            // ------------------------------------------
+
+            const {
+                error: attendanceDeleteError
+            } = await supabase
+                .from("attendance")
+                .delete()
+                .eq(
+                    "email",
+                    email
+                );
+
+            if (attendanceDeleteError) {
+
+                console.log(
+                    "Attendance delete warning:",
+                    attendanceDeleteError
+                );
+
+            }
+
+            // ------------------------------------------
+            // DELETE TRANSACTIONS
+            // ------------------------------------------
+
+            const {
+                error: transactionDeleteError
+            } = await supabase
+                .from("transactions")
+                .delete()
+                .eq(
+                    "email",
+                    email
+                );
+
+            if (transactionDeleteError) {
+
+                console.log(
+                    "Transaction delete error:",
+                    transactionDeleteError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to delete user's transaction history.",
+
+                    error:
+                        transactionDeleteError.message
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // DELETE USER FROM DATABASE
+            // ------------------------------------------
+
+            const {
+                error: userDeleteError
+            } = await supabase
+                .from("users")
+                .delete()
+                .eq(
+                    "id",
+                    userId
+                );
+
+            if (userDeleteError) {
+
+                console.log(
+                    "USER DELETE ERROR:",
+                    userDeleteError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to delete user.",
+
+                    error:
+                        userDeleteError.message
+
+                });
+
+            }
+
+            // ------------------------------------------
+            // DELETE PROFILE PHOTO
+            // ------------------------------------------
+
+            await deleteAllProfilePhotos(
+                userId
+            );
+
+            // ------------------------------------------
+            // SUCCESS
+            // ------------------------------------------
+
+            console.log(
+                "USER DELETED SUCCESSFULLY:",
+                email
+            );
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "User deleted successfully."
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "ADMIN DELETE USER SERVER ERROR:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error while deleting user.",
+
+                error:
+                    error.message
 
             });
 
