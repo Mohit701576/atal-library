@@ -1,3 +1,4 @@
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const { createClient } = require("@supabase/supabase-js");
@@ -6,7 +7,6 @@ const cors = require("cors");
 const path = require("path");
 const crypto = require("crypto");
 const multer = require("multer");
-const { Resend } = require("resend");
 
 // ==================================================
 // SUPABASE
@@ -269,11 +269,65 @@ app.use(
 );
 
 // ==================================================
-// RESEND EMAIL
+// GMAIL SMTP
 // ==================================================
 
-const resend = new Resend(
-    process.env.RESEND_API_KEY
+const transporter = nodemailer.createTransport({
+
+    service: "gmail",
+
+    auth: {
+
+        user:
+            process.env.GMAIL_USER,
+
+        pass:
+            process.env.GMAIL_APP_PASSWORD
+
+    }
+
+});
+
+// ==================================================
+// VERIFY GMAIL SMTP CONNECTION
+// ==================================================
+
+transporter.verify(
+    function (error, success) {
+
+        if (error) {
+
+            console.log(
+                "===================================="
+            );
+
+            console.log(
+                "GMAIL SMTP CONNECTION ERROR"
+            );
+
+            console.log(
+                "===================================="
+            );
+
+            console.log(error);
+
+        } else {
+
+            console.log(
+                "===================================="
+            );
+
+            console.log(
+                "GMAIL SMTP READY"
+            );
+
+            console.log(
+                "===================================="
+            );
+
+        }
+
+    }
 );
 
 // ==================================================
@@ -413,7 +467,7 @@ function checkAdmin(
 }
 
 // ==================================================
-// SEND EMAIL OTP
+// SEND EMAIL OTP - GMAIL SMTP
 // ==================================================
 
 app.post(
@@ -430,6 +484,10 @@ app.post(
                 email
             } = req.body;
 
+            // ------------------------------------------
+            // EMAIL REQUIRED
+            // ------------------------------------------
+
             if (!email) {
 
                 return res.status(400).json({
@@ -443,6 +501,10 @@ app.post(
 
             }
 
+            // ------------------------------------------
+            // CLEAN EMAIL
+            // ------------------------------------------
+
             const cleanEmail =
                 email
                     .toString()
@@ -454,10 +516,17 @@ app.post(
                 cleanEmail
             );
 
-            if (!process.env.RESEND_API_KEY) {
+            // ------------------------------------------
+            // CHECK GMAIL CONFIGURATION
+            // ------------------------------------------
+
+            if (
+                !process.env.GMAIL_USER ||
+                !process.env.GMAIL_APP_PASSWORD
+            ) {
 
                 console.log(
-                    "RESEND_API_KEY is missing."
+                    "GMAIL_USER or GMAIL_APP_PASSWORD is missing."
                 );
 
                 return res.status(500).json({
@@ -470,6 +539,10 @@ app.post(
                 });
 
             }
+
+            // ------------------------------------------
+            // CHECK DUPLICATE EMAIL
+            // ------------------------------------------
 
             const {
                 data: existingUsers,
@@ -517,77 +590,238 @@ app.post(
 
             }
 
+            // ------------------------------------------
+            // GENERATE OTP
+            // ------------------------------------------
+
             const otp =
                 generateOTP();
 
+            // ------------------------------------------
+            // SAVE OTP
+            // ------------------------------------------
+
             emailOtps[cleanEmail] = {
 
-                otp: otp,
+                otp:
+                    otp,
 
                 expiresAt:
                     Date.now() +
                     5 * 60 * 1000,
 
-                verified: false
+                verified:
+                    false
 
             };
 
-            const {
-    data,
-    error
-} = await resend.emails.send({
+            // ------------------------------------------
+            // EMAIL OPTIONS
+            // ------------------------------------------
 
-    from:
-        "Atal Library <onboarding@resend.dev>",
+            const mailOptions = {
 
-    to:
-        [cleanEmail],
+                from:
+                    `"Atal Library" <${process.env.GMAIL_USER}>`,
 
-    subject:
-        "Atal Library - Email Verification OTP",
+                to:
+                    cleanEmail,
 
-    text:
-        `Your Atal Library verification OTP is ${otp}.
+                subject:
+                    "Atal Library - Email Verification OTP",
+
+                text:
+                    `Your Atal Library verification OTP is ${otp}.
 
 This OTP is valid for 5 minutes.
 
-Please do not share this OTP with anyone.`
+Please do not share this OTP with anyone.
 
-});
+If you did not request this OTP, please ignore this email.`,
 
-if (error) {
+                html:
+                    `
+                    <!DOCTYPE html>
 
-    console.log(
-        "================ RESEND ERROR ================"
-    );
+                    <html>
 
-    console.log(
-        JSON.stringify(error, null, 2)
-    );
+                    <head>
 
-    console.log(
-        "================================================"
-    );
+                        <meta charset="UTF-8">
 
-    return res.status(500).json({
+                        <title>
+                            Atal Library OTP
+                        </title>
 
-        success: false,
+                    </head>
 
-        message:
-            "Unable to send OTP. Please try again."
+                    <body
+                        style="
+                            margin:0;
+                            padding:0;
+                            background:#f4f6f8;
+                            font-family:Arial, sans-serif;
+                        "
+                    >
 
-    });
+                        <div
+                            style="
+                                max-width:600px;
+                                margin:40px auto;
+                                background:#ffffff;
+                                border-radius:12px;
+                                padding:30px;
+                                box-shadow:0 4px 15px rgba(0,0,0,0.08);
+                            "
+                        >
 
-}
+                            <h1
+                                style="
+                                    text-align:center;
+                                    color:#2563eb;
+                                    margin-bottom:10px;
+                                "
+                            >
+                                📚 Atal Library
+                            </h1>
+
+                            <p
+                                style="
+                                    text-align:center;
+                                    color:#555;
+                                    font-size:16px;
+                                "
+                            >
+                                Email Verification
+                            </p>
+
+                            <p
+                                style="
+                                    color:#333;
+                                    font-size:15px;
+                                    line-height:1.6;
+                                "
+                            >
+                                Hello,
+                            </p>
+
+                            <p
+                                style="
+                                    color:#333;
+                                    font-size:15px;
+                                    line-height:1.6;
+                                "
+                            >
+                                Your verification OTP for
+                                Atal Library is:
+                            </p>
+
+                            <div
+                                style="
+                                    text-align:center;
+                                    margin:25px 0;
+                                "
+                            >
+
+                                <span
+                                    style="
+                                        display:inline-block;
+                                        background:#2563eb;
+                                        color:white;
+                                        font-size:32px;
+                                        font-weight:bold;
+                                        letter-spacing:8px;
+                                        padding:15px 25px;
+                                        border-radius:10px;
+                                    "
+                                >
+                                    ${otp}
+                                </span>
+
+                            </div>
+
+                            <p
+                                style="
+                                    text-align:center;
+                                    color:#666;
+                                    font-size:14px;
+                                "
+                            >
+                                This OTP is valid for
+                                <strong>5 minutes</strong>.
+                            </p>
+
+                            <p
+                                style="
+                                    color:#777;
+                                    font-size:13px;
+                                    line-height:1.5;
+                                    margin-top:25px;
+                                "
+                            >
+                                Please do not share this OTP
+                                with anyone.
+                            </p>
+
+                            <p
+                                style="
+                                    color:#777;
+                                    font-size:13px;
+                                    line-height:1.5;
+                                "
+                            >
+                                If you did not request this OTP,
+                                please ignore this email.
+                            </p>
+
+                            <hr
+                                style="
+                                    border:none;
+                                    border-top:1px solid #eee;
+                                    margin:25px 0;
+                                "
+                            >
+
+                            <p
+                                style="
+                                    text-align:center;
+                                    color:#999;
+                                    font-size:12px;
+                                "
+                            >
+                                © 2026 Atal Library
+                            </p>
+
+                        </div>
+
+                    </body>
+
+                    </html>
+                    `
+
+            };
+
+            // ------------------------------------------
+            // SEND EMAIL
+            // ------------------------------------------
+
+            const info =
+                await transporter.sendMail(
+                    mailOptions
+                );
 
             console.log(
                 "OTP email sent successfully."
             );
 
             console.log(
-                "Resend Email ID:",
-                data ? data.id : ""
+                "Gmail Message ID:",
+                info.messageId
             );
+
+            // ------------------------------------------
+            // RESPONSE
+            // ------------------------------------------
 
             return res.json({
 
@@ -603,8 +837,15 @@ if (error) {
         catch (error) {
 
             console.log(
-                "OTP SEND ERROR:",
+                "================ GMAIL OTP ERROR ================"
+            );
+
+            console.log(
                 error
+            );
+
+            console.log(
+                "=================================================="
             );
 
             return res.status(500).json({
@@ -775,10 +1016,6 @@ app.post(
                 password
             } = req.body;
 
-            // ------------------------------------------
-            // REQUIRED FIELDS
-            // ------------------------------------------
-
             if (
                 !name ||
                 !email ||
@@ -797,10 +1034,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // PHOTO REQUIRED
-            // ------------------------------------------
-
             if (!req.file) {
 
                 return res.status(400).json({
@@ -813,10 +1046,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // CLEAN DATA
-            // ------------------------------------------
 
             const cleanName =
                 name
@@ -834,10 +1063,6 @@ app.post(
                     .toString()
                     .trim();
 
-            // ------------------------------------------
-            // PHONE CHECK
-            // ------------------------------------------
-
             if (
                 !/^\d{10}$/.test(
                     cleanPhone
@@ -854,10 +1079,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // DUPLICATE EMAIL
-            // ------------------------------------------
 
             const {
                 data: existingUsers,
@@ -905,10 +1126,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // CHECK OTP
-            // ------------------------------------------
-
             const verifiedOTP =
                 emailOtps[cleanEmail];
 
@@ -927,10 +1144,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // INSERT USER
-            // ------------------------------------------
 
             const {
                 data: newUser,
@@ -978,10 +1191,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // SAVE PHOTO
-            // ------------------------------------------
-
             let profilePhotoUrl;
 
             try {
@@ -1001,7 +1210,6 @@ app.post(
                     photoError
                 );
 
-                // Delete user if photo upload fails
                 await supabase
                     .from("users")
                     .delete()
@@ -1020,10 +1228,6 @@ app.post(
                 });
 
             }
-
-            // ------------------------------------------
-            // SAVE PHOTO URL
-            // ------------------------------------------
 
             const {
                 error: photoUpdateError
@@ -1058,15 +1262,7 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // DELETE OTP
-            // ------------------------------------------
-
             delete emailOtps[cleanEmail];
-
-            // ------------------------------------------
-            // SUCCESS
-            // ------------------------------------------
 
             return res.status(201).json({
 
@@ -1319,10 +1515,6 @@ app.post(
                     .trim()
                     .toLowerCase();
 
-            // ------------------------------------------
-            // FIND USER
-            // ------------------------------------------
-
             const {
                 data: users,
                 error: userError
@@ -1374,10 +1566,6 @@ app.post(
             const user =
                 users[0];
 
-            // ------------------------------------------
-            // UPLOAD NEW PHOTO
-            // ------------------------------------------
-
             const extension =
                 getPhotoExtension(
                     req.file.mimetype
@@ -1421,10 +1609,6 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // GET NEW PHOTO URL
-            // ------------------------------------------
-
             const {
                 data: publicUrlData
             } = supabase
@@ -1436,10 +1620,6 @@ app.post(
                 publicUrlData.publicUrl +
                 "?v=" +
                 Date.now();
-
-            // ------------------------------------------
-            // UPDATE USER
-            // ------------------------------------------
 
             const {
                 error: updateError
@@ -1474,18 +1654,10 @@ app.post(
 
             }
 
-            // ------------------------------------------
-            // DELETE OLD FORMAT FILES
-            // ------------------------------------------
-
             await deleteOldProfilePhotos(
                 user.id,
                 filePath
             );
-
-            // ------------------------------------------
-            // SUCCESS
-            // ------------------------------------------
 
             return res.json({
 
@@ -1869,7 +2041,7 @@ app.get(
             } = await supabase
                 .from("users")
                 .select(
-                    "name,email,phone,profile_photo"
+                    "id,name,email,phone,profile_photo"
                 )
                 .order(
                     "created_at",
@@ -3297,7 +3469,6 @@ app.get(
     }
 );
 
-
 // ==================================================
 // USER - ATTENDANCE ENTER
 // ==================================================
@@ -3305,102 +3476,230 @@ app.get(
 app.post(
     "/attendance/enter",
     async (req, res) => {
+
         try {
-            const { email } = req.body;
+
+            const {
+                email
+            } = req.body;
 
             if (!email) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "Email is required."
+
+                    message:
+                        "Email is required."
+
                 });
+
             }
 
-            const cleanEmail = email.toString().trim().toLowerCase();
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
 
-            const { data: users, error: userError } = await supabase
+            const {
+                data: users,
+                error: userError
+            } = await supabase
                 .from("users")
-                .select("id,name,email")
-                .eq("email", cleanEmail)
+                .select(
+                    "id,name,email"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
                 .limit(1);
 
             if (userError) {
-                console.log("Attendance user error:", userError);
+
+                console.log(
+                    "Attendance user error:",
+                    userError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to verify user."
+
+                    message:
+                        "Unable to verify user."
+
                 });
+
             }
 
-            if (!users || users.length === 0) {
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
                 return res.status(404).json({
+
                     success: false,
-                    message: "User not found. Please login again."
+
+                    message:
+                        "User not found. Please login again."
+
                 });
+
             }
 
-            const user = users[0];
+            const user =
+                users[0];
 
-            const { data: activeAttendance, error: activeError } = await supabase
+            const {
+                data: activeAttendance,
+                error: activeError
+            } = await supabase
                 .from("attendance")
-                .select("id,entry_time,exit_time,status")
-                .eq("email", cleanEmail)
-                .eq("status", "INSIDE")
-                .is("exit_time", null)
-                .order("entry_time", { ascending: false })
+                .select(
+                    "id,entry_time,exit_time,status"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "INSIDE"
+                )
+                .is(
+                    "exit_time",
+                    null
+                )
+                .order(
+                    "entry_time",
+                    {
+                        ascending: false
+                    }
+                )
                 .limit(1);
 
             if (activeError) {
-                console.log("Attendance active check error:", activeError);
+
+                console.log(
+                    "Attendance active check error:",
+                    activeError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to check attendance."
+
+                    message:
+                        "Unable to check attendance."
+
                 });
+
             }
 
-            if (activeAttendance && activeAttendance.length > 0) {
+            if (
+                activeAttendance &&
+                activeAttendance.length > 0
+            ) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "You are already inside the library.",
-                    attendance: activeAttendance[0]
+
+                    message:
+                        "You are already inside the library.",
+
+                    attendance:
+                        activeAttendance[0]
+
                 });
+
             }
 
-            const entryTime = new Date().toISOString();
+            const entryTime =
+                new Date().toISOString();
 
-            const { data: attendance, error: insertError } = await supabase
+            const {
+                data: attendance,
+                error: insertError
+            } = await supabase
                 .from("attendance")
                 .insert({
-                    user_id: String(user.id),
-                    name: user.name || "",
-                    email: cleanEmail,
-                    entry_time: entryTime,
-                    exit_time: null,
-                    status: "INSIDE"
+
+                    user_id:
+                        String(user.id),
+
+                    name:
+                        user.name || "",
+
+                    email:
+                        cleanEmail,
+
+                    entry_time:
+                        entryTime,
+
+                    exit_time:
+                        null,
+
+                    status:
+                        "INSIDE"
+
                 })
                 .select("*")
                 .single();
 
             if (insertError) {
-                console.log("Attendance insert error:", insertError);
+
+                console.log(
+                    "Attendance insert error:",
+                    insertError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to record library entry."
+
+                    message:
+                        "Unable to record library entry."
+
                 });
+
             }
 
             return res.json({
+
                 success: true,
-                message: "Entry recorded successfully.",
-                attendance: attendance
+
+                message:
+                    "Entry recorded successfully.",
+
+                attendance:
+                    attendance
+
             });
+
         }
+
         catch (error) {
-            console.log("Attendance enter server error:", error);
+
+            console.log(
+                "Attendance enter server error:",
+                error
+            );
+
             return res.status(500).json({
+
                 success: false,
-                message: "Server error."
+
+                message:
+                    "Server error."
+
             });
+
         }
+
     }
 );
 
@@ -3411,76 +3710,169 @@ app.post(
 app.post(
     "/attendance/exit",
     async (req, res) => {
+
         try {
-            const { email } = req.body;
+
+            const {
+                email
+            } = req.body;
 
             if (!email) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "Email is required."
+
+                    message:
+                        "Email is required."
+
                 });
+
             }
 
-            const cleanEmail = email.toString().trim().toLowerCase();
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
 
-            const { data: activeAttendance, error: findError } = await supabase
+            const {
+                data: activeAttendance,
+                error: findError
+            } = await supabase
                 .from("attendance")
                 .select("*")
-                .eq("email", cleanEmail)
-                .eq("status", "INSIDE")
-                .is("exit_time", null)
-                .order("entry_time", { ascending: false })
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "INSIDE"
+                )
+                .is(
+                    "exit_time",
+                    null
+                )
+                .order(
+                    "entry_time",
+                    {
+                        ascending: false
+                    }
+                )
                 .limit(1);
 
             if (findError) {
-                console.log("Attendance exit find error:", findError);
+
+                console.log(
+                    "Attendance exit find error:",
+                    findError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to find active attendance."
+
+                    message:
+                        "Unable to find active attendance."
+
                 });
+
             }
 
-            if (!activeAttendance || activeAttendance.length === 0) {
+            if (
+                !activeAttendance ||
+                activeAttendance.length === 0
+            ) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "No active library entry found."
+
+                    message:
+                        "No active library entry found."
+
                 });
+
             }
 
-            const record = activeAttendance[0];
-            const exitTime = new Date().toISOString();
+            const record =
+                activeAttendance[0];
 
-            const { data: updatedAttendance, error: updateError } = await supabase
+            const exitTime =
+                new Date().toISOString();
+
+            const {
+                data: updatedAttendance,
+                error: updateError
+            } = await supabase
                 .from("attendance")
                 .update({
-                    exit_time: exitTime,
-                    status: "OUTSIDE"
+
+                    exit_time:
+                        exitTime,
+
+                    status:
+                        "OUTSIDE"
+
                 })
-                .eq("id", record.id)
+                .eq(
+                    "id",
+                    record.id
+                )
                 .select("*")
                 .single();
 
             if (updateError) {
-                console.log("Attendance exit update error:", updateError);
+
+                console.log(
+                    "Attendance exit update error:",
+                    updateError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to record library exit."
+
+                    message:
+                        "Unable to record library exit."
+
                 });
+
             }
 
             return res.json({
+
                 success: true,
-                message: "Exit recorded successfully.",
-                attendance: updatedAttendance
+
+                message:
+                    "Exit recorded successfully.",
+
+                attendance:
+                    updatedAttendance
+
             });
+
         }
+
         catch (error) {
-            console.log("Attendance exit server error:", error);
+
+            console.log(
+                "Attendance exit server error:",
+                error
+            );
+
             return res.status(500).json({
+
                 success: false,
-                message: "Server error."
+
+                message:
+                    "Server error."
+
             });
+
         }
+
     }
 );
 
@@ -3491,50 +3883,115 @@ app.post(
 app.get(
     "/attendance/status",
     async (req, res) => {
+
         try {
-            const email = req.query.email;
+
+            const email =
+                req.query.email;
 
             if (!email) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "Email is required."
+
+                    message:
+                        "Email is required."
+
                 });
+
             }
 
-            const cleanEmail = email.toString().trim().toLowerCase();
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
 
-            const { data: activeAttendance, error } = await supabase
+            const {
+                data: activeAttendance,
+                error
+            } = await supabase
                 .from("attendance")
-                .select("id,name,email,entry_time,exit_time,status")
-                .eq("email", cleanEmail)
-                .eq("status", "INSIDE")
-                .is("exit_time", null)
-                .order("entry_time", { ascending: false })
+                .select(
+                    "id,name,email,entry_time,exit_time,status"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "INSIDE"
+                )
+                .is(
+                    "exit_time",
+                    null
+                )
+                .order(
+                    "entry_time",
+                    {
+                        ascending: false
+                    }
+                )
                 .limit(1);
 
             if (error) {
-                console.log("Attendance status error:", error);
+
+                console.log(
+                    "Attendance status error:",
+                    error
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to get attendance status."
+
+                    message:
+                        "Unable to get attendance status."
+
                 });
+
             }
 
             return res.json({
+
                 success: true,
-                inside: !!(activeAttendance && activeAttendance.length > 0),
-                attendance: activeAttendance && activeAttendance.length > 0
-                    ? activeAttendance[0]
-                    : null
+
+                inside:
+                    !!(
+                        activeAttendance &&
+                        activeAttendance.length > 0
+                    ),
+
+                attendance:
+                    activeAttendance &&
+                    activeAttendance.length > 0
+                        ? activeAttendance[0]
+                        : null
+
             });
+
         }
+
         catch (error) {
-            console.log("Attendance status server error:", error);
+
+            console.log(
+                "Attendance status server error:",
+                error
+            );
+
             return res.status(500).json({
+
                 success: false,
-                message: "Server error."
+
+                message:
+                    "Server error."
+
             });
+
         }
+
     }
 );
 
@@ -3546,39 +4003,94 @@ app.get(
     "/admin/attendance",
     checkAdmin,
     async (req, res) => {
+
         try {
-            const { data: attendance, error } = await supabase
+
+            const {
+                data: attendance,
+                error
+            } = await supabase
                 .from("attendance")
-                .select("id,user_id,name,email,entry_time,exit_time,status")
-                .order("entry_time", { ascending: false });
+                .select(
+                    "id,user_id,name,email,entry_time,exit_time,status"
+                )
+                .order(
+                    "entry_time",
+                    {
+                        ascending: false
+                    }
+                );
 
             if (error) {
-                console.log("Admin attendance error:", error);
+
+                console.log(
+                    "Admin attendance error:",
+                    error
+                );
+
                 return res.status(500).json({
-                    message: "Unable to get attendance."
+
+                    message:
+                        "Unable to get attendance."
+
                 });
+
             }
 
-            const result = (attendance || []).map(function (record) {
-                return {
-                    ID: record.id,
-                    UserID: record.user_id || "",
-                    Name: record.name || "",
-                    Email: record.email || "",
-                    EntryTime: record.entry_time || "",
-                    ExitTime: record.exit_time || "",
-                    Status: record.status || ""
-                };
+            const result =
+                (attendance || []).map(
+                    function (record) {
+
+                        return {
+
+                            ID:
+                                record.id,
+
+                            UserID:
+                                record.user_id || "",
+
+                            Name:
+                                record.name || "",
+
+                            Email:
+                                record.email || "",
+
+                            EntryTime:
+                                record.entry_time || "",
+
+                            ExitTime:
+                                record.exit_time || "",
+
+                            Status:
+                                record.status || ""
+
+                        };
+
+                    }
+                );
+
+            return res.json(
+                result
+            );
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Admin attendance server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                message:
+                    "Server error."
+
             });
 
-            return res.json(result);
         }
-        catch (error) {
-            console.log("Admin attendance server error:", error);
-            return res.status(500).json({
-                message: "Server error."
-            });
-        }
+
     }
 );
 
@@ -3589,112 +4101,263 @@ app.get(
 app.delete(
     "/account",
     async (req, res) => {
-        try {
-            const { email, password } = req.body;
 
-            if (!email || !password) {
+        try {
+
+            const {
+                email,
+                password
+            } = req.body;
+
+            if (
+                !email ||
+                !password
+            ) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "Email and password are required."
+
+                    message:
+                        "Email and password are required."
+
                 });
+
             }
 
-            const cleanEmail = email.toString().trim().toLowerCase();
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
 
-            const { data: users, error: findError } = await supabase
+            const {
+                data: users,
+                error: findError
+            } = await supabase
                 .from("users")
-                .select("id,email,password")
-                .eq("email", cleanEmail)
+                .select(
+                    "id,email,password"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
                 .limit(1);
 
             if (findError) {
-                console.log("Delete account find error:", findError);
+
+                console.log(
+                    "Delete account find error:",
+                    findError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to find account."
+
+                    message:
+                        "Unable to find account."
+
                 });
+
             }
 
-            if (!users || users.length === 0) {
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
                 return res.status(404).json({
+
                     success: false,
-                    message: "Account not found."
+
+                    message:
+                        "Account not found."
+
                 });
+
             }
 
-            const userId = users[0].id;
+            const userId =
+                users[0].id;
 
-            if (users[0].password !== password) {
+            if (
+                users[0].password !==
+                password
+            ) {
+
                 return res.status(401).json({
+
                     success: false,
-                    message: "Incorrect password. Account was not deleted."
+
+                    message:
+                        "Incorrect password. Account was not deleted."
+
                 });
+
             }
 
-            const { data: activeRentals, error: rentalError } = await supabase
+            const {
+                data: activeRentals,
+                error: rentalError
+            } = await supabase
                 .from("transactions")
-                .select("id,book_name")
-                .eq("email", cleanEmail)
-                .eq("status", "RENTED")
-                .is("submit_date", null);
+                .select(
+                    "id,book_name"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "RENTED"
+                )
+                .is(
+                    "submit_date",
+                    null
+                );
 
             if (rentalError) {
-                console.log("Delete account rental check error:", rentalError);
+
+                console.log(
+                    "Delete account rental check error:",
+                    rentalError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to check active book rentals."
+
+                    message:
+                        "Unable to check active book rentals."
+
                 });
+
             }
 
-            if (activeRentals && activeRentals.length > 0) {
+            if (
+                activeRentals &&
+                activeRentals.length > 0
+            ) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "Please submit all rented books before deleting your account."
+
+                    message:
+                        "Please submit all rented books before deleting your account."
+
                 });
+
             }
 
-            await supabase.from("attendance").delete().eq("email", cleanEmail);
-            await supabase.from("transactions").delete().eq("email", cleanEmail);
+            await supabase
+                .from("attendance")
+                .delete()
+                .eq(
+                    "email",
+                    cleanEmail
+                );
 
-            const { error: deleteError } = await supabase
+            await supabase
+                .from("transactions")
+                .delete()
+                .eq(
+                    "email",
+                    cleanEmail
+                );
+
+            const {
+                error: deleteError
+            } = await supabase
                 .from("users")
                 .delete()
-                .eq("id", userId);
+                .eq(
+                    "id",
+                    userId
+                );
 
             if (deleteError) {
-                console.log("Delete account error:", deleteError);
+
+                console.log(
+                    "Delete account error:",
+                    deleteError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to delete account."
+
+                    message:
+                        "Unable to delete account."
+
                 });
+
             }
 
             const possibleFiles = [
+
                 `users/${userId}/profile.jpg`,
+
                 `users/${userId}/profile.png`,
+
                 `users/${userId}/profile.webp`,
+
                 `users/${userId}/profile.gif`
+
             ];
 
             try {
-                await supabase.storage.from(PROFILE_PHOTOS_BUCKET).remove(possibleFiles);
+
+                await supabase
+                    .storage
+                    .from(PROFILE_PHOTOS_BUCKET)
+                    .remove(
+                        possibleFiles
+                    );
+
             }
+
             catch (photoError) {
-                console.log("Account photo delete warning:", photoError);
+
+                console.log(
+                    "Account photo delete warning:",
+                    photoError
+                );
+
             }
 
             return res.json({
+
                 success: true,
-                message: "Account deleted successfully."
+
+                message:
+                    "Account deleted successfully."
+
             });
+
         }
+
         catch (error) {
-            console.log("Delete account server error:", error);
+
+            console.log(
+                "Delete account server error:",
+                error
+            );
+
             return res.status(500).json({
+
                 success: false,
-                message: "Server error."
+
+                message:
+                    "Server error."
+
             });
+
         }
+
     }
 );
 
@@ -3706,96 +4369,219 @@ app.delete(
     "/admin/users/:email",
     checkAdmin,
     async (req, res) => {
-        try {
-            const cleanEmail = decodeURIComponent(req.params.email)
-                .toString()
-                .trim()
-                .toLowerCase();
 
-            const { data: users, error: findError } = await supabase
+        try {
+
+            const cleanEmail =
+                decodeURIComponent(
+                    req.params.email
+                )
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            const {
+                data: users,
+                error: findError
+            } = await supabase
                 .from("users")
-                .select("id,email")
-                .eq("email", cleanEmail)
+                .select(
+                    "id,email"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
                 .limit(1);
 
             if (findError) {
-                console.log("Admin delete user find error:", findError);
+
+                console.log(
+                    "Admin delete user find error:",
+                    findError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to find user."
+
+                    message:
+                        "Unable to find user."
+
                 });
+
             }
 
-            if (!users || users.length === 0) {
+            if (
+                !users ||
+                users.length === 0
+            ) {
+
                 return res.status(404).json({
+
                     success: false,
-                    message: "User not found."
+
+                    message:
+                        "User not found."
+
                 });
+
             }
 
-            const userId = users[0].id;
+            const userId =
+                users[0].id;
 
-            const { data: activeRentals, error: rentalError } = await supabase
+            const {
+                data: activeRentals,
+                error: rentalError
+            } = await supabase
                 .from("transactions")
-                .select("id")
-                .eq("email", cleanEmail)
-                .eq("status", "RENTED")
-                .is("submit_date", null);
+                .select(
+                    "id"
+                )
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "RENTED"
+                )
+                .is(
+                    "submit_date",
+                    null
+                );
 
             if (rentalError) {
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to check active rentals."
+
+                    message:
+                        "Unable to check active rentals."
+
                 });
+
             }
 
-            if (activeRentals && activeRentals.length > 0) {
+            if (
+                activeRentals &&
+                activeRentals.length > 0
+            ) {
+
                 return res.status(400).json({
+
                     success: false,
-                    message: "User has active rented books. Submit them before deleting the account."
+
+                    message:
+                        "User has active rented books. Submit them before deleting the account."
+
                 });
+
             }
 
-            await supabase.from("attendance").delete().eq("email", cleanEmail);
-            await supabase.from("transactions").delete().eq("email", cleanEmail);
+            await supabase
+                .from("attendance")
+                .delete()
+                .eq(
+                    "email",
+                    cleanEmail
+                );
 
-            const { error: deleteError } = await supabase
+            await supabase
+                .from("transactions")
+                .delete()
+                .eq(
+                    "email",
+                    cleanEmail
+                );
+
+            const {
+                error: deleteError
+            } = await supabase
                 .from("users")
                 .delete()
-                .eq("id", userId);
+                .eq(
+                    "id",
+                    userId
+                );
 
             if (deleteError) {
-                console.log("Admin delete user error:", deleteError);
+
+                console.log(
+                    "Admin delete user error:",
+                    deleteError
+                );
+
                 return res.status(500).json({
+
                     success: false,
-                    message: "Unable to delete user."
+
+                    message:
+                        "Unable to delete user."
+
                 });
+
             }
 
             try {
-                await supabase.storage.from(PROFILE_PHOTOS_BUCKET).remove([
-                    `users/${userId}/profile.jpg`,
-                    `users/${userId}/profile.png`,
-                    `users/${userId}/profile.webp`,
-                    `users/${userId}/profile.gif`
-                ]);
+
+                await supabase
+                    .storage
+                    .from(PROFILE_PHOTOS_BUCKET)
+                    .remove([
+
+                        `users/${userId}/profile.jpg`,
+
+                        `users/${userId}/profile.png`,
+
+                        `users/${userId}/profile.webp`,
+
+                        `users/${userId}/profile.gif`
+
+                    ]);
+
             }
+
             catch (photoError) {
-                console.log("Admin user photo delete warning:", photoError);
+
+                console.log(
+                    "Admin user photo delete warning:",
+                    photoError
+                );
+
             }
 
             return res.json({
+
                 success: true,
-                message: "User account deleted successfully."
+
+                message:
+                    "User account deleted successfully."
+
             });
+
         }
+
         catch (error) {
-            console.log("Admin delete user server error:", error);
+
+            console.log(
+                "Admin delete user server error:",
+                error
+            );
+
             return res.status(500).json({
+
                 success: false,
-                message: "Server error."
+
+                message:
+                    "Server error."
+
             });
+
         }
+
     }
 );
 
