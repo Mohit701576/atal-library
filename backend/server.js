@@ -9,6 +9,20 @@ const multer = require("multer");
 const { Resend } = require("resend");
 
 // ==================================================
+// ENVIRONMENT CHECK
+// ==================================================
+
+if (!process.env.SUPABASE_URL) {
+    console.log("WARNING: SUPABASE_URL is missing.");
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.log(
+        "WARNING: SUPABASE_SERVICE_ROLE_KEY is missing."
+    );
+}
+
+// ==================================================
 // SUPABASE
 // ==================================================
 
@@ -49,13 +63,17 @@ const upload = multer({
         ];
 
         if (allowedTypes.includes(file.mimetype)) {
+
             cb(null, true);
+
         } else {
+
             cb(
                 new Error(
                     "Only JPG, PNG, WEBP and GIF images are allowed."
                 )
             );
+
         }
     }
 });
@@ -87,6 +105,7 @@ function uploadProfilePhoto(req, res, next) {
                     success: false,
                     message: err.message
                 });
+
             }
 
             if (err) {
@@ -167,9 +186,11 @@ async function saveProfilePhoto(userId, file) {
         !publicUrlData ||
         !publicUrlData.publicUrl
     ) {
+
         throw new Error(
             "Unable to create profile photo URL."
         );
+
     }
 
     return (
@@ -208,10 +229,21 @@ async function deleteOldProfilePhotos(
 
     try {
 
-        await supabase
+        const {
+            error
+        } = await supabase
             .storage
             .from(PROFILE_PHOTOS_BUCKET)
             .remove(filesToDelete);
+
+        if (error) {
+
+            console.log(
+                "Old profile photo delete warning:",
+                error
+            );
+
+        }
 
     }
 
@@ -276,9 +308,35 @@ async function deleteAllProfilePhotos(userId) {
 // MIDDLEWARE
 // ==================================================
 
-app.use(cors());
+app.use(
+    cors({
+        origin: true,
+        methods: [
+            "GET",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE",
+            "OPTIONS"
+        ],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization"
+        ]
+    })
+);
 
-app.use(express.json());
+app.use(
+    express.json({
+        limit: "10mb"
+    })
+);
+
+app.use(
+    express.urlencoded({
+        extended: true
+    })
+);
 
 app.use(
     express.static(
@@ -349,6 +407,8 @@ app.post(
 
                 return res.status(401).json({
 
+                    success: false,
+
                     message:
                         "Invalid admin username or password."
 
@@ -384,6 +444,8 @@ app.post(
 
             return res.status(500).json({
 
+                success: false,
+
                 message:
                     "Server error."
 
@@ -418,6 +480,8 @@ function checkAdmin(
     ) {
 
         return res.status(401).json({
+
+            success: false,
 
             message:
                 "Admin login required."
@@ -1246,7 +1310,7 @@ app.post(
 );
 
 // ==================================================
-// CHANGE / UPLOAD PROFILE PHOTO
+// PROFILE PHOTO
 // ==================================================
 
 app.post(
@@ -1491,7 +1555,7 @@ app.post(
 );
 
 // ==================================================
-// GET CURRENT USER PROFILE
+// GET PROFILE
 // ==================================================
 
 app.get(
@@ -1877,6 +1941,484 @@ app.get(
             console.log(error);
 
             return res.status(500).json({
+
+                message:
+                    "Server error."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// ================= ATTENDANCE =====================
+// ==================================================
+
+// ==================================================
+// USER - GET ATTENDANCE
+// ==================================================
+
+app.get(
+    "/attendance",
+    async (req, res) => {
+
+        try {
+
+            const email =
+                req.query.email;
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Email is required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            console.log(
+                "ATTENDANCE REQUEST FOR:",
+                cleanEmail
+            );
+
+            const {
+                data: attendance,
+                error
+            } = await supabase
+                .from("attendance")
+                .select("*")
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .order(
+                    "date",
+                    {
+                        ascending: false
+                    }
+                );
+
+            if (error) {
+
+                console.log(
+                    "GET ATTENDANCE ERROR:",
+                    error
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to get attendance.",
+
+                    error:
+                        error.message
+
+                });
+
+            }
+
+            return res.json({
+
+                success: true,
+
+                attendance:
+                    attendance || []
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Attendance server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error while getting attendance."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// USER - ADD ATTENDANCE
+// ==================================================
+
+app.post(
+    "/attendance",
+    async (req, res) => {
+
+        try {
+
+            const {
+                name,
+                email,
+                date,
+                status
+            } = req.body;
+
+            if (
+                !name ||
+                !email ||
+                !date ||
+                !status
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Name, email, date and status are required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+            const cleanName =
+                name
+                    .toString()
+                    .trim();
+
+            const cleanDate =
+                date
+                    .toString()
+                    .trim();
+
+            const cleanStatus =
+                status
+                    .toString()
+                    .trim();
+
+            console.log(
+                "ADD ATTENDANCE:",
+                cleanEmail,
+                cleanDate,
+                cleanStatus
+            );
+
+            // Prevent duplicate attendance
+            // for same user and same date.
+
+            const {
+                data: existingAttendance,
+                error: existingError
+            } = await supabase
+                .from("attendance")
+                .select("id")
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "date",
+                    cleanDate
+                )
+                .limit(1);
+
+            if (existingError) {
+
+                console.log(
+                    "Attendance duplicate check error:",
+                    existingError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to check attendance."
+
+                });
+
+            }
+
+            if (
+                existingAttendance &&
+                existingAttendance.length > 0
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Attendance for this date already exists."
+
+                });
+
+            }
+
+            const {
+                data: newAttendance,
+                error: insertError
+            } = await supabase
+                .from("attendance")
+                .insert({
+
+                    name:
+                        cleanName,
+
+                    email:
+                        cleanEmail,
+
+                    date:
+                        cleanDate,
+
+                    status:
+                        cleanStatus
+
+                })
+                .select("*")
+                .single();
+
+            if (insertError) {
+
+                console.log(
+                    "ADD ATTENDANCE ERROR:",
+                    insertError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to save attendance.",
+
+                    error:
+                        insertError.message
+
+                });
+
+            }
+
+            return res.status(201).json({
+
+                success: true,
+
+                message:
+                    "Attendance saved successfully.",
+
+                attendance:
+                    newAttendance
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Add attendance server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error while saving attendance."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// ADMIN - GET ALL ATTENDANCE
+// ==================================================
+
+app.get(
+    "/admin/attendance",
+    checkAdmin,
+    async (req, res) => {
+
+        try {
+
+            const {
+                data: attendance,
+                error
+            } = await supabase
+                .from("attendance")
+                .select("*")
+                .order(
+                    "date",
+                    {
+                        ascending: false
+                    }
+                );
+
+            if (error) {
+
+                console.log(
+                    "ADMIN ATTENDANCE ERROR:",
+                    error
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to get attendance.",
+
+                    error:
+                        error.message
+
+                });
+
+            }
+
+            return res.json({
+
+                success: true,
+
+                attendance:
+                    attendance || []
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Admin attendance server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error while getting attendance."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
+// ADMIN - DELETE ATTENDANCE
+// ==================================================
+
+app.delete(
+    "/admin/attendance/:id",
+    checkAdmin,
+    async (req, res) => {
+
+        try {
+
+            const attendanceId =
+                Number(
+                    req.params.id
+                );
+
+            if (
+                !attendanceId ||
+                Number.isNaN(attendanceId)
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Invalid attendance ID."
+
+                });
+
+            }
+
+            const {
+                error
+            } = await supabase
+                .from("attendance")
+                .delete()
+                .eq(
+                    "id",
+                    attendanceId
+                );
+
+            if (error) {
+
+                console.log(
+                    "DELETE ATTENDANCE ERROR:",
+                    error
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to delete attendance.",
+
+                    error:
+                        error.message
+
+                });
+
+            }
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Attendance deleted successfully."
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "Delete attendance server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
 
                 message:
                     "Server error."
@@ -3164,10 +3706,6 @@ app.delete(
 
             }
 
-            // ------------------------------------------
-            // FIND USER
-            // ------------------------------------------
-
             const {
                 data: users,
                 error: userFindError
@@ -3225,10 +3763,6 @@ app.delete(
             const userId =
                 user.id;
 
-            // ------------------------------------------
-            // CHECK ACTIVE RENTALS
-            // ------------------------------------------
-
             const {
                 data: activeTransactions,
                 error: transactionCheckError
@@ -3284,10 +3818,6 @@ app.delete(
 
             }
 
-            // ------------------------------------------
-            // DELETE ATTENDANCE RECORDS
-            // ------------------------------------------
-
             const {
                 error: attendanceDeleteError
             } = await supabase
@@ -3306,10 +3836,6 @@ app.delete(
                 );
 
             }
-
-            // ------------------------------------------
-            // DELETE TRANSACTIONS
-            // ------------------------------------------
 
             const {
                 error: transactionDeleteError
@@ -3342,10 +3868,6 @@ app.delete(
 
             }
 
-            // ------------------------------------------
-            // DELETE USER FROM DATABASE
-            // ------------------------------------------
-
             const {
                 error: userDeleteError
             } = await supabase
@@ -3377,17 +3899,9 @@ app.delete(
 
             }
 
-            // ------------------------------------------
-            // DELETE PROFILE PHOTO
-            // ------------------------------------------
-
             await deleteAllProfilePhotos(
                 userId
             );
-
-            // ------------------------------------------
-            // SUCCESS
-            // ------------------------------------------
 
             console.log(
                 "USER DELETED SUCCESSFULLY:",
@@ -3623,9 +4137,64 @@ app.get(
     "/",
     (req, res) => {
 
-        res.send(
+        res.status(200).send(
             "Atal Library backend is running successfully."
         );
+
+    }
+);
+
+// ==================================================
+// UNKNOWN API ROUTE
+// ==================================================
+
+app.use(
+    (req, res, next) => {
+
+        if (
+            req.path.startsWith("/")
+        ) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    `API route not found: ${req.method} ${req.path}`
+
+            });
+
+        }
+
+        next();
+
+    }
+);
+
+// ==================================================
+// GLOBAL ERROR HANDLER
+// ==================================================
+
+app.use(
+    (error, req, res, next) => {
+
+        console.log(
+            "GLOBAL SERVER ERROR:",
+            error
+        );
+
+        if (res.headersSent) {
+            return next(error);
+        }
+
+        return res.status(500).json({
+
+            success: false,
+
+            message:
+                "Internal server error."
+
+        });
 
     }
 );
@@ -3641,6 +4210,10 @@ app.listen(
 
         console.log(
             `Atal Library server running on port ${PORT}`
+        );
+
+        console.log(
+            "Backend is ready."
         );
 
     }
