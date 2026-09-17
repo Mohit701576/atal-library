@@ -216,11 +216,8 @@ async function deleteOldProfilePhotos(
     const possibleFiles = [
 
         `users/${userId}/profile.jpg`,
-
         `users/${userId}/profile.png`,
-
         `users/${userId}/profile.webp`,
-
         `users/${userId}/profile.gif`
 
     ];
@@ -273,8 +270,11 @@ app.use(
 // ==================================================
 
 const transporter = nodemailer.createTransport({
+
     host: "smtp.gmail.com",
+
     port: 587,
+
     secure: false,
 
     family: 4,
@@ -285,70 +285,65 @@ const transporter = nodemailer.createTransport({
     },
 
     connectionTimeout: 15000,
+
     greetingTimeout: 15000,
+
     socketTimeout: 20000,
 
     tls: {
         rejectUnauthorized: true
     }
+
 });
 
-transporter.verify()
-    .then(() => {
-        console.log("====================================");
-        console.log("GMAIL SMTP READY");
-        console.log("IPv4 SMTP connection successful");
-        console.log("GMAIL USER:", process.env.GMAIL_USER);
-        console.log("====================================");
-    })
-    .catch((error) => {
-        console.log("====================================");
-        console.log("GMAIL SMTP CONNECTION ERROR");
-        console.log("====================================");
-        console.log(error);
-    });
-    
-    // ==================================================
+// ==================================================
 // VERIFY GMAIL SMTP CONNECTION
 // ==================================================
 
-transporter.verify(
-    function (error, success) {
+transporter.verify()
+    .then(() => {
 
-        if (error) {
+        console.log(
+            "===================================="
+        );
 
-            console.log(
-                "===================================="
-            );
+        console.log(
+            "GMAIL SMTP READY"
+        );
 
-            console.log(
-                "GMAIL SMTP CONNECTION ERROR"
-            );
+        console.log(
+            "IPv4 SMTP connection successful"
+        );
 
-            console.log(
-                "===================================="
-            );
+        console.log(
+            "GMAIL USER:",
+            process.env.GMAIL_USER
+        );
 
-            console.log(error);
+        console.log(
+            "===================================="
+        );
 
-        } else {
+    })
+    .catch((error) => {
 
-            console.log(
-                "===================================="
-            );
+        console.log(
+            "===================================="
+        );
 
-            console.log(
-                "GMAIL SMTP READY"
-            );
+        console.log(
+            "GMAIL SMTP CONNECTION ERROR"
+        );
 
-            console.log(
-                "===================================="
-            );
+        console.log(
+            "===================================="
+        );
 
-        }
+        console.log(
+            error
+        );
 
-    }
-);
+    });
 
 // ==================================================
 // GENERATE OTP
@@ -617,6 +612,10 @@ app.post(
             const otp =
                 generateOTP();
 
+            console.log(
+                "OTP GENERATED SUCCESSFULLY"
+            );
+
             // ------------------------------------------
             // SAVE OTP
             // ------------------------------------------
@@ -825,13 +824,17 @@ If you did not request this OTP, please ignore this email.`,
             // SEND EMAIL
             // ------------------------------------------
 
+            console.log(
+                "CONNECTING TO GMAIL SMTP..."
+            );
+
             const info =
                 await transporter.sendMail(
                     mailOptions
                 );
 
             console.log(
-                "OTP email sent successfully."
+                "OTP EMAIL SENT SUCCESSFULLY"
             );
 
             console.log(
@@ -858,6 +861,21 @@ If you did not request this OTP, please ignore this email.`,
 
             console.log(
                 "================ GMAIL OTP ERROR ================"
+            );
+
+            console.log(
+                "ERROR MESSAGE:",
+                error.message
+            );
+
+            console.log(
+                "ERROR CODE:",
+                error.code
+            );
+
+            console.log(
+                "ERROR COMMAND:",
+                error.command
             );
 
             console.log(
@@ -4320,11 +4338,8 @@ app.delete(
             const possibleFiles = [
 
                 `users/${userId}/profile.jpg`,
-
                 `users/${userId}/profile.png`,
-
                 `users/${userId}/profile.webp`,
-
                 `users/${userId}/profile.gif`
 
             ];
@@ -4553,11 +4568,8 @@ app.delete(
                     .remove([
 
                         `users/${userId}/profile.jpg`,
-
                         `users/${userId}/profile.png`,
-
                         `users/${userId}/profile.webp`,
-
                         `users/${userId}/profile.gif`
 
                     ]);
