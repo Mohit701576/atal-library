@@ -112,6 +112,12 @@
             background: #1d4ed8;
         }
 
+        .admin-login-box button:disabled {
+            background: #93c5fd;
+
+            cursor: not-allowed;
+        }
+
         .back-btn {
             display: block;
 
@@ -126,6 +132,20 @@
 
         .back-btn:hover {
             text-decoration: underline;
+        }
+
+        .status-message {
+            display: none;
+
+            margin-bottom: 18px;
+
+            padding: 10px;
+
+            border-radius: 8px;
+
+            text-align: center;
+
+            font-size: 14px;
         }
 
     </style>
@@ -143,6 +163,12 @@
         <p>Atal Library Administration</p>
 
 
+        <div
+            id="statusMessage"
+            class="status-message">
+        </div>
+
+
         <form id="adminLoginForm">
 
 
@@ -154,6 +180,7 @@
                 type="text"
                 id="adminUsername"
                 placeholder="Enter admin username"
+                autocomplete="username"
                 required
             >
 
@@ -166,43 +193,120 @@
                 type="password"
                 id="adminPassword"
                 placeholder="Enter admin password"
+                autocomplete="current-password"
                 required
             >
 
 
-            <button type="submit">
+            <button
+                type="submit"
+                id="loginButton">
+
                 Login as Admin
+
             </button>
+
 
         </form>
 
 
-        <a href="index.html" class="back-btn">
+        <a
+            href="index.html"
+            class="back-btn">
+
             ← Back to Library
+
         </a>
+
 
     </div>
 
 
     <script>
 
-        /* =================================================
-           BACKEND URL
-        ================================================= */
+
+        // ==================================================
+        // BACKEND URL
+        // ==================================================
 
         const API_URL =
             "https://atal-library-backend.onrender.com";
 
 
-        /* =================================================
-           ADMIN LOGIN
-        ================================================= */
+        // ==================================================
+        // ELEMENTS
+        // ==================================================
 
         const adminLoginForm =
             document.getElementById(
                 "adminLoginForm"
             );
 
+
+        const loginButton =
+            document.getElementById(
+                "loginButton"
+            );
+
+
+        const statusMessage =
+            document.getElementById(
+                "statusMessage"
+            );
+
+
+        // ==================================================
+        // SHOW STATUS
+        // ==================================================
+
+        function showStatus(
+            message,
+            type = "error"
+        ) {
+
+            statusMessage.textContent =
+                message;
+
+            statusMessage.style.display =
+                "block";
+
+
+            if (type === "success") {
+
+                statusMessage.style.background =
+                    "#dcfce7";
+
+                statusMessage.style.color =
+                    "#166534";
+
+            } else {
+
+                statusMessage.style.background =
+                    "#fee2e2";
+
+                statusMessage.style.color =
+                    "#991b1b";
+
+            }
+
+        }
+
+
+        // ==================================================
+        // HIDE STATUS
+        // ==================================================
+
+        function hideStatus() {
+
+            statusMessage.style.display =
+                "none";
+
+        }
+
+
+        // ==================================================
+        // ADMIN LOGIN
+        // ==================================================
 
         adminLoginForm.addEventListener(
             "submit",
@@ -211,77 +315,216 @@
                 event.preventDefault();
 
 
+                hideStatus();
+
+
                 const username =
-                    document.getElementById(
-                        "adminUsername"
-                    ).value.trim();
+                    document
+                        .getElementById(
+                            "adminUsername"
+                        )
+                        .value
+                        .trim();
 
 
                 const password =
-                    document.getElementById(
-                        "adminPassword"
-                    ).value;
+                    document
+                        .getElementById(
+                            "adminPassword"
+                        )
+                        .value;
+
+
+                // ------------------------------------------
+                // VALIDATION
+                // ------------------------------------------
+
+                if (
+                    !username ||
+                    !password
+                ) {
+
+                    showStatus(
+                        "Please enter username and password."
+                    );
+
+                    return;
+
+                }
+
+
+                // ------------------------------------------
+                // BUTTON LOADING
+                // ------------------------------------------
+
+                loginButton.disabled =
+                    true;
+
+                loginButton.textContent =
+                    "Logging in...";
 
 
                 try {
 
+
+                    console.log(
+                        "Admin login request started..."
+                    );
+
+
+                    // IMPORTANT:
+                    // Server route is /admin/login
                     const response =
                         await fetch(
-                            `${API_URL}/admin-login`,
+                            `${API_URL}/admin/login`,
                             {
                                 method: "POST",
 
                                 headers: {
                                     "Content-Type":
+                                        "application/json",
+
+                                    "Accept":
                                         "application/json"
                                 },
 
                                 body:
                                     JSON.stringify({
+
                                         username:
                                             username,
 
                                         password:
                                             password
+
                                     })
                             }
                         );
 
 
-                    const data =
-                        await response.json();
+                    console.log(
+                        "Admin Login HTTP Status:",
+                        response.status
+                    );
 
+
+                    const responseText =
+                        await response.text();
+
+
+                    let data = {};
+
+
+                    try {
+
+                        data =
+                            responseText
+                                ? JSON.parse(
+                                    responseText
+                                )
+                                : {};
+
+                    } catch (jsonError) {
+
+                        console.error(
+                            "Invalid JSON response:",
+                            responseText
+                        );
+
+                        throw new Error(
+                            "Invalid server response."
+                        );
+
+                    }
+
+
+                    console.log(
+                        "Admin Login Response:",
+                        data
+                    );
+
+
+                    // --------------------------------------
+                    // LOGIN FAILED
+                    // --------------------------------------
 
                     if (!response.ok) {
 
-                        alert(
+                        showStatus(
                             data.message ||
-                            "Admin login failed."
+                            data.error ||
+                            "Invalid admin username or password."
                         );
+
+
+                        loginButton.disabled =
+                            false;
+
+                        loginButton.textContent =
+                            "Login as Admin";
+
 
                         return;
 
                     }
 
 
-                    alert(
-                        "Admin login successful!"
+                    // --------------------------------------
+                    // LOGIN SUCCESS
+                    // --------------------------------------
+
+                    showStatus(
+                        data.message ||
+                        "Admin login successful.",
+                        "success"
+                    );
+
+
+                    // Save admin login status
+                    sessionStorage.setItem(
+                        "adminLoggedIn",
+                        "true"
                     );
 
 
                     sessionStorage.setItem(
-                        "adminToken",
-                        data.token
+                        "adminUsername",
+                        username
                     );
 
 
-                    window.location.href =
-                        "admin-dashboard.html";
+                    // Save token only if backend sends one
+                    if (data.token) {
 
-                }
+                        sessionStorage.setItem(
+                            "adminToken",
+                            data.token
+                        );
+
+                    }
 
 
-                catch (error) {
+                    loginButton.textContent =
+                        "Login Successful";
+
+
+                    // --------------------------------------
+                    // REDIRECT TO ADMIN DASHBOARD
+                    // --------------------------------------
+
+                    setTimeout(
+                        function () {
+
+                            window.location.href =
+                                "admin-dashboard.html";
+
+                        },
+                        500
+                    );
+
+
+                } catch (error) {
+
 
                     console.error(
                         "Admin Login Error:",
@@ -289,14 +532,22 @@
                     );
 
 
-                    alert(
-                        "Unable to connect to backend server."
+                    showStatus(
+                        "Unable to connect to backend server. Please try again."
                     );
+
+
+                    loginButton.disabled =
+                        false;
+
+                    loginButton.textContent =
+                        "Login as Admin";
 
                 }
 
             }
         );
+
 
     </script>
 
@@ -304,3 +555,4 @@
 </body>
 
 </html>
+
