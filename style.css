@@ -2002,3 +2002,105 @@ body.dark .auth-modal-content > p {
 .browse-books-btn:hover {
     opacity: 0.9;
 }
+
+/* =====================================================
+   MY RENTAL FULL PAGE
+===================================================== */
+
+.my-rentals-page {
+    min-height: 70vh;
+    padding: 40px 5%;
+    background: #f5f7fb;
+}
+
+
+/* BACK TO LIBRARY */
+
+.back-to-library-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    border: none;
+    background: transparent;
+
+    color: #2563eb;
+    font-size: 16px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    padding: 8px 0;
+    margin-bottom: 20px;
+}
+
+.back-to-library-btn:hover {
+    text-decoration: underline;
+}
+
+
+/* MY RENTAL HEADING */
+
+.my-rentals-page .section-heading {
+    text-align: center;
+    margin-bottom: 35px;
+}
+
+
+/* RENTAL CONTAINER */
+
+.my-rentals-page .book-container {
+    display: grid;
+
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(250px, 1fr)
+    );
+
+    gap: 25px;
+
+    width: 100%;
+}
+
+
+/* NO RENTALS */
+
+.no-rentals-message {
+    width: 100%;
+    text-align: center;
+
+    padding: 70px 20px;
+}
+
+.no-rentals-message h3 {
+    margin: 0 0 10px;
+    font-size: 24px;
+}
+
+.no-rentals-message p {
+    color: #64748b;
+    margin-bottom: 25px;
+}
+
+
+/* BROWSE BOOKS */
+
+.browse-books-btn {
+    border: none;
+
+    background: #2563eb;
+    color: white;
+
+    padding: 12px 25px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.browse-books-btn:hover {
+    opacity: 0.9;
+}

@@ -37,18 +37,16 @@ function updateMyRentalVisibility() {
     const myRentalNavLink =
         document.getElementById("myRentalNavLink");
 
-    const myRentalsSection =
-        document.getElementById("my-rentals");
+    const myRentalsPage =
+        document.getElementById("my-rentals-page");
 
     const user =
         getSavedUser();
 
 
-    if (
-        user &&
-        user.email
-    ) {
+    if (user && user.email) {
 
+        // Login hai → My Rental navbar mein dikhao
         if (myRentalNavLink) {
 
             myRentalNavLink.style.display =
@@ -56,19 +54,22 @@ function updateMyRentalVisibility() {
 
         }
 
-        if (myRentalsSection) {
 
-            myRentalsSection.style.display =
-                "block";
+        // IMPORTANT:
+        // Login hone par My Rental page automatically
+        // show NAHI hoga.
+        if (myRentalsPage) {
+
+            myRentalsPage.style.display =
+                "none";
 
         }
-
-        loadMyRentals();
 
     }
 
     else {
 
+        // Logout → My Rental navbar hide
         if (myRentalNavLink) {
 
             myRentalNavLink.style.display =
@@ -76,9 +77,11 @@ function updateMyRentalVisibility() {
 
         }
 
-        if (myRentalsSection) {
 
-            myRentalsSection.style.display =
+        // My Rental page bhi hide
+        if (myRentalsPage) {
+
+            myRentalsPage.style.display =
                 "none";
 
         }
@@ -86,7 +89,6 @@ function updateMyRentalVisibility() {
     }
 
 }
-
 
 // ==================================================
 // LOAD MY RENTALS
@@ -192,7 +194,9 @@ async function loadMyRentals() {
 
             <h3>You have no rented books</h3>
 
-            <p>Browse our library and rent your first book.</p>
+            <p>
+                You haven't rented any book yet.
+            </p>
 
             <button
                 class="browse-books-btn"
@@ -6319,6 +6323,106 @@ function showLibraryPage() {
     if (myRentalSection) {
         myRentalSection.style.display = "none";
     }
+
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth"
+    });
+}
+
+/* =====================================================
+   SHOW MY RENTAL PAGE
+===================================================== */
+
+function showMyRentalPage() {
+
+    const hero = document.querySelector(".hero");
+    const books = document.getElementById("books");
+    const about = document.getElementById("about");
+    const contact = document.getElementById("contact");
+
+    const myRentalPage =
+        document.getElementById("my-rentals-page");
+
+
+    /* HIDE NORMAL LIBRARY */
+
+    if (hero) {
+        hero.style.display = "none";
+    }
+
+    if (books) {
+        books.style.display = "none";
+    }
+
+    if (about) {
+        about.style.display = "none";
+    }
+
+    if (contact) {
+        contact.style.display = "none";
+    }
+
+
+    /* SHOW MY RENTALS */
+
+    if (myRentalPage) {
+
+        myRentalPage.style.display = "block";
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
+
+    /* LOAD RENTALS */
+
+    loadMyRentals();
+}
+
+
+/* =====================================================
+   SHOW NORMAL LIBRARY
+===================================================== */
+
+function showLibraryPage() {
+
+    const hero = document.querySelector(".hero");
+    const books = document.getElementById("books");
+    const about = document.getElementById("about");
+    const contact = document.getElementById("contact");
+
+    const myRentalPage =
+        document.getElementById("my-rentals-page");
+
+
+    /* HIDE MY RENTALS */
+
+    if (myRentalPage) {
+        myRentalPage.style.display = "none";
+    }
+
+
+    /* SHOW NORMAL LIBRARY */
+
+    if (hero) {
+        hero.style.display = "";
+    }
+
+    if (books) {
+        books.style.display = "";
+    }
+
+    if (about) {
+        about.style.display = "";
+    }
+
+    if (contact) {
+        contact.style.display = "";
+    }
+
 
     window.scrollTo({
         top: 0,
