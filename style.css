@@ -496,15 +496,17 @@ nav {
 }
 
 
-/* Book Container */
+/* ================= BOOK CONTAINER ================= */
 
 .book-container {
     display: grid;
 
     grid-template-columns:
-        repeat(4, 1fr);
+        repeat(4, minmax(0, 1fr));
 
     gap: 25px;
+
+    width: 100%;
 }
 
 
@@ -1144,7 +1146,7 @@ body.dark .auth-modal-content > p {
 
     .book-container {
         grid-template-columns:
-            repeat(3, 1fr);
+            repeat(3, minmax(0, 1fr));
     }
 
     .hero h1 {
@@ -1365,12 +1367,75 @@ body.dark .auth-modal-content > p {
         width: 100%;
     }
 
+
+    /* =================================================
+       MOBILE BOOKS - HORIZONTAL SCROLL
+    ================================================= */
+
     .book-container {
-        grid-template-columns:
-            repeat(2, 1fr);
+        display: flex;
+
+        flex-direction: row;
+
+        flex-wrap: nowrap;
 
         gap: 15px;
+
+        width: 100%;
+
+        overflow-x: scroll;
+
+        overflow-y: hidden;
+
+        padding: 5px 5px 18px;
+
+        /* Prevent cards from shrinking */
+        align-items: stretch;
+
+        /* Firefox scrollbar */
+        scrollbar-width: auto;
+
+        scrollbar-color:
+            #2563eb
+            #e2e8f0;
     }
+
+
+    /* Chrome / Edge / Safari scrollbar */
+
+    .book-container::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    .book-container::-webkit-scrollbar-track {
+        background: #e2e8f0;
+
+        border-radius: 10px;
+    }
+
+    .book-container::-webkit-scrollbar-thumb {
+        background: #2563eb;
+
+        border-radius: 10px;
+    }
+
+    .book-container::-webkit-scrollbar-thumb:hover {
+        background: #1d4ed8;
+    }
+
+
+    /* Mobile Book Card */
+
+    .book-card {
+        flex: 0 0 220px;
+
+        width: 220px;
+
+        min-width: 220px;
+
+        max-width: 220px;
+    }
+
 
     .book-card img {
         height: 220px;
@@ -1442,8 +1507,57 @@ body.dark .auth-modal-content > p {
         font-size: 32px;
     }
 
+
+    /* Keep books horizontal on small mobile */
+
     .book-container {
-        grid-template-columns: 1fr;
+        display: flex;
+
+        flex-direction: row;
+
+        flex-wrap: nowrap;
+
+        overflow-x: scroll;
+
+        overflow-y: hidden;
+
+        gap: 12px;
+
+        padding-bottom: 18px;
+
+        scrollbar-width: auto;
+
+        scrollbar-color:
+            #2563eb
+            #e2e8f0;
+    }
+
+
+    .book-container::-webkit-scrollbar {
+        height: 12px;
+    }
+
+    .book-container::-webkit-scrollbar-track {
+        background: #e2e8f0;
+
+        border-radius: 10px;
+    }
+
+    .book-container::-webkit-scrollbar-thumb {
+        background: #2563eb;
+
+        border-radius: 10px;
+    }
+
+
+    .book-card {
+        flex: 0 0 210px;
+
+        width: 210px;
+
+        min-width: 210px;
+
+        max-width: 210px;
     }
 
     .book-card img {

@@ -375,8 +375,9 @@
 
             <p>
 
-                Explore our collection of programming,
-                computer science and technology books.
+                Explore our collection of books across
+                education, technology, science, literature
+                and many more subjects.
 
             </p>
 
@@ -537,30 +538,58 @@
             </div>
 
 
+            <!-- ================= CATEGORY FILTER ================= -->
+
             <select id="categoryFilter">
 
                 <option value="all">
                     All Categories
                 </option>
 
-                <option value="Programming">
-                    Programming
+                <option value="Academic & Education">
+                    Academic & Education
                 </option>
 
-                <option value="Web Development">
-                    Web Development
+                <option value="Computer & Technology">
+                    Computer & Technology
                 </option>
 
-                <option value="Computer Science">
-                    Computer Science
+                <option value="Science & Mathematics">
+                    Science & Mathematics
                 </option>
 
-                <option value="Database">
-                    Database
+                <option value="Engineering & Medical">
+                    Engineering & Medical
+                </option>
+
+                <option value="Competitive & Government Exams">
+                    Competitive & Government Exams
+                </option>
+
+                <option value="Business & Management">
+                    Business & Management
+                </option>
+
+                <option value="History, Geography & Social Science">
+                    History, Geography & Social Science
+                </option>
+
+                <option value="Literature & Fiction">
+                    Literature & Fiction
+                </option>
+
+                <option value="Self-Help & Biography">
+                    Self-Help & Biography
+                </option>
+
+                <option value="General & Reference">
+                    General & Reference
                 </option>
 
             </select>
 
+
+            <!-- ================= SORT ================= -->
 
             <select id="sortBooks">
 
@@ -598,11 +627,73 @@
         </div>
 
 
-        <div
-            class="book-container"
-            id="bookContainer"
-        >
-        </div>
+        <div 
+    class="book-container" 
+    id="bookContainer"
+>
+</div>
+
+
+<!-- ================= BOOK PAGINATION ================= -->
+
+<div 
+    id="pagination"
+    class="pagination"
+    style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    "
+>
+
+    <button
+        id="prevPageBtn"
+        type="button"
+        style="
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        "
+    >
+        ← Previous
+    </button>
+
+
+    <div
+        id="pageNumbers"
+        style="
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            justify-content: center;
+        "
+    ></div>
+
+
+    <button
+        id="nextPageBtn"
+        type="button"
+        style="
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        "
+    >
+        Next →
+    </button>
+
+</div>
 
     </section>
 
@@ -1031,6 +1122,7 @@
                     Full Name
                 </label>
 
+
                 <input
                     type="text"
                     id="registerName"
@@ -1045,6 +1137,7 @@
                     Email
                 </label>
 
+
                 <div class="otp-email-row">
 
                     <input
@@ -1053,6 +1146,7 @@
                         placeholder="Enter your email"
                         required
                     >
+
 
                     <button
                         type="button"
@@ -1070,6 +1164,7 @@
                     Email OTP
                 </label>
 
+
                 <div class="otp-email-row">
 
                     <input
@@ -1079,6 +1174,7 @@
                         maxlength="6"
                         inputmode="numeric"
                     >
+
 
                     <button
                         type="button"
@@ -1107,6 +1203,7 @@
                     Phone Number
                 </label>
 
+
                 <input
                     type="tel"
                     id="registerPhone"
@@ -1123,6 +1220,7 @@
                     Password
                 </label>
 
+
                 <input
                     type="password"
                     id="registerPassword"
@@ -1137,12 +1235,14 @@
                     Profile Photo
                 </label>
 
+
                 <input
                     type="file"
                     id="registerPhoto"
                     accept="image/jpeg,image/png,image/webp,image/gif"
                     required
                 >
+
 
                 <small
                     style="
@@ -1394,6 +1494,7 @@
     <script src="script.js"></script>
 
 
+
     <!-- =========================================================
          ATTENDANCE VISIBILITY CONTROL
     ========================================================== -->
@@ -1410,6 +1511,7 @@
 
             const libraryUser =
                 localStorage.getItem("libraryUser");
+
 
             if (libraryUser) {
 
@@ -1449,6 +1551,7 @@
             const loggedUser =
                 localStorage.getItem("loggedUser");
 
+
             if (loggedUser) {
 
                 /*
@@ -1486,6 +1589,7 @@
             const attendanceSection =
                 document.getElementById("attendance");
 
+
             const attendanceNavLink =
                 document.getElementById(
                     "attendanceNavLink"
@@ -1493,7 +1597,9 @@
 
 
             if (!attendanceSection) {
+
                 return;
+
             }
 
 
@@ -1515,12 +1621,14 @@
                 attendanceSection.style.display =
                     "block";
 
+
                 if (attendanceNavLink) {
 
                     attendanceNavLink.style.display =
                         "inline-block";
 
                 }
+
 
                 console.log(
                     "Attendance visible for:",
@@ -1541,12 +1649,14 @@
                 attendanceSection.style.display =
                     "none";
 
+
                 if (attendanceNavLink) {
 
                     attendanceNavLink.style.display =
                         "none";
 
                 }
+
 
                 console.log(
                     "Attendance hidden - user not logged in"

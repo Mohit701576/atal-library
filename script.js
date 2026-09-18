@@ -139,7 +139,6 @@ function renderUserGreeting(element, name, photoUrl) {
 
         img.alt = "Profile Photo";
 
-
         img.width = 35;
         img.height = 35;
 
@@ -1263,7 +1262,6 @@ document.addEventListener(
 
 
                 updateUserUI();
-
 
             }
 
@@ -2558,16 +2556,555 @@ document.addEventListener(
             );
 
 
-        /* =================================================
-           DISPLAY BOOKS
-        ================================================= */
+        /* =====================================================
+           BOOK PAGINATION
+        ===================================================== */
 
-        function displayBooks(bookList) {
+        const BOOKS_PER_PAGE = 12;
 
-            if (!bookContainer) {
+        let currentPage = 1;
+
+        let currentBookList = [];
+
+
+        /* =====================================================
+           CREATE PAGINATION UI
+        ===================================================== */
+
+        let pagination =
+            document.getElementById(
+                "pagination"
+            );
+
+
+        /*
+           Agar index.html me pagination HTML
+           already nahi hai to JavaScript automatically
+           create kar dega.
+        */
+
+        if (!pagination && bookContainer) {
+
+            pagination =
+                document.createElement("div");
+
+            pagination.id =
+                "pagination";
+
+            pagination.style.display =
+                "none";
+
+            pagination.style.justifyContent =
+                "center";
+
+            pagination.style.alignItems =
+                "center";
+
+            pagination.style.gap =
+                "10px";
+
+            pagination.style.marginTop =
+                "30px";
+
+            pagination.style.marginBottom =
+                "30px";
+
+            pagination.style.flexWrap =
+                "wrap";
+
+
+            const prevButton =
+                document.createElement("button");
+
+            prevButton.id =
+                "prevPageBtn";
+
+            prevButton.type =
+                "button";
+
+            prevButton.innerText =
+                "← Previous";
+
+
+            prevButton.style.padding =
+                "10px 18px";
+
+            prevButton.style.border =
+                "none";
+
+            prevButton.style.borderRadius =
+                "8px";
+
+            prevButton.style.background =
+                "#2563eb";
+
+            prevButton.style.color =
+                "white";
+
+            prevButton.style.fontWeight =
+                "bold";
+
+            prevButton.style.cursor =
+                "pointer";
+
+
+            const pageNumbers =
+                document.createElement("div");
+
+            pageNumbers.id =
+                "pageNumbers";
+
+            pageNumbers.style.display =
+                "flex";
+
+            pageNumbers.style.gap =
+                "6px";
+
+            pageNumbers.style.flexWrap =
+                "wrap";
+
+            pageNumbers.style.justifyContent =
+                "center";
+
+
+            const nextButton =
+                document.createElement("button");
+
+            nextButton.id =
+                "nextPageBtn";
+
+            nextButton.type =
+                "button";
+
+            nextButton.innerText =
+                "Next →";
+
+
+            nextButton.style.padding =
+                "10px 18px";
+
+            nextButton.style.border =
+                "none";
+
+            nextButton.style.borderRadius =
+                "8px";
+
+            nextButton.style.background =
+                "#2563eb";
+
+            nextButton.style.color =
+                "white";
+
+            nextButton.style.fontWeight =
+                "bold";
+
+            nextButton.style.cursor =
+                "pointer";
+
+
+            pagination.appendChild(
+                prevButton
+            );
+
+            pagination.appendChild(
+                pageNumbers
+            );
+
+            pagination.appendChild(
+                nextButton
+            );
+
+
+            bookContainer.insertAdjacentElement(
+                "afterend",
+                pagination
+            );
+
+        }
+
+
+        /* =====================================================
+           PAGINATION FUNCTIONS
+        ===================================================== */
+
+        function updatePagination() {
+
+            if (!pagination) {
+                return;
+            }
+
+
+            const prevPageBtn =
+                document.getElementById(
+                    "prevPageBtn"
+                );
+
+
+            const nextPageBtn =
+                document.getElementById(
+                    "nextPageBtn"
+                );
+
+
+            const pageNumbers =
+                document.getElementById(
+                    "pageNumbers"
+                );
+
+
+            const totalPages =
+                Math.ceil(
+                    currentBookList.length /
+                    BOOKS_PER_PAGE
+                );
+
+
+            /*
+               No pagination needed when
+               there is only one page.
+            */
+
+            if (
+                currentBookList.length === 0 ||
+                totalPages <= 1
+            ) {
+
+                pagination.style.display =
+                    "none";
+
+                if (pageNumbers) {
+                    pageNumbers.innerHTML = "";
+                }
 
                 return;
 
+            }
+
+
+            pagination.style.display =
+                "flex";
+
+
+            if (pageNumbers) {
+
+                pageNumbers.innerHTML = "";
+
+
+                for (
+                    let page = 1;
+                    page <= totalPages;
+                    page++
+                ) {
+
+                    const pageButton =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    pageButton.type =
+                        "button";
+
+
+                    pageButton.innerText =
+                        page;
+
+
+                    pageButton.style.padding =
+                        "10px 14px";
+
+                    pageButton.style.border =
+                        "none";
+
+                    pageButton.style.borderRadius =
+                        "8px";
+
+                    pageButton.style.cursor =
+                        "pointer";
+
+                    pageButton.style.fontWeight =
+                        "bold";
+
+
+                    if (page === currentPage) {
+
+                        pageButton.style.background =
+                            "#1d4ed8";
+
+                        pageButton.style.color =
+                            "white";
+
+                    }
+
+                    else {
+
+                        pageButton.style.background =
+                            "#e2e8f0";
+
+                        pageButton.style.color =
+                            "#1e293b";
+
+                    }
+
+
+                    pageButton.onclick =
+                        function () {
+
+                            currentPage =
+                                page;
+
+                            displayCurrentPage();
+
+                            window.scrollTo({
+
+                                top:
+                                    bookContainer
+                                        ? bookContainer.offsetTop - 100
+                                        : 0,
+
+                                behavior:
+                                    "smooth"
+
+                            });
+
+                        };
+
+
+                    pageNumbers.appendChild(
+                        pageButton
+                    );
+
+                }
+
+            }
+
+
+            if (prevPageBtn) {
+
+                prevPageBtn.disabled =
+                    currentPage <= 1;
+
+
+                prevPageBtn.style.opacity =
+                    currentPage <= 1
+                        ? "0.5"
+                        : "1";
+
+
+                prevPageBtn.style.cursor =
+                    currentPage <= 1
+                        ? "not-allowed"
+                        : "pointer";
+
+            }
+
+
+            if (nextPageBtn) {
+
+                nextPageBtn.disabled =
+                    currentPage >= totalPages;
+
+
+                nextPageBtn.style.opacity =
+                    currentPage >= totalPages
+                        ? "0.5"
+                        : "1";
+
+
+                nextPageBtn.style.cursor =
+                    currentPage >= totalPages
+                        ? "not-allowed"
+                        : "pointer";
+
+            }
+
+        }
+
+
+        /* =====================================================
+           PREVIOUS PAGE
+        ===================================================== */
+
+        const previousPageButton =
+            document.getElementById(
+                "prevPageBtn"
+            );
+
+
+        if (previousPageButton) {
+
+            previousPageButton.onclick =
+                function () {
+
+                    if (currentPage > 1) {
+
+                        currentPage--;
+
+                        displayCurrentPage();
+
+                        window.scrollTo({
+
+                            top:
+                                bookContainer
+                                    ? bookContainer.offsetTop - 100
+                                    : 0,
+
+                            behavior:
+                                "smooth"
+
+                        });
+
+                    }
+
+                };
+
+        }
+
+
+        /* =====================================================
+           NEXT PAGE
+        ===================================================== */
+
+        const nextPageButton =
+            document.getElementById(
+                "nextPageBtn"
+            );
+
+
+        if (nextPageButton) {
+
+            nextPageButton.onclick =
+                function () {
+
+                    const totalPages =
+                        Math.ceil(
+                            currentBookList.length /
+                            BOOKS_PER_PAGE
+                        );
+
+
+                    if (
+                        currentPage <
+                        totalPages
+                    ) {
+
+                        currentPage++;
+
+                        displayCurrentPage();
+
+                        window.scrollTo({
+
+                            top:
+                                bookContainer
+                                    ? bookContainer.offsetTop - 100
+                                    : 0,
+
+                            behavior:
+                                "smooth"
+
+                        });
+
+                    }
+
+                };
+
+        }
+
+
+        /* =====================================================
+           ATAL LIBRARY - BOOK CATEGORIES
+        ===================================================== */
+
+        const LIBRARY_CATEGORIES = [
+
+            "Academic & Education",
+            "Computer & Technology",
+            "Science & Mathematics",
+            "Engineering & Medical",
+            "Competitive & Government Exams",
+            "Business & Management",
+            "History, Geography & Social Science",
+            "Literature & Fiction",
+            "Self-Help & Biography",
+            "General & Reference"
+
+        ];
+
+
+        /* =====================================================
+           LOAD BOOK CATEGORIES INTO FILTER
+        ===================================================== */
+
+        function loadLibraryCategories() {
+
+            const categoryFilter =
+                document.getElementById(
+                    "categoryFilter"
+                );
+
+
+            if (!categoryFilter) {
+                return;
+            }
+
+
+            categoryFilter.innerHTML = "";
+
+
+            const allOption =
+                document.createElement(
+                    "option"
+                );
+
+
+            allOption.value =
+                "all";
+
+
+            allOption.textContent =
+                "All Categories";
+
+
+            categoryFilter.appendChild(
+                allOption
+            );
+
+
+            LIBRARY_CATEGORIES.forEach(
+                function (category) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+
+                    option.value =
+                        category;
+
+
+                    option.textContent =
+                        category;
+
+
+                    categoryFilter.appendChild(
+                        option
+                    );
+
+                }
+            );
+
+        }
+
+
+        /* =================================================
+           DISPLAY BOOKS - CURRENT PAGE
+        ================================================= */
+
+        function displayCurrentPage() {
+
+            if (!bookContainer) {
+                return;
             }
 
 
@@ -2575,8 +3112,8 @@ document.addEventListener(
 
 
             if (
-                !bookList ||
-                bookList.length === 0
+                !currentBookList ||
+                currentBookList.length === 0
             ) {
 
                 bookContainer.innerHTML = `
@@ -2594,12 +3131,54 @@ document.addEventListener(
 
                 `;
 
+
+                updatePagination();
+
                 return;
 
             }
 
 
-            bookList.forEach(
+            const totalPages =
+                Math.ceil(
+                    currentBookList.length /
+                    BOOKS_PER_PAGE
+                );
+
+
+            if (currentPage > totalPages) {
+
+                currentPage =
+                    totalPages;
+
+            }
+
+
+            if (currentPage < 1) {
+
+                currentPage = 1;
+
+            }
+
+
+            const startIndex =
+                (currentPage - 1) *
+                BOOKS_PER_PAGE;
+
+
+            const endIndex =
+                startIndex +
+                BOOKS_PER_PAGE;
+
+
+            const booksToDisplay =
+                currentBookList.slice(
+                    startIndex,
+                    endIndex
+                );
+
+
+            booksToDisplay.forEach(
                 function (book) {
 
                     let statusHTML = "";
@@ -2685,6 +3264,30 @@ document.addEventListener(
 
                 }
             );
+
+
+            updatePagination();
+
+        }
+
+
+        /* =================================================
+           DISPLAY BOOKS
+           Compatible function
+        ================================================= */
+
+        function displayBooks(bookList) {
+
+            currentBookList =
+                Array.isArray(bookList)
+                    ? bookList
+                    : [];
+
+
+            currentPage = 1;
+
+
+            displayCurrentPage();
 
         }
 
@@ -2812,6 +3415,14 @@ document.addEventListener(
 
                 }
 
+
+                if (pagination) {
+
+                    pagination.style.display =
+                        "none";
+
+                }
+
             }
 
         }
@@ -2833,6 +3444,9 @@ document.addEventListener(
             );
 
 
+        loadLibraryCategories();
+
+
         const sortBooks =
             document.getElementById(
                 "sortBooks"
@@ -2852,6 +3466,14 @@ document.addEventListener(
 
 
         function filterBooks() {
+
+            /*
+               Whenever search/category/sort changes,
+               pagination will automatically start from page 1.
+            */
+
+            currentPage = 1;
+
 
             if (
                 !books ||
@@ -3121,6 +3743,9 @@ document.addEventListener(
                             "default";
 
                     }
+
+
+                    currentPage = 1;
 
 
                     filterBooks();
@@ -4505,7 +5130,9 @@ function updateAttendanceUI(
 
 async function loadAttendanceStatus() {
 
-    const user = getAttendanceUser();
+    const user =
+        getAttendanceUser();
+
 
     // User login nahi hai
     if (!user || !user.email) {
@@ -4513,17 +5140,27 @@ async function loadAttendanceStatus() {
         updateAttendanceUI(false, null);
 
         return;
+
     }
+
 
     try {
 
-        const response = await fetch(
-            `${API_URL}/attendance/status?email=${encodeURIComponent(user.email)}`
+        const response =
+            await fetch(
+                `${API_URL}/attendance/status?email=${encodeURIComponent(user.email)}`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "Attendance Status Response:",
+            data
         );
 
-        const data = await response.json();
-
-        console.log("Attendance Status Response:", data);
 
         if (!response.ok) {
 
@@ -4532,10 +5169,17 @@ async function loadAttendanceStatus() {
                 data
             );
 
-            updateAttendanceUI(false, null);
+
+            updateAttendanceUI(
+                false,
+                null
+            );
+
 
             return;
+
         }
+
 
         updateAttendanceUI(
             data.inside === true,
@@ -4544,6 +5188,7 @@ async function loadAttendanceStatus() {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -4551,9 +5196,16 @@ async function loadAttendanceStatus() {
             error
         );
 
-        updateAttendanceUI(false, null);
+
+        updateAttendanceUI(
+            false,
+            null
+        );
+
     }
+
 }
+
 
 /* =====================================================
    ENTER LIBRARY
