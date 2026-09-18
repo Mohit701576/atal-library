@@ -516,11 +516,6 @@ async function submitMyRental(
             "Book submitted successfully."
         );
 
-
-        // Refresh books
-        await loadBooksFromBackend();
-
-
         // Refresh My Rental
         await loadMyRentals();
 
