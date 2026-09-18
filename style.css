@@ -1,5 +1,5 @@
 /* =====================================================
-   ATAL LIBRARY - CSS
+   ATAL LIBRARY - COMPLETE CSS
 ===================================================== */
 
 
@@ -49,7 +49,7 @@ nav {
 }
 
 
-/* Logo */
+/* ================= LOGO ================= */
 
 .logo {
     font-size: 22px;
@@ -58,7 +58,7 @@ nav {
 }
 
 
-/* Menu */
+/* ================= MENU ================= */
 
 .menu {
     display: flex;
@@ -172,7 +172,6 @@ nav {
 
 #logoutBtn:hover {
     background: #b91c1c;
-
     transform: translateY(-2px);
 }
 
@@ -185,7 +184,7 @@ nav {
 }
 
 
-/* Hamburger */
+/* ================= HAMBURGER ================= */
 
 .menu-btn {
     display: none;
@@ -210,7 +209,9 @@ nav {
 }
 
 
-/* ================= HERO ================= */
+/* =====================================================
+   HERO
+===================================================== */
 
 .hero {
     min-height: 500px;
@@ -276,10 +277,11 @@ nav {
 }
 
 
-/* Hero Buttons */
+/* ================= HERO BUTTONS ================= */
 
 .hero-buttons {
     display: flex;
+
     gap: 12px;
 
     margin-top: 30px;
@@ -304,6 +306,7 @@ nav {
     border: none;
 
     background: #2563eb;
+
     color: white;
 }
 
@@ -326,7 +329,9 @@ nav {
 }
 
 
-/* ================= STATS ================= */
+/* =====================================================
+   STATS
+===================================================== */
 
 .stats {
     display: grid;
@@ -372,7 +377,9 @@ nav {
 }
 
 
-/* ================= SECTION HEADING ================= */
+/* =====================================================
+   SECTION HEADING
+===================================================== */
 
 .section-heading {
     text-align: center;
@@ -408,14 +415,16 @@ nav {
 }
 
 
-/* ================= BOOKS ================= */
+/* =====================================================
+   BOOKS
+===================================================== */
 
 .books {
     padding: 80px 8%;
 }
 
 
-/* Search */
+/* ================= SEARCH ================= */
 
 .search-area {
     display: flex;
@@ -433,6 +442,7 @@ nav {
     min-width: 250px;
 
     display: flex;
+
     align-items: center;
 
     background: white;
@@ -481,7 +491,7 @@ nav {
 }
 
 
-/* Book Info */
+/* ================= BOOK INFO ================= */
 
 .book-info {
     display: flex;
@@ -496,7 +506,9 @@ nav {
 }
 
 
-/* ================= BOOK CONTAINER ================= */
+/* =====================================================
+   BOOK CONTAINER
+===================================================== */
 
 .book-container {
     display: grid;
@@ -510,7 +522,9 @@ nav {
 }
 
 
-/* Book Card */
+/* =====================================================
+   BOOK CARD
+===================================================== */
 
 .book-card {
     background: white;
@@ -528,6 +542,8 @@ nav {
     cursor: pointer;
 
     min-width: 0;
+
+    width: 100%;
 }
 
 .book-card:hover {
@@ -538,6 +554,9 @@ nav {
         rgba(0, 0, 0, 0.12);
 }
 
+
+/* ================= BOOK IMAGE ================= */
+
 .book-card img {
     width: 100%;
 
@@ -546,7 +565,12 @@ nav {
     object-fit: contain;
 
     display: block;
+
+    background: #ffffff;
 }
+
+
+/* ================= BOOK CONTENT ================= */
 
 .book-card-content {
     padding: 18px;
@@ -558,6 +582,8 @@ nav {
     color: #172554;
 
     font-size: 18px;
+
+    line-height: 1.4;
 }
 
 .book-author {
@@ -609,7 +635,9 @@ nav {
 }
 
 
-/* ================= ABOUT ================= */
+/* =====================================================
+   ABOUT
+===================================================== */
 
 .about {
     padding: 80px 8%;
@@ -680,7 +708,9 @@ nav {
 }
 
 
-/* ================= CONTACT ================= */
+/* =====================================================
+   CONTACT
+===================================================== */
 
 .contact {
     padding: 80px 8%;
@@ -722,7 +752,9 @@ nav {
 }
 
 
-/* ================= BOOK MODAL ================= */
+/* =====================================================
+   BOOK MODAL
+===================================================== */
 
 .modal {
     display: none;
@@ -737,6 +769,7 @@ nav {
         rgba(0, 0, 0, 0.65);
 
     align-items: center;
+
     justify-content: center;
 
     padding: 20px;
@@ -764,6 +797,7 @@ nav {
     position: absolute;
 
     right: 12px;
+
     top: 10px;
 
     border: none;
@@ -821,6 +855,9 @@ nav {
     line-height: 1.5;
 }
 
+
+/* ================= RENT/SUBMIT BUTTONS ================= */
+
 .rent-btn,
 .submit-btn {
     border: none;
@@ -849,7 +886,9 @@ nav {
 }
 
 
-/* ================= AUTH MODAL ================= */
+/* =====================================================
+   AUTH MODAL
+===================================================== */
 
 .auth-modal {
     display: none;
@@ -864,6 +903,7 @@ nav {
         rgba(0, 0, 0, 0.65);
 
     align-items: center;
+
     justify-content: center;
 
     padding: 20px;
@@ -887,6 +927,7 @@ nav {
     position: absolute;
 
     right: 12px;
+
     top: 10px;
 
     border: none;
@@ -979,7 +1020,9 @@ nav {
 }
 
 
-/* ================= FOOTER ================= */
+/* =====================================================
+   FOOTER
+===================================================== */
 
 footer {
     background: #172554;
@@ -1030,15 +1073,19 @@ footer {
 }
 
 
-/* ================= TOP BUTTON ================= */
+/* =====================================================
+   TOP BUTTON
+===================================================== */
 
 #topBtn {
     position: fixed;
 
     right: 25px;
+
     bottom: 25px;
 
     width: 45px;
+
     height: 45px;
 
     border: none;
@@ -1059,7 +1106,9 @@ footer {
 }
 
 
-/* ================= DARK MODE ================= */
+/* =====================================================
+   DARK MODE
+===================================================== */
 
 body.dark {
     background: #0f172a;
@@ -1101,6 +1150,10 @@ body.dark .about-card {
     background: #1e293b;
 }
 
+body.dark .book-card img {
+    background: #1e293b;
+}
+
 body.dark .search-box,
 body.dark .search-area select {
     background: #1e293b;
@@ -1121,6 +1174,12 @@ body.dark .auth-modal-content {
     background: #1e293b;
 }
 
+body.dark .modal-close {
+    background: #1e293b;
+
+    color: white;
+}
+
 body.dark .modal-details h2,
 body.dark .auth-modal-content h2 {
     color: white;
@@ -1132,7 +1191,9 @@ body.dark .auth-modal-content > p {
 }
 
 
-/* ================= TABLET ================= */
+/* =====================================================
+   TABLET
+===================================================== */
 
 @media (max-width: 1000px) {
 
@@ -1153,14 +1214,21 @@ body.dark .auth-modal-content > p {
         font-size: 45px;
     }
 
+    #registerModal .auth-modal-content {
+        width: 380px;
+
+        padding: 18px 22px;
+    }
 }
 
 
-/* ================= MOBILE ================= */
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media (max-width: 768px) {
 
-    /* Navbar */
+    /* ================= NAVBAR ================= */
 
     nav {
         min-height: 65px;
@@ -1174,20 +1242,18 @@ body.dark .auth-modal-content > p {
         font-size: 19px;
     }
 
-
-    /* Hamburger */
-
     .menu-btn {
         display: block;
     }
 
 
-    /* Main Mobile Menu */
+    /* ================= MOBILE MENU ================= */
 
     .menu {
         position: absolute;
 
         top: 65px;
+
         left: 0;
 
         width: 100%;
@@ -1213,9 +1279,6 @@ body.dark .auth-modal-content > p {
         display: flex;
     }
 
-
-    /* Mobile links */
-
     .menu-links {
         display: flex;
 
@@ -1232,14 +1295,11 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Hide Desktop Auth */
+    /* ================= AUTH ================= */
 
     .auth-buttons {
         display: none;
     }
-
-
-    /* Mobile Auth */
 
     .mobile-auth {
         display: flex;
@@ -1307,7 +1367,7 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Hero */
+    /* ================= HERO ================= */
 
     .hero {
         min-height: 480px;
@@ -1335,7 +1395,7 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Stats */
+    /* ================= STATS ================= */
 
     .stats {
         grid-template-columns:
@@ -1345,7 +1405,7 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Books */
+    /* ================= BOOKS ================= */
 
     .books {
         padding: 60px 20px;
@@ -1369,7 +1429,8 @@ body.dark .auth-modal-content > p {
 
 
     /* =================================================
-       MOBILE BOOKS - HORIZONTAL SCROLL
+       MOBILE BOOKS
+       WIDE HORIZONTAL CARDS
     ================================================= */
 
     .book-container {
@@ -1379,29 +1440,30 @@ body.dark .auth-modal-content > p {
 
         flex-wrap: nowrap;
 
-        gap: 15px;
+        gap: 16px;
 
         width: 100%;
 
-        overflow-x: scroll;
+        overflow-x: auto;
 
         overflow-y: hidden;
 
-        padding: 5px 5px 18px;
+        padding:
+            5px 4px 20px;
 
-        /* Prevent cards from shrinking */
         align-items: stretch;
 
-        /* Firefox scrollbar */
         scrollbar-width: auto;
 
         scrollbar-color:
             #2563eb
             #e2e8f0;
+
+        -webkit-overflow-scrolling: touch;
     }
 
 
-    /* Chrome / Edge / Safari scrollbar */
+    /* Chrome / Edge / Safari */
 
     .book-container::-webkit-scrollbar {
         height: 12px;
@@ -1424,25 +1486,44 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Mobile Book Card */
+    /* =================================================
+       IMPORTANT:
+       WIDE MOBILE BOOK CARD
+    ================================================= */
 
-    .book-card {
-        flex: 0 0 220px;
+    .books .book-card {
+        flex: 0 0 310px;
 
-        width: 220px;
+        width: 310px;
 
-        min-width: 220px;
+        min-width: 310px;
 
-        max-width: 220px;
+        max-width: 310px;
     }
 
 
-    .book-card img {
-        height: 220px;
+    .books .book-card img {
+        width: 100%;
+
+        height: 280px;
+
+        object-fit: contain;
+    }
+
+    .books .book-card-content {
+        padding: 20px;
+    }
+
+    .books .book-card-content h3 {
+        font-size: 19px;
+    }
+
+    .books .book-author {
+        font-size: 14px;
     }
 
 
-    /* About */
+    /* ================= ABOUT ================= */
 
     .about {
         padding: 60px 20px;
@@ -1459,7 +1540,7 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Contact */
+    /* ================= CONTACT ================= */
 
     .contact {
         padding: 60px 20px;
@@ -1470,7 +1551,7 @@ body.dark .auth-modal-content > p {
     }
 
 
-    /* Footer */
+    /* ================= FOOTER ================= */
 
     footer {
         padding:
@@ -1485,292 +1566,8 @@ body.dark .auth-modal-content > p {
         flex-wrap: wrap;
     }
 
-}
 
-
-/* ================= SMALL MOBILE ================= */
-
-@media (max-width: 480px) {
-
-    .mobile-auth {
-        justify-content: flex-start;
-    }
-
-    .mobile-auth button,
-    #mobileUserGreeting {
-        font-size: 12px;
-
-        padding: 8px 9px;
-    }
-
-    .hero h1 {
-        font-size: 32px;
-    }
-
-
-    /* Keep books horizontal on small mobile */
-
-    .book-container {
-        display: flex;
-
-        flex-direction: row;
-
-        flex-wrap: nowrap;
-
-        overflow-x: scroll;
-
-        overflow-y: hidden;
-
-        gap: 12px;
-
-        padding-bottom: 18px;
-
-        scrollbar-width: auto;
-
-        scrollbar-color:
-            #2563eb
-            #e2e8f0;
-    }
-
-
-    .book-container::-webkit-scrollbar {
-        height: 12px;
-    }
-
-    .book-container::-webkit-scrollbar-track {
-        background: #e2e8f0;
-
-        border-radius: 10px;
-    }
-
-    .book-container::-webkit-scrollbar-thumb {
-        background: #2563eb;
-
-        border-radius: 10px;
-    }
-
-
-    .book-card {
-        flex: 0 0 210px;
-
-        width: 210px;
-
-        min-width: 210px;
-
-        max-width: 210px;
-    }
-
-    .book-card img {
-        height: 260px;
-    }
-
-    .stats {
-        gap: 12px;
-    }
-
-    .stat-card {
-        padding: 18px 10px;
-    }
-
-}
-
-
-/* ================= FORGOT PASSWORD ================= */
-
-.forgot-password {
-    text-align: right;
-
-    margin-top: 5px;
-}
-
-.forgot-password a {
-    color: #2563eb;
-
-    text-decoration: none;
-
-    font-size: 14px;
-}
-
-.forgot-password a:hover {
-    text-decoration: underline;
-}
-
-
-/* ================= FORGOT PASSWORD MODAL FIX ================= */
-
-#forgotPasswordModal {
-    display: none;
-}
-
-#forgotPasswordModal.show {
-    display: flex !important;
-}
-
-
-/* =====================================================
-   REGISTER FORM - COMPACT
-===================================================== */
-
-/*
-   IMPORTANT:
-   Register modal ko compact rakha gaya hai.
-   Login modal par iska koi effect nahi hoga.
-*/
-
-#registerModal .auth-modal-content {
-    width: 400px;
-
-    max-width: 95%;
-
-    padding: 20px 25px;
-
-    max-height: 90vh;
-
-    overflow-y: auto;
-}
-
-
-/* Register close button */
-
-#registerModal .auth-close {
-    right: 10px;
-
-    top: 7px;
-
-    font-size: 25px;
-}
-
-
-/* Register icon */
-
-#registerModal .auth-icon {
-    font-size: 35px;
-
-    margin: 0;
-}
-
-
-/* Register heading */
-
-#registerModal .auth-modal-content h2 {
-    margin: 3px 0 7px;
-
-    font-size: 24px;
-}
-
-
-/* Register description */
-
-#registerModal .auth-modal-content > p {
-    margin: 4px 0 10px;
-
-    font-size: 13px;
-
-    line-height: 1.3;
-}
-
-
-/* Register form */
-
-#registerModal .auth-modal-content form {
-    gap: 4px;
-}
-
-
-/* Register labels */
-
-#registerModal .auth-modal-content label {
-    margin-top: 4px;
-
-    margin-bottom: 1px;
-
-    font-size: 13px;
-}
-
-
-/* Register input */
-
-#registerModal .auth-modal-content input {
-    width: 100%;
-
-    height: 37px;
-
-    padding: 7px 10px;
-
-    font-size: 13px;
-}
-
-
-/* Profile photo input */
-
-#registerModal .auth-modal-content input[type="file"] {
-    height: auto;
-
-    min-height: 37px;
-
-    padding: 6px;
-
-    font-size: 12px;
-}
-
-
-/* Profile photo information */
-
-#registerModal .auth-modal-content small {
-    display: block;
-
-    margin-top: 1px !important;
-
-    font-size: 10px !important;
-
-    line-height: 1.15;
-}
-
-
-/* Register button */
-
-#registerModal .auth-submit {
-    width: 100%;
-
-    margin-top: 9px;
-
-    padding: 9px;
-
-    font-size: 13px;
-}
-
-
-/* Already have account */
-
-#registerModal .auth-switch {
-    margin-top: 7px;
-
-    margin-bottom: 0;
-
-    font-size: 12px;
-}
-
-
-/* =====================================================
-   REGISTER FORM - TABLET
-===================================================== */
-
-@media (max-width: 1000px) {
-
-    #registerModal .auth-modal-content {
-        width: 380px;
-
-        padding: 18px 22px;
-    }
-
-}
-
-
-/* =====================================================
-   REGISTER FORM - MOBILE
-===================================================== */
-
-@media (max-width: 768px) {
+    /* ================= REGISTER MODAL ================= */
 
     #registerModal {
         padding: 10px;
@@ -1862,14 +1659,160 @@ body.dark .auth-modal-content > p {
         font-size: 11px;
     }
 
+
+    /* =================================================
+       MY RENTALS MOBILE
+       DO NOT USE HORIZONTAL BOOK SCROLL
+    ================================================= */
+
+    .my-rentals-page {
+        min-height: 70vh;
+
+        padding:
+            30px 20px;
+    }
+
+    .my-rentals-page .book-container {
+        display: grid;
+
+        grid-template-columns: 1fr;
+
+        gap: 20px;
+
+        width: 100%;
+
+        overflow: visible;
+
+        padding: 0;
+    }
+
+    .my-rentals-page .book-card {
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+    }
+
+    .my-rentals-page .book-card img {
+        width: 100%;
+
+        height: 280px;
+
+        object-fit: contain;
+    }
 }
 
 
 /* =====================================================
-   REGISTER FORM - VERY SMALL MOBILE
+   SMALL MOBILE
 ===================================================== */
 
 @media (max-width: 480px) {
+
+    .mobile-auth {
+        justify-content: flex-start;
+    }
+
+    .mobile-auth button,
+    #mobileUserGreeting {
+        font-size: 12px;
+
+        padding: 8px 9px;
+    }
+
+
+    /* ================= HERO ================= */
+
+    .hero h1 {
+        font-size: 32px;
+    }
+
+
+    /* =================================================
+       WIDE BOOK CARD ON SMALL PHONES
+    ================================================= */
+
+    .book-container {
+        gap: 14px;
+
+        padding:
+            5px 2px 20px;
+    }
+
+
+    /*
+       Card is now almost full phone width.
+       Example:
+       360px phone → about 310px card
+       390px phone → about 320px card
+    */
+
+    .books .book-card {
+        flex: 0 0 310px;
+
+        width: 310px;
+
+        min-width: 310px;
+
+        max-width: 310px;
+    }
+
+    .books .book-card img {
+        height: 270px;
+    }
+
+    .books .book-card-content {
+        padding: 18px;
+    }
+
+    .books .book-card-content h3 {
+        font-size: 18px;
+    }
+
+
+    /* ================= STATS ================= */
+
+    .stats {
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 18px 10px;
+    }
+
+
+    /* =================================================
+       MY RENTALS SMALL MOBILE
+    ================================================= */
+
+    .my-rentals-page {
+        padding:
+            25px 15px;
+    }
+
+    .my-rentals-page .book-container {
+        display: grid;
+
+        grid-template-columns: 1fr;
+
+        gap: 18px;
+    }
+
+    .my-rentals-page .book-card {
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+    }
+
+    .my-rentals-page .book-card img {
+        height: 270px;
+    }
+
+
+    /* ================= REGISTER ================= */
 
     #registerModal {
         padding: 5px;
@@ -1950,87 +1893,173 @@ body.dark .auth-modal-content > p {
 
         font-size: 10px;
     }
-
 }
+
 
 /* =====================================================
-   MY RENTAL PAGE
+   FORGOT PASSWORD
 ===================================================== */
 
-.back-to-library-btn {
-    border: none;
-    background: transparent;
-    color: #2563eb;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-bottom: 25px;
-    padding: 8px 0;
+.forgot-password {
+    text-align: right;
+
+    margin-top: 5px;
 }
 
-.back-to-library-btn:hover {
+.forgot-password a {
+    color: #2563eb;
+
+    text-decoration: none;
+
+    font-size: 14px;
+}
+
+.forgot-password a:hover {
     text-decoration: underline;
 }
 
-.no-rentals-message {
-    width: 100%;
-    text-align: center;
-    padding: 60px 20px;
+
+/* ================= FORGOT PASSWORD MODAL ================= */
+
+#forgotPasswordModal {
+    display: none;
 }
 
-.no-rentals-message h3 {
-    margin-bottom: 10px;
+#forgotPasswordModal.show {
+    display: flex !important;
+}
+
+
+/* =====================================================
+   REGISTER FORM - COMPACT
+===================================================== */
+
+#registerModal .auth-modal-content {
+    width: 400px;
+
+    max-width: 95%;
+
+    padding: 20px 25px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+}
+
+#registerModal .auth-close {
+    right: 10px;
+
+    top: 7px;
+
+    font-size: 25px;
+}
+
+#registerModal .auth-icon {
+    font-size: 35px;
+
+    margin: 0;
+}
+
+#registerModal .auth-modal-content h2 {
+    margin: 3px 0 7px;
+
     font-size: 24px;
 }
 
-.no-rentals-message p {
-    color: #64748b;
-    margin-bottom: 25px;
+#registerModal .auth-modal-content > p {
+    margin: 4px 0 10px;
+
+    font-size: 13px;
+
+    line-height: 1.3;
 }
 
-.browse-books-btn {
-    border: none;
-    background: #2563eb;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
+#registerModal .auth-modal-content form {
+    gap: 4px;
 }
 
-.browse-books-btn:hover {
-    opacity: 0.9;
+#registerModal .auth-modal-content label {
+    margin-top: 4px;
+
+    margin-bottom: 1px;
+
+    font-size: 13px;
 }
+
+#registerModal .auth-modal-content input {
+    width: 100%;
+
+    height: 37px;
+
+    padding: 7px 10px;
+
+    font-size: 13px;
+}
+
+#registerModal .auth-modal-content input[type="file"] {
+    height: auto;
+
+    min-height: 37px;
+
+    padding: 6px;
+
+    font-size: 12px;
+}
+
+#registerModal .auth-modal-content small {
+    display: block;
+
+    margin-top: 1px !important;
+
+    font-size: 10px !important;
+
+    line-height: 1.15;
+}
+
+#registerModal .auth-submit {
+    width: 100%;
+
+    margin-top: 9px;
+
+    padding: 9px;
+
+    font-size: 13px;
+}
+
+#registerModal .auth-switch {
+    margin-top: 7px;
+
+    margin-bottom: 0;
+
+    font-size: 12px;
+}
+
 
 /* =====================================================
-   MY RENTAL FULL PAGE
+   MY RENTAL
 ===================================================== */
-
-.my-rentals-page {
-    min-height: 70vh;
-    padding: 40px 5%;
-    background: #f5f7fb;
-}
-
-
-/* BACK TO LIBRARY */
 
 .back-to-library-btn {
     display: inline-flex;
+
     align-items: center;
+
     gap: 6px;
 
     border: none;
+
     background: transparent;
 
     color: #2563eb;
+
     font-size: 16px;
+
     font-weight: 600;
 
     cursor: pointer;
 
     padding: 8px 0;
+
     margin-bottom: 20px;
 }
 
@@ -2039,23 +2068,38 @@ body.dark .auth-modal-content > p {
 }
 
 
-/* MY RENTAL HEADING */
+/* =====================================================
+   MY RENTAL FULL PAGE
+===================================================== */
+
+.my-rentals-page {
+    min-height: 70vh;
+
+    padding: 40px 5%;
+
+    background: #f5f7fb;
+}
+
+
+/* ================= RENTAL HEADING ================= */
 
 .my-rentals-page .section-heading {
     text-align: center;
+
     margin-bottom: 35px;
 }
 
 
-/* RENTAL CONTAINER */
+/* ================= RENTAL CONTAINER ================= */
 
 .my-rentals-page .book-container {
     display: grid;
 
-    grid-template-columns: repeat(
-        auto-fill,
-        minmax(250px, 1fr)
-    );
+    grid-template-columns:
+        repeat(
+            auto-fill,
+            minmax(250px, 1fr)
+        );
 
     gap: 25px;
 
@@ -2063,10 +2107,11 @@ body.dark .auth-modal-content > p {
 }
 
 
-/* NO RENTALS */
+/* ================= NO RENTALS ================= */
 
 .no-rentals-message {
     width: 100%;
+
     text-align: center;
 
     padding: 70px 20px;
@@ -2074,21 +2119,24 @@ body.dark .auth-modal-content > p {
 
 .no-rentals-message h3 {
     margin: 0 0 10px;
+
     font-size: 24px;
 }
 
 .no-rentals-message p {
     color: #64748b;
+
     margin-bottom: 25px;
 }
 
 
-/* BROWSE BOOKS */
+/* ================= BROWSE BOOKS ================= */
 
 .browse-books-btn {
     border: none;
 
     background: #2563eb;
+
     color: white;
 
     padding: 12px 25px;
@@ -2096,6 +2144,7 @@ body.dark .auth-modal-content > p {
     border-radius: 8px;
 
     font-size: 15px;
+
     font-weight: 600;
 
     cursor: pointer;
@@ -2103,4 +2152,129 @@ body.dark .auth-modal-content > p {
 
 .browse-books-btn:hover {
     opacity: 0.9;
+}
+
+
+/* =====================================================
+   MY RENTAL DARK MODE
+===================================================== */
+
+body.dark .my-rentals-page {
+    background: #0f172a;
+}
+
+body.dark .no-rentals-message p {
+    color: #cbd5e1;
+}
+
+
+/* =====================================================
+   EXTRA MOBILE RENTAL FIX
+   Must remain at the end
+===================================================== */
+
+@media (max-width: 768px) {
+
+    .my-rentals-page .book-container {
+        display: grid !important;
+
+        grid-template-columns: 1fr !important;
+
+        gap: 20px !important;
+
+        overflow: visible !important;
+
+        padding: 0 !important;
+    }
+
+    .my-rentals-page .book-card {
+        display: block;
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        max-width: 100% !important;
+
+        flex: none !important;
+    }
+}
+
+/* =====================================================
+   BOOK IMAGE - NEVER CROP
+===================================================== */
+
+.book-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: contain !important;
+    display: block;
+}
+
+/* =====================================================
+   MY RENTAL - DECORATIVE BACK TO LIBRARY BUTTON
+===================================================== */
+
+.back-to-library-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 12px 22px;
+
+    border: 2px solid #2563eb;
+    border-radius: 30px;
+
+    background: linear-gradient(
+        135deg,
+        #2563eb,
+        #1d4ed8
+    );
+
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 15px rgba(37, 99, 235, 0.25);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.back-to-library-btn span:first-child {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.back-to-library-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 9px 20px rgba(37, 99, 235, 0.35);
+
+    background: linear-gradient(
+        135deg,
+        #1d4ed8,
+        #1e40af
+    );
+}
+
+.back-to-library-btn:active {
+    transform: translateY(0);
+}
+
+
+/* =====================================================
+   MY RENTAL - TOP ARROW
+===================================================== */
+
+#topBtn {
+    z-index: 2000;
 }

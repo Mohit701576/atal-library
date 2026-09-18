@@ -60,8 +60,8 @@
                     Books
                 </a>
 
-                <a
-    href="#my-rentals"
+              <a
+    href="#my-rentals-page"
     id="myRentalNavLink"
     style="display: none;"
 >
@@ -709,9 +709,14 @@
 
 <section class="my-rentals-page" id="my-rentals-page" style="display: none;">
 
-    <button id="backToLibraryBtn" class="back-to-library-btn">
-        ← Back to Library
-    </button>
+    <button
+    id="backToLibraryBtn"
+    class="back-to-library-btn"
+    type="button"
+>
+    <span>←</span>
+    <span>Back to Library</span>
+</button>
 
     <div class="section-heading">
         <span>MY RENTALS</span>
@@ -1627,6 +1632,18 @@
                     "attendanceNavLink"
                 );
 
+            if (window.isMyRentalMode === true) {
+
+    if (attendanceSection) {
+        attendanceSection.style.display = "none";
+    }
+
+    if (attendanceNavLink) {
+        attendanceNavLink.style.display = "none";
+    }
+
+    return;
+}
 
             if (!attendanceSection) {
 

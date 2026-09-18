@@ -35,10 +35,14 @@ function getSavedUser() {
 function updateMyRentalVisibility() {
 
     const myRentalNavLink =
-        document.getElementById("myRentalNavLink");
+        document.getElementById(
+            "myRentalNavLink"
+        );
 
     const myRentalsPage =
-        document.getElementById("my-rentals-page");
+        document.getElementById(
+            "my-rentals-page"
+        );
 
     const user =
         getSavedUser();
@@ -46,7 +50,6 @@ function updateMyRentalVisibility() {
 
     if (user && user.email) {
 
-        // Login hai → My Rental navbar mein dikhao
         if (myRentalNavLink) {
 
             myRentalNavLink.style.display =
@@ -54,22 +57,15 @@ function updateMyRentalVisibility() {
 
         }
 
-
-        // IMPORTANT:
-        // Login hone par My Rental page automatically
-        // show NAHI hoga.
-        if (myRentalsPage) {
-
-            myRentalsPage.style.display =
-                "none";
-
-        }
+        /*
+           My Rental page ko yahan
+           automatically hide mat karo.
+        */
 
     }
 
     else {
 
-        // Logout → My Rental navbar hide
         if (myRentalNavLink) {
 
             myRentalNavLink.style.display =
@@ -77,8 +73,6 @@ function updateMyRentalVisibility() {
 
         }
 
-
-        // My Rental page bhi hide
         if (myRentalsPage) {
 
             myRentalsPage.style.display =
@@ -89,6 +83,7 @@ function updateMyRentalVisibility() {
     }
 
 }
+
 
 // ==================================================
 // LOAD MY RENTALS
@@ -588,6 +583,29 @@ function updateAttendanceVisibility() {
         document.getElementById("attendanceNavLink");
 
 
+    /* =========================================
+       MY RENTAL MODE
+       Attendance bilkul hide rahegi
+    ========================================= */
+
+    if (window.isMyRentalMode === true) {
+
+        if (attendanceSection) {
+            attendanceSection.style.display = "none";
+        }
+
+        if (attendanceNavLink) {
+            attendanceNavLink.style.display = "none";
+        }
+
+        return;
+    }
+
+
+    /* =========================================
+       NORMAL LIBRARY MODE
+    ========================================= */
+
     const isLoggedIn =
         !!(user && user.email);
 
@@ -596,7 +614,6 @@ function updateAttendanceVisibility() {
 
         attendanceSection.style.display =
             isLoggedIn ? "block" : "none";
-
     }
 
 
@@ -604,11 +621,8 @@ function updateAttendanceVisibility() {
 
         attendanceNavLink.style.display =
             isLoggedIn ? "inline-block" : "none";
-
     }
-
 }
-
 
 /* =====================================================
    PROFILE PHOTO
@@ -6280,26 +6294,253 @@ setInterval(
 
 function showMyRentalPage() {
 
-    const booksSection = document.getElementById("books");
-    const aboutSection = document.getElementById("about");
-    const contactSection = document.getElementById("contact");
-    const heroSection = document.querySelector(".hero");
-    const myRentalSection = document.getElementById("my-rentals");
+    window.isMyRentalMode = true;
 
-    if (booksSection) booksSection.style.display = "none";
-    if (aboutSection) aboutSection.style.display = "none";
-    if (contactSection) contactSection.style.display = "none";
-    if (heroSection) heroSection.style.display = "none";
+    const user = getSavedUser();
 
-    if (myRentalSection) {
-        myRentalSection.style.display = "block";
-        myRentalSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+    if (!user || !user.email) {
+
+        alert(
+            "Please login first to view My Rentals."
+        );
+
+        return;
     }
 
+
+    const navLinks =
+        document.querySelectorAll(
+            ".menu-links a"
+        );
+
+    const authButtons =
+        document.querySelector(
+            ".auth-buttons"
+        );
+
+    const mobileAuth =
+        document.getElementById(
+            "mobileAuth"
+        );
+
+    const menuBtn =
+        document.getElementById(
+            "menuBtn"
+        );
+
+    const hero =
+        document.querySelector(
+            ".hero"
+        );
+
+    const stats =
+        document.querySelector(
+            ".stats"
+        );
+
+    const attendance =
+        document.getElementById(
+            "attendance"
+        );
+
+    const books =
+        document.getElementById(
+            "books"
+        );
+
+    const about =
+        document.getElementById(
+            "about"
+        );
+
+    const contact =
+        document.getElementById(
+            "contact"
+        );
+
+    const footer =
+        document.querySelector(
+            "footer"
+        );
+
+    const myRentalPage =
+        document.getElementById(
+            "my-rentals-page"
+        );
+
+    const myRentalNavLink =
+        document.getElementById(
+            "myRentalNavLink"
+        );
+
+
+    /* =============================================
+       HIDE NORMAL NAV LINKS
+    ============================================= */
+
+    navLinks.forEach(
+        function (link) {
+
+            if (
+                link.id ===
+                "myRentalNavLink"
+            ) {
+
+                link.style.display =
+                    "inline-block";
+
+            }
+
+            else {
+
+                link.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    /* =============================================
+       HIDE DESKTOP AUTH
+    ============================================= */
+
+    if (authButtons) {
+
+        authButtons.style.display =
+            "none";
+
+    }
+
+
+    /* =============================================
+       HIDE MOBILE AUTH
+    ============================================= */
+
+    if (mobileAuth) {
+
+        mobileAuth.style.display =
+            "none";
+
+    }
+
+
+    /* =============================================
+       HIDE HAMBURGER
+    ============================================= */
+
+    if (menuBtn) {
+
+        menuBtn.style.display =
+            "none";
+
+    }
+
+
+    /* =============================================
+       HIDE NORMAL LIBRARY CONTENT
+    ============================================= */
+
+    if (hero) {
+
+        hero.style.display =
+            "none";
+
+    }
+
+    if (stats) {
+
+        stats.style.display =
+            "none";
+
+    }
+
+    if (attendance) {
+
+        attendance.style.display =
+            "none";
+
+    }
+
+    if (books) {
+
+        books.style.display =
+            "none";
+
+    }
+
+    if (about) {
+
+        about.style.display =
+            "none";
+
+    }
+
+    if (contact) {
+
+        contact.style.display =
+            "none";
+
+    }
+
+    if (footer) {
+
+        footer.style.display =
+            "none";
+
+    }
+
+
+    /* =============================================
+       SHOW ONLY MY RENTALS
+    ============================================= */
+
+    if (myRentalPage) {
+
+        myRentalPage.style.display =
+            "block";
+
+    }
+
+
+    /* =============================================
+       LOAD RENTALS
+    ============================================= */
+
     loadMyRentals();
+
+
+    /* =============================================
+       CLOSE MOBILE MENU
+    ============================================= */
+
+    const mainMenu =
+        document.getElementById(
+            "mainMenu"
+        );
+
+    if (mainMenu) {
+
+        mainMenu.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    /* =============================================
+       GO TO TOP
+    ============================================= */
+
+    window.scrollTo({
+
+        top: 0,
+
+        behavior: "smooth"
+
+    });
+
 }
 
 
@@ -6309,123 +6550,222 @@ function showMyRentalPage() {
 
 function showLibraryPage() {
 
-    const booksSection = document.getElementById("books");
-    const aboutSection = document.getElementById("about");
-    const contactSection = document.getElementById("contact");
-    const heroSection = document.querySelector(".hero");
-    const myRentalSection = document.getElementById("my-rentals");
+    window.isMyRentalMode = false;
 
-    if (heroSection) heroSection.style.display = "";
-    if (booksSection) booksSection.style.display = "";
-    if (aboutSection) aboutSection.style.display = "";
-    if (contactSection) contactSection.style.display = "";
+    const hero =
+        document.querySelector(
+            ".hero"
+        );
 
-    if (myRentalSection) {
-        myRentalSection.style.display = "none";
-    }
+    const stats =
+        document.querySelector(
+            ".stats"
+        );
 
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-    });
-}
+    const attendance =
+        document.getElementById(
+            "attendance"
+        );
 
-/* =====================================================
-   SHOW MY RENTAL PAGE
-===================================================== */
+    const books =
+        document.getElementById(
+            "books"
+        );
 
-function showMyRentalPage() {
+    const about =
+        document.getElementById(
+            "about"
+        );
 
-    const hero = document.querySelector(".hero");
-    const books = document.getElementById("books");
-    const about = document.getElementById("about");
-    const contact = document.getElementById("contact");
+    const contact =
+        document.getElementById(
+            "contact"
+        );
+
+    const footer =
+        document.querySelector(
+            "footer"
+        );
 
     const myRentalPage =
-        document.getElementById("my-rentals-page");
+        document.getElementById(
+            "my-rentals-page"
+        );
+
+    const navLinks =
+        document.querySelectorAll(
+            ".menu-links a"
+        );
+
+    const authButtons =
+        document.querySelector(
+            ".auth-buttons"
+        );
+
+    const mobileAuth =
+        document.getElementById(
+            "mobileAuth"
+        );
+
+    const menuBtn =
+        document.getElementById(
+            "menuBtn"
+        );
 
 
-    /* HIDE NORMAL LIBRARY */
-
-    if (hero) {
-        hero.style.display = "none";
-    }
-
-    if (books) {
-        books.style.display = "none";
-    }
-
-    if (about) {
-        about.style.display = "none";
-    }
-
-    if (contact) {
-        contact.style.display = "none";
-    }
-
-
-    /* SHOW MY RENTALS */
+    /* =============================================
+       HIDE MY RENTAL PAGE
+    ============================================= */
 
     if (myRentalPage) {
 
-        myRentalPage.style.display = "block";
+        myRentalPage.style.display =
+            "none";
 
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
     }
 
 
-    /* LOAD RENTALS */
-
-    loadMyRentals();
-}
-
-
-/* =====================================================
-   SHOW NORMAL LIBRARY
-===================================================== */
-
-function showLibraryPage() {
-
-    const hero = document.querySelector(".hero");
-    const books = document.getElementById("books");
-    const about = document.getElementById("about");
-    const contact = document.getElementById("contact");
-
-    const myRentalPage =
-        document.getElementById("my-rentals-page");
-
-
-    /* HIDE MY RENTALS */
-
-    if (myRentalPage) {
-        myRentalPage.style.display = "none";
-    }
-
-
-    /* SHOW NORMAL LIBRARY */
+    /* =============================================
+       SHOW NORMAL LIBRARY CONTENT
+    ============================================= */
 
     if (hero) {
-        hero.style.display = "";
+
+        hero.style.display =
+            "";
+
+    }
+
+    if (stats) {
+
+        stats.style.display =
+            "";
+
     }
 
     if (books) {
-        books.style.display = "";
+
+        books.style.display =
+            "";
+
     }
 
     if (about) {
-        about.style.display = "";
+
+        about.style.display =
+            "";
+
     }
 
     if (contact) {
-        contact.style.display = "";
+
+        contact.style.display =
+            "";
+
+    }
+
+    if (footer) {
+
+        footer.style.display =
+            "";
+
     }
 
 
+    /* =============================================
+       RESTORE NAV LINKS
+    ============================================= */
+
+    navLinks.forEach(
+        function (link) {
+
+            link.style.display =
+                "";
+
+        }
+    );
+
+
+    /* =============================================
+       RESTORE HAMBURGER
+    ============================================= */
+
+    if (menuBtn) {
+
+        /*
+           CSS normally controls this.
+           Mobile par block,
+           desktop par none.
+        */
+
+        menuBtn.style.display =
+            "";
+
+    }
+
+
+    /* =============================================
+       RESTORE AUTH
+    ============================================= */
+
+    if (authButtons) {
+
+        authButtons.style.display =
+            "";
+
+    }
+
+    if (mobileAuth) {
+
+        mobileAuth.style.display =
+            "";
+
+    }
+
+
+    /* =============================================
+       RESTORE ATTENDANCE
+       LOGIN KE ACCORDING
+    ============================================= */
+
+    updateAttendanceVisibility();
+
+
+    /* =============================================
+       RESTORE USER UI
+    ============================================= */
+
+    updateUserUI();
+
+
+    /* =============================================
+       CLOSE MOBILE MENU
+    ============================================= */
+
+    const mainMenu =
+        document.getElementById(
+            "mainMenu"
+        );
+
+    if (mainMenu) {
+
+        mainMenu.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    /* =============================================
+       GO TO TOP
+    ============================================= */
+
     window.scrollTo({
+
         top: 0,
+
         behavior: "smooth"
+
     });
+
 }
