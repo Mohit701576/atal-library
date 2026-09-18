@@ -2673,36 +2673,51 @@ app.post(
 // ADMIN USERS
 // ==================================================
 
+// ==================================================
+// ADMIN USERS
+// ==================================================
+
 app.get(
     "/admin/users",
     requireAdminToken,
     async (req, res) => {
         try {
+            // Use * so dashboard does not fail
+            // if your users table has extra columns.
             const {
                 data,
                 error
             } = await supabase
                 .from("users")
-                .select(
-                    "id, name, email, phone"
-                )
-                .order(
-                    "id",
-                    {
-                        ascending: false
-                    }
-                );
+                .select("*");
 
             if (error) {
-                throw error;
+                console.error(
+                    "SUPABASE ADMIN USERS ERROR:",
+                    error
+                );
+
+                return sendError(
+                    res,
+                    500,
+                    "Unable to get users.",
+                    error
+                );
             }
+
+            const users =
+                Array.isArray(data)
+                    ? data.map(user => ({
+                        id: user.id,
+                        name: user.name || "",
+                        email: user.email || "",
+                        phone: user.phone || ""
+                    }))
+                    : [];
 
             return res.json({
                 success: true,
-                users:
-                    Array.isArray(data)
-                        ? data
-                        : []
+                users
             });
 
         } catch (error) {
@@ -2733,20 +2748,13 @@ app.delete(
             const userId =
                 req.params.id;
 
-            // ==================================================
-            // FIND USER
-            // ==================================================
-
             const {
                 data: user,
                 error: userError
             } = await supabase
                 .from("users")
                 .select("*")
-                .eq(
-                    "id",
-                    userId
-                )
+                .eq("id", userId)
                 .maybeSingle();
 
             if (userError) {
@@ -2761,9 +2769,9 @@ app.delete(
                 );
             }
 
-            // ==================================================
+            // ==========================================
             // CHECK ACTIVE RENTALS
-            // ==================================================
+            // ==========================================
 
             const rentalInfo =
                 await getActiveRentalInfo(
@@ -2773,8 +2781,7 @@ app.delete(
 
             if (
                 rentalInfo.actualActive &&
-                rentalInfo.actualActive.length >
-                    0
+                rentalInfo.actualActive.length > 0
             ) {
                 return sendError(
                     res,
@@ -2783,21 +2790,18 @@ app.delete(
                 );
             }
 
-            // ==================================================
-            // DELETE STALE RENTALS
-            // ==================================================
+            // ==========================================
+            // DELETE STALE TRANSACTIONS
+            // ==========================================
 
             for (
                 const transaction
-                of rentalInfo.staleTransactions ||
-                []
+                of rentalInfo.staleTransactions || []
             ) {
                 const {
                     error
                 } = await supabase
-                    .from(
-                        "transactions"
-                    )
+                    .from("transactions")
                     .delete()
                     .eq(
                         "id",
@@ -2809,9 +2813,9 @@ app.delete(
                 }
             }
 
-            // ==================================================
+            // ==========================================
             // DELETE ATTENDANCE
-            // ==================================================
+            // ==========================================
 
             const {
                 error: attendanceError
@@ -2827,9 +2831,9 @@ app.delete(
                 throw attendanceError;
             }
 
-            // ==================================================
+            // ==========================================
             // DELETE TRANSACTIONS
-            // ==================================================
+            // ==========================================
 
             const {
                 error: transactionError
@@ -2845,9 +2849,9 @@ app.delete(
                 throw transactionError;
             }
 
-            // ==================================================
+            // ==========================================
             // DELETE USER
-            // ==================================================
+            // ==========================================
 
             const {
                 error: deleteError
@@ -2879,6 +2883,742 @@ app.delete(
                 res,
                 500,
                 "Unable to delete user.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN BOOKS - GET ALL
+// ==================================================
+
+app.get(
+    "/admin/books",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const {
+                data,
+                error
+            } = await supabase
+                .from("books")
+                .select("*")
+                .order(
+                    "id",
+                    {
+                        ascending: false
+                    }
+                );
+
+            if (error) {
+                console.error(
+                    "SUPABASE ADMIN BOOKS ERROR:",
+                    error
+                );
+
+                return sendError(
+                    res,
+                    500,
+                    "Unable to get books.",
+                    error
+                );
+            }
+
+            return res.json({
+                success: true,
+                books:
+                    Array.isArray(data)
+                        ? data
+                        : []
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN BOOKS ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to get books.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN BOOKS - ADD
+// ==================================================
+
+app.post(
+    "/admin/books",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const {
+                name,
+                author,
+                category,
+                year,
+                image,
+                description,
+                price,
+                created_by
+            } = req.body;
+
+            const cleanBookName =
+                cleanValue(name);
+
+            if (!cleanBookName) {
+                return sendError(
+                    res,
+                    400,
+                    "Book name is required."
+                );
+            }
+
+            let cleanYear = null;
+
+            if (
+                year !== undefined &&
+                year !== null &&
+                String(year).trim() !== ""
+            ) {
+                const parsedYear =
+                    Number(year);
+
+                if (
+                    !Number.isFinite(
+                        parsedYear
+                    )
+                ) {
+                    return sendError(
+                        res,
+                        400,
+                        "Book year must be a valid number."
+                    );
+                }
+
+                cleanYear =
+                    parsedYear;
+            }
+
+            let cleanPrice = 0;
+
+            if (
+                price !== undefined &&
+                price !== null &&
+                String(price).trim() !== ""
+            ) {
+                const parsedPrice =
+                    Number(price);
+
+                if (
+                    !Number.isFinite(
+                        parsedPrice
+                    )
+                ) {
+                    return sendError(
+                        res,
+                        400,
+                        "Book price must be a valid number."
+                    );
+                }
+
+                cleanPrice =
+                    parsedPrice;
+            }
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from("books")
+                .insert([
+                    {
+                        name:
+                            cleanBookName,
+
+                        author:
+                            cleanValue(
+                                author
+                            ),
+
+                        category:
+                            cleanValue(
+                                category
+                            ),
+
+                        year:
+                            cleanYear,
+
+                        image:
+                            cleanValue(
+                                image
+                            ),
+
+                        description:
+                            cleanValue(
+                                description
+                            ),
+
+                        rented_by:
+                            null,
+
+                        created_by:
+                            created_by ||
+                            new Date().toISOString(),
+
+                        price:
+                            cleanPrice
+                    }
+                ])
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return res.json({
+                success: true,
+                message:
+                    "Book added successfully.",
+                book: data
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN ADD BOOK ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to add book.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN BOOKS - UPDATE
+// ==================================================
+
+app.put(
+    "/admin/books/:id",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const bookId =
+                req.params.id;
+
+            const {
+                name,
+                author,
+                category,
+                year,
+                image,
+                description,
+                price
+            } = req.body;
+
+            const {
+                data: existingBook,
+                error: findError
+            } = await supabase
+                .from("books")
+                .select("*")
+                .eq(
+                    "id",
+                    bookId
+                )
+                .maybeSingle();
+
+            if (findError) {
+                throw findError;
+            }
+
+            if (!existingBook) {
+                return sendError(
+                    res,
+                    404,
+                    "Book not found."
+                );
+            }
+
+            const updateData = {};
+
+            if (
+                name !== undefined
+            ) {
+                const cleanBookName =
+                    cleanValue(name);
+
+                if (!cleanBookName) {
+                    return sendError(
+                        res,
+                        400,
+                        "Book name is required."
+                    );
+                }
+
+                updateData.name =
+                    cleanBookName;
+            }
+
+            if (
+                author !== undefined
+            ) {
+                updateData.author =
+                    cleanValue(author);
+            }
+
+            if (
+                category !== undefined
+            ) {
+                updateData.category =
+                    cleanValue(category);
+            }
+
+            if (
+                year !== undefined
+            ) {
+                if (
+                    year === null ||
+                    String(year).trim() === ""
+                ) {
+                    updateData.year = null;
+                } else {
+                    const parsedYear =
+                        Number(year);
+
+                    if (
+                        !Number.isFinite(
+                            parsedYear
+                        )
+                    ) {
+                        return sendError(
+                            res,
+                            400,
+                            "Book year must be a valid number."
+                        );
+                    }
+
+                    updateData.year =
+                        parsedYear;
+                }
+            }
+
+            if (
+                image !== undefined
+            ) {
+                updateData.image =
+                    cleanValue(image);
+            }
+
+            if (
+                description !== undefined
+            ) {
+                updateData.description =
+                    cleanValue(
+                        description
+                    );
+            }
+
+            if (
+                price !== undefined
+            ) {
+                if (
+                    price === null ||
+                    String(price).trim() === ""
+                ) {
+                    updateData.price = 0;
+                } else {
+                    const parsedPrice =
+                        Number(price);
+
+                    if (
+                        !Number.isFinite(
+                            parsedPrice
+                        )
+                    ) {
+                        return sendError(
+                            res,
+                            400,
+                            "Book price must be a valid number."
+                        );
+                    }
+
+                    updateData.price =
+                        parsedPrice;
+                }
+            }
+
+            if (
+                Object.keys(
+                    updateData
+                ).length === 0
+            ) {
+                return sendError(
+                    res,
+                    400,
+                    "No book data was provided for update."
+                );
+            }
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from("books")
+                .update(updateData)
+                .eq(
+                    "id",
+                    bookId
+                )
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return res.json({
+                success: true,
+                message:
+                    "Book updated successfully.",
+                book: data
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN UPDATE BOOK ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to update book.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN BOOKS - PATCH UPDATE
+// ==================================================
+
+app.patch(
+    "/admin/books/:id",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const bookId =
+                req.params.id;
+
+            const {
+                name,
+                author,
+                category,
+                year,
+                image,
+                description,
+                price
+            } = req.body;
+
+            const updateData = {};
+
+            if (name !== undefined) {
+                updateData.name =
+                    cleanValue(name);
+            }
+
+            if (author !== undefined) {
+                updateData.author =
+                    cleanValue(author);
+            }
+
+            if (category !== undefined) {
+                updateData.category =
+                    cleanValue(category);
+            }
+
+            if (year !== undefined) {
+                updateData.year =
+                    year === null ||
+                    String(year).trim() === ""
+                        ? null
+                        : Number(year);
+            }
+
+            if (image !== undefined) {
+                updateData.image =
+                    cleanValue(image);
+            }
+
+            if (description !== undefined) {
+                updateData.description =
+                    cleanValue(
+                        description
+                    );
+            }
+
+            if (price !== undefined) {
+                updateData.price =
+                    price === null ||
+                    String(price).trim() === ""
+                        ? 0
+                        : Number(price);
+            }
+
+            if (
+                Object.keys(
+                    updateData
+                ).length === 0
+            ) {
+                return sendError(
+                    res,
+                    400,
+                    "No book data was provided for update."
+                );
+            }
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from("books")
+                .update(updateData)
+                .eq(
+                    "id",
+                    bookId
+                )
+                .select()
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return res.json({
+                success: true,
+                message:
+                    "Book updated successfully.",
+                book: data
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN PATCH BOOK ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to update book.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN BOOKS - DELETE
+// ==================================================
+
+app.delete(
+    "/admin/books/:id",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const bookId =
+                req.params.id;
+
+            const {
+                data: book,
+                error: bookError
+            } = await supabase
+                .from("books")
+                .select("*")
+                .eq(
+                    "id",
+                    bookId
+                )
+                .maybeSingle();
+
+            if (bookError) {
+                throw bookError;
+            }
+
+            if (!book) {
+                return sendError(
+                    res,
+                    404,
+                    "Book not found."
+                );
+            }
+
+            if (
+                cleanRentedBy(
+                    book.rented_by
+                )
+            ) {
+                return sendError(
+                    res,
+                    400,
+                    "You cannot delete a rented book."
+                );
+            }
+
+            const {
+                error
+            } = await supabase
+                .from("books")
+                .delete()
+                .eq(
+                    "id",
+                    bookId
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            return res.json({
+                success: true,
+                message:
+                    "Book deleted successfully."
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN DELETE BOOK ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to delete book.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN TRANSACTIONS
+// ==================================================
+
+app.get(
+    "/admin/transactions",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const {
+                data,
+                error
+            } = await supabase
+                .from("transactions")
+                .select("*")
+                .order(
+                    "rent_date",
+                    {
+                        ascending: false
+                    }
+                );
+
+            if (error) {
+                console.error(
+                    "SUPABASE ADMIN TRANSACTIONS ERROR:",
+                    error
+                );
+
+                return sendError(
+                    res,
+                    500,
+                    "Unable to get transactions.",
+                    error
+                );
+            }
+
+            return res.json({
+                success: true,
+                transactions:
+                    Array.isArray(data)
+                        ? data
+                        : []
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN TRANSACTIONS ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to get transactions.",
+                error
+            );
+        }
+    }
+);
+
+// ==================================================
+// ADMIN TRANSACTIONS - ALIAS
+// ==================================================
+
+app.get(
+    "/admin/rentals",
+    requireAdminToken,
+    async (req, res) => {
+        try {
+            const {
+                data,
+                error
+            } = await supabase
+                .from("transactions")
+                .select("*")
+                .order(
+                    "rent_date",
+                    {
+                        ascending: false
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            return res.json({
+                success: true,
+                transactions:
+                    Array.isArray(data)
+                        ? data
+                        : []
+            });
+
+        } catch (error) {
+            console.error(
+                "ADMIN RENTALS ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to get rentals.",
                 error
             );
         }
