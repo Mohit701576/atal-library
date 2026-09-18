@@ -2434,6 +2434,293 @@ app.post(
 );
 
 // ==================================================
+// USER - GET MY ACTIVE RENTALS
+// ==================================================
+
+app.get(
+    "/my-rentals",
+    async (req, res) => {
+
+        try {
+
+            const email = req.query.email;
+
+            // ------------------------------------------
+            // EMAIL REQUIRED
+            // ------------------------------------------
+
+            if (!email) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "Email is required."
+
+                });
+
+            }
+
+            const cleanEmail =
+                email
+                    .toString()
+                    .trim()
+                    .toLowerCase();
+
+
+            // ------------------------------------------
+            // GET ACTIVE RENTAL TRANSACTIONS
+            // ------------------------------------------
+
+            const {
+                data: transactions,
+                error: transactionError
+            } = await supabase
+                .from("transactions")
+                .select(`
+                    id,
+                    name,
+                    email,
+                    book_name,
+                    author,
+                    rent_date,
+                    submit_date,
+                    status
+                `)
+                .eq(
+                    "email",
+                    cleanEmail
+                )
+                .eq(
+                    "status",
+                    "RENTED"
+                )
+                .is(
+                    "submit_date",
+                    null
+                )
+                .order(
+                    "rent_date",
+                    {
+                        ascending: false
+                    }
+                );
+
+
+            if (transactionError) {
+
+                console.log(
+                    "My rentals transaction error:",
+                    transactionError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to get your rented books."
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // NO ACTIVE RENTALS
+            // ------------------------------------------
+
+            if (
+                !transactions ||
+                transactions.length === 0
+            ) {
+
+                return res.json({
+
+                    success: true,
+
+                    rentals: []
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // GET BOOKS
+            // ------------------------------------------
+
+            const {
+                data: books,
+                error: booksError
+            } = await supabase
+                .from("books")
+                .select(`
+                    id,
+                    name,
+                    author,
+                    category,
+                    year,
+                    image,
+                    description,
+                    price,
+                    rented_by
+                `);
+
+
+            if (booksError) {
+
+                console.log(
+                    "My rentals books error:",
+                    booksError
+                );
+
+                return res.status(500).json({
+
+                    success: false,
+
+                    message:
+                        "Unable to get book information."
+
+                });
+
+            }
+
+
+            // ------------------------------------------
+            // MATCH TRANSACTIONS WITH BOOKS
+            // ------------------------------------------
+
+            const rentals =
+                transactions.map(
+                    function (transaction) {
+
+                        const matchingBook =
+                            (books || []).find(
+                                function (book) {
+
+                                    return (
+                                        String(book.name || "")
+                                            .trim()
+                                            .toLowerCase()
+                                        ===
+                                        String(transaction.book_name || "")
+                                            .trim()
+                                            .toLowerCase()
+                                        &&
+                                        String(book.author || "")
+                                            .trim()
+                                            .toLowerCase()
+                                        ===
+                                        String(transaction.author || "")
+                                            .trim()
+                                            .toLowerCase()
+                                    );
+
+                                }
+                            );
+
+
+                        return {
+
+                            id:
+                                transaction.id,
+
+                            name:
+                                transaction.name || "",
+
+                            email:
+                                transaction.email || "",
+
+                            bookId:
+                                matchingBook
+                                    ? matchingBook.id
+                                    : null,
+
+                            book:
+                                transaction.book_name || "",
+
+                            author:
+                                transaction.author || "",
+
+                            category:
+                                matchingBook
+                                    ? matchingBook.category || ""
+                                    : "",
+
+                            year:
+                                matchingBook
+                                    ? matchingBook.year || ""
+                                    : "",
+
+                            image:
+                                matchingBook
+                                    ? matchingBook.image || ""
+                                    : "",
+
+                            description:
+                                matchingBook
+                                    ? matchingBook.description || ""
+                                    : "",
+
+                            price:
+                                matchingBook
+                                    ? Number(matchingBook.price) || 0
+                                    : 0,
+
+                            rentDate:
+                                transaction.rent_date || "",
+
+                            submitDate:
+                                transaction.submit_date || "",
+
+                            status:
+                                transaction.status || "RENTED"
+
+                        };
+
+                    }
+                );
+
+
+            // ------------------------------------------
+            // SEND RESPONSE
+            // ------------------------------------------
+
+            return res.json({
+
+                success: true,
+
+                rentals:
+                    rentals
+
+            });
+
+        }
+
+        catch (error) {
+
+            console.log(
+                "My rentals server error:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Server error."
+
+            });
+
+        }
+
+    }
+);
+
+// ==================================================
 // GET ALL BOOKS
 // ==================================================
 

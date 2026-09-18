@@ -28,6 +28,544 @@ function getSavedUser() {
     }
 }
 
+// ==================================================
+// MY RENTALS
+// ==================================================
+
+function updateMyRentalVisibility() {
+
+    const myRentalNavLink =
+        document.getElementById("myRentalNavLink");
+
+    const myRentalsSection =
+        document.getElementById("my-rentals");
+
+    const user =
+        getSavedUser();
+
+
+    if (
+        user &&
+        user.email
+    ) {
+
+        if (myRentalNavLink) {
+
+            myRentalNavLink.style.display =
+                "inline-block";
+
+        }
+
+        if (myRentalsSection) {
+
+            myRentalsSection.style.display =
+                "block";
+
+        }
+
+        loadMyRentals();
+
+    }
+
+    else {
+
+        if (myRentalNavLink) {
+
+            myRentalNavLink.style.display =
+                "none";
+
+        }
+
+        if (myRentalsSection) {
+
+            myRentalsSection.style.display =
+                "none";
+
+        }
+
+    }
+
+}
+
+
+// ==================================================
+// LOAD MY RENTALS
+// ==================================================
+
+async function loadMyRentals() {
+
+    const container =
+        document.getElementById(
+            "myRentalsContainer"
+        );
+
+    const message =
+        document.getElementById(
+            "myRentalsMessage"
+        );
+
+    const user =
+        getSavedUser();
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        container.innerHTML = "";
+
+        if (message) {
+
+            message.textContent =
+                "Please login to see your rented books.";
+
+        }
+
+        return;
+
+    }
+
+
+    try {
+
+        if (message) {
+
+            message.style.display =
+                "block";
+
+            message.textContent =
+                "Loading your rented books...";
+
+        }
+
+
+        const response =
+            await fetch(
+                `${API_URL}/my-rentals?email=${encodeURIComponent(user.email)}`
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to load your rentals."
+            );
+
+        }
+
+
+        // ------------------------------------------
+        // SAFE RESPONSE HANDLING
+        // ------------------------------------------
+
+        const rentals =
+            Array.isArray(data)
+                ? data
+                : Array.isArray(data.rentals)
+                    ? data.rentals
+                    : Array.isArray(data.data)
+                        ? data.data
+                        : [];
+
+
+        // ------------------------------------------
+        // NO RENTALS
+        // ------------------------------------------
+
+        if (
+            rentals.length === 0
+        ) {
+
+            container.innerHTML = `
+
+                <div
+                    style="
+                        width:100%;
+                        text-align:center;
+                        padding:40px 20px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:50px;
+                            margin-bottom:15px;
+                        "
+                    >
+                        📚
+                    </div>
+
+                    <h3>
+                        No Active Rentals
+                    </h3>
+
+                    <p
+                        style="
+                            color:#64748b;
+                        "
+                    >
+                        You have not rented any book currently.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        // ------------------------------------------
+        // RENDER RENTALS
+        // ------------------------------------------
+
+        container.innerHTML = rentals
+            .map(
+                function (rental) {
+
+                    const image =
+                        rental.image ||
+                        "https://via.placeholder.com/300x400?text=Book";
+
+
+                    const rentDate =
+                        rental.rentDate
+                            ? new Date(
+                                rental.rentDate
+                            ).toLocaleString()
+                            : "N/A";
+
+
+                    return `
+
+                        <div
+                            class="book-card"
+                            style="
+                                position:relative;
+                            "
+                        >
+
+                            <img
+                                src="${image}"
+                                alt="${rental.book || "Book"}"
+                                style="
+                                    width:100%;
+                                    height:250px;
+                                    object-fit:cover;
+                                "
+                            >
+
+
+                            <div
+                                class="book-card-content"
+                            >
+
+                                <span
+                                    style="
+                                        display:inline-block;
+                                        background:#fee2e2;
+                                        color:#b91c1c;
+                                        padding:5px 10px;
+                                        border-radius:20px;
+                                        font-size:12px;
+                                        font-weight:bold;
+                                        margin-bottom:10px;
+                                    "
+                                >
+                                    📕 RENTED BY YOU
+                                </span>
+
+
+                                <h3>
+                                    ${rental.book || "Unknown Book"}
+                                </h3>
+
+
+                                <p>
+                                    <strong>
+                                        Author:
+                                    </strong>
+                                    ${rental.author || "Unknown"}
+                                </p>
+
+
+                                ${
+                                    rental.category
+                                        ? `
+                                            <p>
+                                                <strong>
+                                                    Category:
+                                                </strong>
+                                                ${rental.category}
+                                            </p>
+                                        `
+                                        : ""
+                                }
+
+
+                                ${
+                                    rental.year
+                                        ? `
+                                            <p>
+                                                <strong>
+                                                    Year:
+                                                </strong>
+                                                ${rental.year}
+                                            </p>
+                                        `
+                                        : ""
+                                }
+
+
+                                <p
+                                    style="
+                                        font-size:13px;
+                                        color:#64748b;
+                                    "
+                                >
+                                    <strong>
+                                        Rented:
+                                    </strong>
+                                    ${rentDate}
+                                </p>
+
+
+                                <button
+                                    type="button"
+                                    class="submit-btn my-rental-submit-btn"
+                                    data-book-id="${rental.bookId || ""}"
+                                    data-book="${encodeURIComponent(rental.book || "")}"
+                                    data-author="${encodeURIComponent(rental.author || "")}"
+                                    style="
+                                        width:100%;
+                                        margin-top:12px;
+                                    "
+                                >
+                                    ↩️ Submit Book
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "My Rentals Error:",
+            error
+        );
+
+
+        container.innerHTML = `
+
+            <div
+                style="
+                    width:100%;
+                    text-align:center;
+                    padding:40px 20px;
+                "
+            >
+
+                <h3>
+                    Unable to Load Rentals
+                </h3>
+
+                <p
+                    style="
+                        color:#64748b;
+                    "
+                >
+                    ${error.message}
+                </p>
+
+                <button
+                    type="button"
+                    onclick="loadMyRentals()"
+                    style="
+                        padding:10px 18px;
+                        border:none;
+                        border-radius:8px;
+                        background:#2563eb;
+                        color:white;
+                        cursor:pointer;
+                        font-weight:bold;
+                    "
+                >
+                    🔄 Try Again
+                </button>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// ==================================================
+// SUBMIT BOOK FROM MY RENTALS
+// ==================================================
+
+async function submitMyRental(
+    bookId,
+    bookName,
+    author
+) {
+
+    const user =
+        getSavedUser();
+
+
+    if (
+        !user ||
+        !user.email
+    ) {
+
+        alert(
+            "Please login first."
+        );
+
+        return;
+
+    }
+
+
+    if (!bookId) {
+
+        alert(
+            "Book information is missing. Please refresh the page and try again."
+        );
+
+        return;
+
+    }
+
+
+    const confirmed =
+        confirm(
+            `Do you want to submit "${bookName}"?`
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_URL}/submit`,
+                {
+
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json"
+
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            name:
+                                user.name,
+
+                            email:
+                                user.email,
+
+                            book:
+                                bookName,
+
+                            author:
+                                author,
+
+                            bookId:
+                                Number(bookId)
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Unable to submit book."
+            );
+
+        }
+
+
+        alert(
+            data.message ||
+            "Book submitted successfully."
+        );
+
+
+        // Refresh books
+        await loadBooksFromBackend();
+
+
+        // Refresh My Rental
+        await loadMyRentals();
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "Submit My Rental Error:",
+            error
+        );
+
+
+        alert(
+            error.message ||
+            "Unable to submit book."
+        );
+
+    }
+
+}
+
 
 function saveUser(user) {
 
@@ -216,6 +754,124 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
+        // ==================================================
+// MY RENTAL NAVIGATION
+// ==================================================
+
+const myRentalNavLink =
+    document.getElementById(
+        "myRentalNavLink"
+    );
+
+
+if (myRentalNavLink) {
+
+    myRentalNavLink.addEventListener(
+        "click",
+        function () {
+
+            const user =
+                getSavedUser();
+
+
+            if (
+                !user ||
+                !user.email
+            ) {
+
+                this.style.display =
+                    "none";
+
+                return;
+
+            }
+
+
+            const myRentalsSection =
+                document.getElementById(
+                    "my-rentals"
+                );
+
+
+            if (myRentalsSection) {
+
+                myRentalsSection.style.display =
+                    "block";
+
+
+                myRentalsSection.scrollIntoView({
+
+                    behavior:
+                        "smooth"
+
+                });
+
+            }
+
+
+            loadMyRentals();
+
+        }
+    );
+
+}
+
+
+// ==================================================
+// MY RENTAL SUBMIT BUTTON
+// ==================================================
+
+const myRentalsContainer =
+    document.getElementById(
+        "myRentalsContainer"
+    );
+
+
+if (myRentalsContainer) {
+
+    myRentalsContainer.addEventListener(
+        "click",
+        function (event) {
+
+            const submitButton =
+                event.target.closest(
+                    ".my-rental-submit-btn"
+                );
+
+
+            if (!submitButton) {
+
+                return;
+
+            }
+
+
+            const bookId =
+                submitButton.dataset.bookId;
+
+
+            const bookName =
+                decodeURIComponent(
+                    submitButton.dataset.book || ""
+                );
+
+
+            const author =
+                decodeURIComponent(
+                    submitButton.dataset.author || ""
+                );
+
+
+            submitMyRental(
+                bookId,
+                bookName,
+                author
+            );
+
+        }
+    );
+
+}
 
         /* =================================================
            NAVBAR
@@ -710,6 +1366,7 @@ document.addEventListener(
             const isLoggedIn =
                 !!(user && user.email);
 
+            updateMyRentalVisibility();
 
             updateAttendanceVisibility();
 
@@ -1284,15 +1941,8 @@ document.addEventListener(
 
         function logoutUser() {
 
-            localStorage.removeItem(
-                "loggedUser"
-            );
-
-
-            localStorage.removeItem(
-                "libraryUser"
-            );
-
+            localStorage.removeItem("loggedUser");
+            localStorage.removeItem("libraryUser");
 
             updateUserUI();
 
@@ -4751,11 +5401,9 @@ document.addEventListener(
         ================================================= */
 
         updateAttendanceVisibility();
-
         loadBooksFromBackend();
-
         updateUserUI();
-
+        updateMyRentalVisibility();
         refreshProfileFromBackend();
 
 
