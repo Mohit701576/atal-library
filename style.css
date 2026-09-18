@@ -496,25 +496,9 @@ nav {
 }
 
 
-/* =====================================================
-   BOOK SLIDER WRAPPER
-===================================================== */
-
-.books-slider-wrapper {
-    position: relative;
-
-    width: 100%;
-}
-
-
-/* =====================================================
-   NORMAL BOOK CONTAINER
-   1-4 BOOKS
-===================================================== */
+/* Book Container */
 
 .book-container {
-    width: 100%;
-
     display: grid;
 
     grid-template-columns:
@@ -524,175 +508,7 @@ nav {
 }
 
 
-/* =====================================================
-   SLIDER MODE
-   5+ BOOKS
-===================================================== */
-
-.book-container.slider-mode {
-
-    display: flex;
-
-    gap: 25px;
-
-    overflow-x: auto;
-
-    overflow-y: hidden;
-
-    scroll-behavior: smooth;
-
-    scroll-snap-type: x mandatory;
-
-    padding: 5px 3px 15px;
-
-    scrollbar-width: none;
-
-    /*
-       Buttons ke liye neeche extra space
-    */
-    margin-bottom: 65px;
-}
-
-
-/* Hide scrollbar Chrome / Edge / Safari */
-
-.book-container.slider-mode::-webkit-scrollbar {
-    display: none;
-}
-
-
-/* =====================================================
-   SLIDER BOOK CARD
-===================================================== */
-
-.book-container.slider-mode .book-card {
-
-    flex: 0 0 calc(
-        (100% - 75px) / 4
-    );
-
-    min-width: calc(
-        (100% - 75px) / 4
-    );
-
-    scroll-snap-align: start;
-}
-
-
-/* =====================================================
-   SLIDER BUTTONS - BOTTOM CENTER
-===================================================== */
-
-.book-slider-btn {
-
-    position: absolute;
-
-    /*
-       Books ke niche buttons
-    */
-    bottom: 0;
-
-    z-index: 20;
-
-    width: 44px;
-
-    height: 44px;
-
-    border: none;
-
-    border-radius: 50%;
-
-    background: #2563eb;
-
-    color: white;
-
-    font-size: 22px;
-
-    font-weight: bold;
-
-    cursor: pointer;
-
-    display: none;
-
-    align-items: center;
-
-    justify-content: center;
-
-    box-shadow:
-        0 5px 15px
-        rgba(0, 0, 0, 0.20);
-
-    transition: 0.3s;
-}
-
-
-/* Previous button */
-
-.book-prev-btn {
-
-    left: 50%;
-
-    transform:
-        translateX(-52px);
-}
-
-
-/* Next button */
-
-.book-next-btn {
-
-    right: 50%;
-
-    transform:
-        translateX(52px);
-}
-
-
-/* Hover */
-
-.book-slider-btn:hover {
-
-    background: #1d4ed8;
-
-    transform:
-        scale(1.08);
-}
-
-
-/* Previous hover */
-
-.book-prev-btn:hover {
-
-    transform:
-        translateX(-52px)
-        scale(1.08);
-}
-
-
-/* Next hover */
-
-.book-next-btn:hover {
-
-    transform:
-        translateX(52px)
-        scale(1.08);
-}
-
-
-/* =====================================================
-   SHOW SLIDER BUTTONS
-===================================================== */
-
-.books-slider-wrapper.slider-active
-.book-slider-btn {
-
-    display: flex;
-}
-
-
-/* =====================================================
-   BOOK CARD
-===================================================== */
+/* Book Card */
 
 .book-card {
     background: white;
@@ -1314,19 +1130,6 @@ body.dark .auth-modal-content > p {
 }
 
 
-/* Slider buttons - Dark Mode */
-
-body.dark .book-slider-btn {
-    background: #3b82f6;
-
-    color: white;
-}
-
-body.dark .book-slider-btn:hover {
-    background: #2563eb;
-}
-
-
 /* ================= TABLET ================= */
 
 @media (max-width: 1000px) {
@@ -1346,52 +1149,6 @@ body.dark .book-slider-btn:hover {
 
     .hero h1 {
         font-size: 45px;
-    }
-
-
-    /* Slider - Tablet */
-
-    .book-container.slider-mode .book-card {
-
-        flex: 0 0 calc(
-            (100% - 50px) / 3
-        );
-
-        min-width: calc(
-            (100% - 50px) / 3
-        );
-    }
-
-
-    /*
-       Bottom buttons remain centered.
-       No left/right side positioning.
-    */
-
-    .book-prev-btn {
-        left: 50%;
-
-        transform:
-            translateX(-50px);
-    }
-
-    .book-next-btn {
-        right: 50%;
-
-        transform:
-            translateX(50px);
-    }
-
-    .book-prev-btn:hover {
-        transform:
-            translateX(-50px)
-            scale(1.08);
-    }
-
-    .book-next-btn:hover {
-        transform:
-            translateX(50px)
-            scale(1.08);
     }
 
 }
@@ -1608,9 +1365,6 @@ body.dark .book-slider-btn:hover {
         width: 100%;
     }
 
-
-    /* Normal Grid */
-
     .book-container {
         grid-template-columns:
             repeat(2, 1fr);
@@ -1620,77 +1374,6 @@ body.dark .book-slider-btn:hover {
 
     .book-card img {
         height: 220px;
-    }
-
-
-    /* =================================================
-       Slider - Mobile
-    ================================================= */
-
-    .book-container.slider-mode {
-
-        gap: 15px;
-
-        padding-left: 3px;
-
-        padding-right: 3px;
-
-        margin-bottom: 60px;
-    }
-
-    .book-container.slider-mode .book-card {
-
-        flex: 0 0 calc(
-            (100% - 15px) / 2
-        );
-
-        min-width: calc(
-            (100% - 15px) / 2
-        );
-    }
-
-
-    /* Bottom buttons */
-
-    .book-slider-btn {
-
-        width: 40px;
-
-        height: 40px;
-
-        font-size: 20px;
-
-        bottom: 0;
-    }
-
-    .book-prev-btn {
-
-        left: 50%;
-
-        transform:
-            translateX(-47px);
-    }
-
-    .book-next-btn {
-
-        right: 50%;
-
-        transform:
-            translateX(47px);
-    }
-
-    .book-prev-btn:hover {
-
-        transform:
-            translateX(-47px)
-            scale(1.08);
-    }
-
-    .book-next-btn:hover {
-
-        transform:
-            translateX(47px)
-            scale(1.08);
     }
 
 
@@ -1759,9 +1442,6 @@ body.dark .book-slider-btn:hover {
         font-size: 32px;
     }
 
-
-    /* Normal Grid */
-
     .book-container {
         grid-template-columns: 1fr;
     }
@@ -1769,70 +1449,6 @@ body.dark .book-slider-btn:hover {
     .book-card img {
         height: 260px;
     }
-
-
-    /* =================================================
-       Slider - Very Small Mobile
-    ================================================= */
-
-    .book-container.slider-mode {
-
-        gap: 15px;
-
-        margin-bottom: 58px;
-    }
-
-    .book-container.slider-mode .book-card {
-
-        flex: 0 0 100%;
-
-        min-width: 100%;
-    }
-
-
-    /* Bottom buttons */
-
-    .book-slider-btn {
-
-        width: 38px;
-
-        height: 38px;
-
-        font-size: 18px;
-
-        bottom: 0;
-    }
-
-    .book-prev-btn {
-
-        left: 50%;
-
-        transform:
-            translateX(-44px);
-    }
-
-    .book-next-btn {
-
-        right: 50%;
-
-        transform:
-            translateX(44px);
-    }
-
-    .book-prev-btn:hover {
-
-        transform:
-            translateX(-44px)
-            scale(1.08);
-    }
-
-    .book-next-btn:hover {
-
-        transform:
-            translateX(44px)
-            scale(1.08);
-    }
-
 
     .stats {
         gap: 12px;
