@@ -28,6 +28,22 @@ const RESEND_FROM_EMAIL = String(
     process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev"
 ).trim();
 
+// ==================================================
+// ADMIN ENVIRONMENT
+// ==================================================
+
+const ADMIN_USERNAME = String(
+    process.env.ADMIN_USERNAME || ""
+).trim();
+
+const ADMIN_PASSWORD = String(
+    process.env.ADMIN_PASSWORD || ""
+);
+
+const ADMIN_TOKEN = String(
+    process.env.ADMIN_TOKEN || ""
+).trim();
+
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     console.error(
         "ERROR: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing."
@@ -1368,6 +1384,56 @@ app.get(
 );
 
 // ==================================================
+// ADMIN AUTHENTICATION
+// ==================================================
+
+function requireAdminToken(
+    req,
+    res,
+    next
+) {
+    try {
+        const authHeader =
+            String(
+                req.headers.authorization || ""
+            ).trim();
+
+        const receivedToken =
+            authHeader.startsWith("Bearer ")
+                ? authHeader
+                      .slice(7)
+                      .trim()
+                : "";
+
+        if (
+            !ADMIN_TOKEN ||
+            !receivedToken ||
+            receivedToken !== ADMIN_TOKEN
+        ) {
+            return sendError(
+                res,
+                401,
+                "Unauthorized admin access."
+            );
+        }
+
+        next();
+
+    } catch (error) {
+        console.error(
+            "ADMIN AUTH ERROR:",
+            error
+        );
+
+        return sendError(
+            res,
+            401,
+            "Unauthorized admin access."
+        );
+    }
+}
+
+// ==================================================
 // ADMIN ATTENDANCE
 // ==================================================
 
@@ -1416,11 +1482,13 @@ async function getAllAttendance(
 
 app.get(
     "/admin/attendance",
+    requireAdminToken,
     getAllAttendance
 );
 
 app.get(
     "/attendance/admin",
+    requireAdminToken,
     getAllAttendance
 );
 
@@ -1848,10 +1916,6 @@ app.post(
             // ==================================================
             // ATOMIC BOOK LOCK
             // ==================================================
-            // Only update if rented_by is still NULL.
-            // This helps prevent two users from renting
-            // the same book at the same time.
-            // ==================================================
 
             const {
                 data: lockedBook,
@@ -1925,7 +1989,6 @@ app.post(
                 .single();
 
             if (transactionError) {
-                // Roll back book lock.
                 await supabase
                     .from("books")
                     .update({
@@ -2223,8 +2286,6 @@ app.post(
                         );
 
                     if (clearError) {
-                        // Try to restore transaction
-                        // if releasing book fails.
                         await supabase
                             .from(
                                 "transactions"
@@ -2518,48 +2579,103 @@ app.delete(
 // ADMIN LOGIN
 // ==================================================
 
-app.post("/admin/login", async (req, res) => {
-    try {
-        const username = String(req.body.username || "").trim();
-        const password = String(req.body.password || "");
+app.post(
+    "/admin/login",
+    async (req, res) => {
+        try {
+            const username =
+                String(
+                    req.body.username || ""
+                ).trim();
 
-        // ADMIN LOGIN CREDENTIALS
-        const ADMIN_USERNAME = "admin";
-        const ADMIN_PASSWORD = "123456";
+            const password =
+                String(
+                    req.body.password || ""
+                );
 
-        console.log("ADMIN LOGIN ATTEMPT");
-        console.log("Username received:", username);
+            console.log(
+                "ADMIN LOGIN ATTEMPT"
+            );
 
-        if (
-            username !== ADMIN_USERNAME ||
-            password !== ADMIN_PASSWORD
-        ) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid admin username or password."
+            console.log(
+                "Username received:",
+                username
+            );
+
+            // ==================================================
+            // CHECK ADMIN CONFIGURATION
+            // ==================================================
+
+            if (
+                !ADMIN_USERNAME ||
+                !ADMIN_PASSWORD ||
+                !ADMIN_TOKEN
+            ) {
+                console.error(
+                    "ADMIN LOGIN ERROR: Admin credentials/token are not configured."
+                );
+
+                return sendError(
+                    res,
+                    500,
+                    "Admin login is not configured on the server."
+                );
+            }
+
+            // ==================================================
+            // CHECK CREDENTIALS
+            // ==================================================
+
+            if (
+                username !==
+                    ADMIN_USERNAME ||
+                password !==
+                    ADMIN_PASSWORD
+            ) {
+                return sendError(
+                    res,
+                    401,
+                    "Invalid admin username or password."
+                );
+            }
+
+            // ==================================================
+            // SUCCESS
+            // ==================================================
+
+            return res.json({
+                success: true,
+
+                message:
+                    "Admin login successful.",
+
+                token:
+                    ADMIN_TOKEN
             });
+
+        } catch (error) {
+            console.error(
+                "ADMIN LOGIN ERROR:",
+                error
+            );
+
+            return sendError(
+                res,
+                500,
+                "Unable to login as admin.",
+                error
+            );
         }
-
-        return res.json({
-            success: true,
-            message: "Admin login successful."
-        });
-
-    } catch (error) {
-        console.error("ADMIN LOGIN ERROR:", error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Unable to login as admin."
-        });
     }
-});
+);
+
 // ==================================================
 // ADMIN USERS
 // ==================================================
 
 app.get(
     "/admin/users",
+    requireAdminToken,
     async (req, res) => {
         try {
             const {
@@ -2611,6 +2727,7 @@ app.get(
 
 app.delete(
     "/admin/users/:id",
+    requireAdminToken,
     async (req, res) => {
         try {
             const userId =
